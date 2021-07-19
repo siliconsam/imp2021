@@ -1,0 +1,106 @@
+%begin
+
+!    %constant %integer faultevent = 6, faultsub = 1, faultextra = 2
+    %constant %integer faultevent = 6, faultsub = 1, faultextra = 2
+
+    %routine level 5
+        %on %event 6 %start
+            %string(255) msg
+            get eventmessage( msg )
+            printstring("At level 5 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            printstring("Error message ='".msg."'"); newline            
+            -> lev5
+        %finish
+
+        printstring("Inside Level 5"); newline
+
+        %signal faultevent,faultsub,faultextra
+
+    lev5:
+        printstring("Reached lev5"); newline
+    %end
+
+    %routine level 4
+        %on %event 5 %start
+            %string(255) msg
+            get eventmessage( msg )
+            printstring("At level 4 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            printstring("Error message ='".msg."'"); newline            
+            -> lev4
+        %finish
+
+        printstring("Inside Level 4"); newline
+        level 5
+    lev4:
+        printstring("Reached lev4"); newline
+    %end
+
+    %routine level 3
+        %on %event 4 %start
+            %string(255) msg
+            get eventmessage( msg )
+            printstring("At level 3 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            printstring("Error message ='".msg."'"); newline            
+            -> lev3
+        %finish
+
+        printstring("Inside Level 3"); newline
+        level 4
+    lev3:
+        printstring("Reached lev3"); newline
+    %end
+
+    %routine level 2
+        %on %event 3 %start
+            %string(255) msg
+            get eventmessage( msg )
+            printstring("At level 2 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            printstring("Error message ='".msg."'"); newline            
+            -> lev2
+        %finish
+
+        printstring("Inside Level 2"); newline
+        level 3
+    lev2:
+        printstring("Reached lev2"); newline
+    %end
+
+    %routine level 1
+
+        %on %event 2 %start
+            %string(255) msg
+            get eventmessage( msg )
+            printstring("At level 1 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            printstring("Error message ='".msg."'"); newline            
+            -> lev1
+        %finish
+
+        printstring("Inside Level 1"); newline
+        level 2
+    lev1:
+        printstring("Reached lev1"); newline
+    %end
+
+    %on %event 1 %start
+            %string(255) msg
+            get eventmessage( msg )
+            printstring("At level 0 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            printstring("Error message ='".msg."'"); newline            
+        -> lev0
+    %finish
+
+!    setdebuglevel(dbgtrap)
+    printstring("Inside level 0");newline
+    level 1
+
+levm1:
+    printstring("Reached label levm1");newline
+    -> theend
+    
+lev0:
+    printstring("Reached label lev0");newline
+    -> theend
+
+theend:
+    cleardebug
+%endofprogram

@@ -1,0 +1,13 @@
+{----------------------------------------------------------------------------}
+    %external %routine To Upper(%string(*)%name s)
+        %integer i
+        %byte %name p
+
+        %for i=1,1,length(s) %cycle
+            p == charno(s,i)
+            %if 'a' <= p <= 'z' %then p = p - ('a'-'A')
+        %repeat
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

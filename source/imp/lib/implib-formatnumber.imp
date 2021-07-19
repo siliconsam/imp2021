@@ -1,0 +1,26 @@
+{----------------------------------------------------------------------------}
+    ! format the number to the given number base
+    ! and prefix by the number base expressed in base 10
+    %external %string(255) %function formatNumber( %integer n,base,places)
+        %string(255) s,x
+        %integer i
+
+        %if base = 10 %start
+            x = int2ascii( n, base, places)
+        %else
+            s = int2ascii( n, base, 0)
+            x = int2ascii( base, 10, places - length(s)  - 1 )
+
+            length(x) = length(x) + 1
+            charno(x,length(x)) = '_'
+            %for i = 1,1,length(s) %cycle
+                length(x) = length(x) + 1
+                charno(x,length(x)) = charno(s,i)
+            %repeat
+        %finish
+
+        %result = x
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

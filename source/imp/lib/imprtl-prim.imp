@@ -1,0 +1,89 @@
+! External Library routines implemented in C
+! N.B. These routines need an alias name referring to the actual C routine
+!      Also the alias name may need to be changed for different operating systems
+! imprtl routines implemented in C to access C standard file handles,error status,write a double length real
+
+%external %routine     %spec prim exit            %alias "_exit" ( %integer status )
+
+%external %integer %fn %spec prim geterr          %alias "_geterrno"
+%external %integer %fn %spec prim geterrhandle    %alias "_getstderr"
+%external %integer %fn %spec prim getinhandle     %alias "_getstdin"
+%external %integer %fn %spec prim getouthandle    %alias "_getstdout"
+%external %routine     %spec prim write double    %alias "_fileputreal" ( %integer handle, %long %real d )
+
+%external %integer %fn %spec prim openfile        %alias "_fopen" ( %integer mode address, %integer file name address )
+%external %integer %fn %spec prim tell            %alias "_ftell" ( %integer handle )
+%external %routine     %spec prim file rewind     %alias "_rewind" ( %integer handle )
+%external %routine     %spec prim file seek       %alias "_fseek" ( %integer handle, displacement, pos )
+%external %routine     %spec prim close           %alias "_fclose" ( %integer handle )
+%external %integer %fn %spec prim readbytes       %alias "_fread" ( %integer handle, count, itemsz, %byte %name buffer )
+%external %integer %fn %spec prim writebytes      %alias "_fwrite" ( %integer handle, count, itemsz,%byte %name buffer )
+%external %integer %fn %spec prim get char        %alias "_fgetc" ( %integer handle )
+%external %routine     %spec prim put char        %alias "_fputc" ( %integer handle,ch )
+%external %routine     %spec prim flush           %alias "_fflush" ( %integer handle )
+
+%external %routine exit( %integer status )
+    prim exit( status )
+%end
+
+%external %integer %fn get error
+    %result = prim get err
+%end
+
+%external %integer %fn getstderrhandle
+    %result = prim geterrhandle
+%end
+
+%external %integer %fn getstdinhandle
+    %result = prim getinhandle
+%end
+
+%external %integer %fn getstdouthandle
+    %result = prim getouthandle
+%end
+
+%external %routine put double( %integer handle, %long %real d )
+    prim write double( handle, d )
+%end
+
+%external %integer %fn openfile ( %integer mode address, %integer file name address )
+    %result = prim openfile( mode address, file name address )
+%end
+
+%external %integer %fn tell ( %integer handle )
+    %result = prim tell( handle )
+%end
+
+%external %routine file rewind( %integer handle )
+    prim file rewind( handle )
+%end
+
+%external %routine file seek ( %integer handle, displacement, pos )
+    prim file seek( handle, displacement, pos )
+%end
+
+%external %routine close( %integer handle )
+    prim close( handle )
+%end
+
+%external %integer %fn readbytes( %integer handle, count, itemsz, %byte %name buffer )
+    %result = prim readbytes( handle, count, itemsz, buffer )
+%end
+
+%external %integer %fn writebytes( %integer handle, count, itemsz,%byte %name buffer )
+    %result = prim writebytes( handle, count, itemsz, buffer )
+%end
+
+%external %integer %fn get char( %integer handle )
+    %result = prim get char( handle )
+%end
+
+%external %routine put char( %integer handle,ch )
+    prim put char( handle,ch )
+%end
+
+%external %routine flush( %integer handle )
+    prim flush( handle )
+%end
+
+%endoffile

@@ -1,0 +1,112 @@
+%begin
+
+    %external %routine %spec debug newline
+
+    %integer i
+    %string(16) filename = "zzz.lis"
+    %string(15) sourcename = "zzzsource.txt"
+    %byte %array blurb(0:511)
+    %string(32) data
+    %string(255) longdata
+    %integer ch
+    %integer count
+    %longreal pi = 3.1415926
+
+    selectoutput(0)
+    printstring("Opening source ".sourcename); newline
+    printstring("Opening file ".filename); newline
+
+SETDEBUGLEVEL( 0 { + dbgprog + dbgmain + dbgio} )
+!    openinput(1,sourcename)
+    selectinput(1)
+!    openoutput(1,filename)
+    selectoutput(1)
+    
+    count = readbuffer( blurb , 32 )
+    printstring("Read blurb count=".itos(count,0));newline
+    %for i=0,1,count - 1 %cycle
+        printsymbol( blurb(i) )
+    %repeat
+    newline; printstring("Just output the read blurb");newline
+
+    length( longdata ) = 0
+    count = readbuffer( longdata, 25 )
+    printstring("Read longdata count=".itos(count,0));newline
+    printstring( longdata ); newline
+
+    %for i=1,1,20 %cycle
+        print string( "hello, iteration ".itos(i,0) );newline
+    %repeat
+
+    length(longdata) = 0
+    %cycle
+        length(data) = 0
+        %cycle
+            readsymbol(ch)
+            %if (ch # nl) %and (ch # eof) %start
+                ! QAD method of appending a char to a string
+                ! Also checks against string overflow
+                %if length(data) < sizeof(data) - 1 %start
+                    length(data) = length(data) + 1
+                    charno(data,length(data)) = ch
+                %finish
+            %finish
+            %if (ch # eof) %start
+                %if length(longdata) < sizeof(longdata) - 1 %start
+                    length(longdata) = length(longdata) + 1
+                    charno(longdata,length(longdata)) = ch
+                %finish
+            %finish
+
+        %repeat %until (ch = nl) %or (ch = eof)
+        printstring(data); newline
+    %repeat %until (ch = eof)
+
+%if (DEBUGMODE # 0) %start
+debug string("TESTWRITE: about to load blurb"); debug newline
+%finish
+
+    %for i = 0,1,length(sourcename) - 1 %cycle
+
+!%if (DEBUGMODE #0) %start
+!debug string("TESTWRITE: loading blurb(".itos(i,0).")=".tostring(charno(sourcename,i+1)) ); debug newline
+!%finish
+
+        blurb(i) = charno(sourcename,i+1)
+    %repeat
+
+    blurb(length(sourcename)) = nl
+
+%if (DEBUGMODE #0) %start
+debug string("TESTWRITE: just loaded blurb"); debug newline
+%finish
+
+%if (DEBUGMODE #0) %start
+debug newline; debug string("TESTWRITE: writebuffer(sourcename)"); debug newline
+%finish
+!    count = writebuffer( byteinteger( addr( sourcename ) ), length( sourcename ) + 1 )     
+    count = writebuffer( sourcename, length( sourcename ) + 1 )     
+
+%if (DEBUGMODE #0) %start
+debug newline; debug string("TESTWRITE: writebuffer(longdata)"); debug newline
+%finish
+    count = writebuffer( longdata, length( longdata ) + 1 )     
+    printstring("Written count=".itos(count,0));newline
+
+%if (DEBUGMODE #0) %start
+debug newline; debug string("TESTWRITE: writebuffer(blurb)"); debug newline
+%finish
+!    count = writebuffer( byteinteger( addr( blurb ) ), length( sourcename )  )     
+    count = writebuffer( blurb, length( sourcename )  )     
+    newline; printstring("Written blurb count=".itos(count,0));newline
+    printstring( "PI="); print real( pi ); newline
+    
+    closeinput
+    closeoutput
+    selectoutput(0)
+    printstring("Closed file ".sourcename); newline
+    printstring("Closed file ".filename); newline
+
+SETDEBUGLEVEL(0)
+
+%end %of %program

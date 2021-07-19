@@ -1,0 +1,150 @@
+
+    %constant %integer BYTESIZE = 1
+    %constant %integer WORDSIZE = 4
+
+    ! This returns the pointer to the array of pointers to the environment variables 
+    %external %integer %name %function %spec getenvironment
+
+    %external %integer %function getenvcount
+        %integer %name arr
+        %integer count
+
+        arr == getenvironment
+
+        count = 0
+        ! Find the count of environment variables
+        ! We treat an address as a 4-byte unsigned value
+        ! In this case we are only concerned about zero v non-zero values
+        %while integer( addr( arr ) + WORDSIZE*count ) # 0 %cycle
+            count = count + 1
+        %repeat
+
+        %result = count
+    %end
+
+    %external %string(255) %function getenvname( %integer index )
+        %integer i,eqpos,len
+        %byte %name b,src
+        %string(255) s
+
+        length(s) = 0
+
+        %if (0 < index <= getenvcount) %start
+            ! get the pointer (aka "name") to the C-style char array
+            b == byteinteger( integer( addr(getenvironment) + WORDSIZE*(index-1) ) )
+
+            ! I ass-u-me that a C string has a length
+            ! in the range 0..MAXINT - 1, where MAXINT is 2^31
+            ! and each "char" is stored in a byte
+            !
+            ! Also, I should use len as a 32-bit UNSIGNED integer
+            ! and defend against negative values!!
+            len = 0
+            %while byteinteger( addr( b ) + len ) # 0 %cycle
+                len = len + BYTESIZE
+
+                ! Defend against negative lengths
+                %if (len = -1) %start
+                    len = 0
+                    %exit
+                %finish
+   	        %repeat
+
+            ! Now obtain the actual C string
+            ! Beware! IMP is restricted to 255 characters at most
+            !   An IMP string has a byte prefix indicating string length
+            !   So length = 0..255
+            ! C strings can be any length, terminated by 0 byte
+            eqpos = 0
+            %for i = 1,1,len %cycle
+                src == byteinteger( addr( b ) + BYTESIZE*(i - 1) )
+                ! have we found the '=' char
+                %if (src = '=') %and (eqpos = 0) %then eqpos = i
+
+                ! 1) are we before the '=' char
+                ! 2) will the length(string before '=') < 256
+                %if (eqpos = 0) %and (length(s) < 256) %start
+                    ! yes to both conditions met so append the current char
+                    length(s) = length(s) + 1
+                    charno( s, length(s) ) = src
+                %finish
+            %repeat
+
+        %finish
+
+        %result = s
+    %end
+
+    %external %string(255) %function getenv( %integer index )
+        %integer i,eqpos,len
+        %byte %name b,src
+        %string(255) s
+
+        length(s) = 0
+
+        %if (0 < index <= getenvcount) %start
+            ! get the pointer (aka "name") to the C-style char array 
+            b == byteinteger( integer( addr(getenvironment) + WORDSIZE*(index-1) ) )
+
+            ! I ass-u-me that a C string has a length
+            ! in the range 0..MAXINT - 1, where MAXINT is 2^31
+            ! and each "char" is stored in a byte
+            !
+            ! Also, I should use len as a 32-bit UNSIGNED integer
+            ! and defend against negative values!!
+            len = 0
+            %while byteinteger( addr( b ) + len ) # 0 %cycle
+                len = len + BYTESIZE
+
+                ! Defend against negative lengths
+                %if (len = -1) %start
+                    len = 0
+                    %exit
+                %finish
+            %repeat
+
+            ! Now obtain the actual C string
+            ! Beware! IMP is restricted to 255 characters at most
+            !   An IMP string has a byte prefix indicating string length
+            !   So length = 0..255
+            ! C strings can be any length, terminated by 0 byte
+            eqpos = 0
+            %for i = 1,1,len %cycle
+                src == byteinteger( addr( b ) + BYTESIZE*(i - 1) )
+
+                ! 1) have we found the '=' char
+                ! 2) will the length(string AFTER '=') < 256
+                %if (eqpos # 0) %and ((len - eqpos) < 256) %start
+                    ! yes both conditions met so append the current char
+                    length(s) = length(s) + 1
+                    charno( s, length(s) ) = src
+                %finish
+
+                ! have we found the '=' char
+                %if (src = '=') %and (eqpos = 0) %then eqpos = i
+            %repeat
+
+        %finish
+
+        %result = s
+    %end
+
+    %external %integer %function getenvindex( %string(255) varname )
+        %integer i,count,index
+
+        index = 0
+
+        count = getenvcount
+        i = 1
+        %cycle
+            %if (varname = getenvname( i )) %start
+                index = i
+            %else
+                i = i + 1
+            %finish
+        %repeat %until (index # 0) %or (i > count)
+
+        %result = index
+    %end
+
+%endoffile

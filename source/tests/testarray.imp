@@ -1,0 +1,146 @@
+%begin
+    %constant %long %integer d1l = -1, d1u = 8, d2l = -1, d2u = 1, d3l = -1, d3u = 1
+!    %constant %long %integer bl = -1, bu = 800
+    %constant %long %integer bl = -1, bu = 800
+    %integer dim,sz,base,limit,range
+    %integer a,b,c,v,i
+    %integer %name x
+    %byte %name y
+    %integer offset
+    %integer %array bilbo(d1l:d1u,d2l:d2u,d3l:d3u)
+    %integer %array baggins(bl:bu)
+!    %byte %array baggins(bl:bu)
+
+    %routine onedimarray( %integer %name base,limit, %integer dim,sz,lb,ub )
+        %integer row
+        %integer i
+
+        ! initialise the base and limit offsets
+        base = 0
+        limit = 0
+
+        row   = (ub - lb) + 1;               ! Number of objects in a row
+        base  = base * row + lb
+        limit = limit * row + ub
+
+        base = base * sz
+        limit = (limit + 1) * sz
+    %end
+
+    %routine WriteHexInteger( %integer n )
+        %integer d,i
+
+        %for i = 28,-4,0 %cycle
+            d = 15 & (n >> i);
+            %if (d > 9) %start
+                printsymbol(d - 10 + 'A')
+            %else
+                printsymbol( d + '0' )
+            %finish
+        %repeat
+    %end
+
+    selectoutput(1)
+    printstring("Start array initialisation");newline
+
+    a = addr(bilbo(0,0,0))
+    b = addr(bilbo(d1l,d2l,d3l))
+    c = addr(bilbo(d1u,d2u,d3u))
+    range = sizeof(bilbo(d1l,d2l,d3l)) + c - b
+    base = b - a
+    printstring( "bilbo A: sizeof              =" ); printstring( itos(sizeof(bilbo(d1l,d2l,d3l)),0) ); newline
+    printstring( "bilbo B: address(d1l,d2l,d3l)="); WriteHexInteger( addr(bilbo(d1l,d2l,d3l)) ); newline
+    printstring( "bilbo C: address(d1u,d2u,d3u)="); WriteHexInteger( addr(bilbo(d1u,d2u,d3u)) ); newline
+    printstring( "bilbo D: range               =" ); printstring( itos( range,0) ); newline
+    printstring( "bilbo E: base                =" ); printstring( itos( base,0) ); newline
+    printstring( "bilbo F: limit               =" ); printstring( itos( range + base,0) ); newline
+
+    dim = 1
+    sz = sizeof(baggins(bl))
+    onedimarray( base, limit, dim, sz, bl, bu )
+    range = limit - base
+    b = addr(baggins(bl))
+    c = addr(baggins(bu))
+    printstring( "baggins A: sizeof            =" )
+    printstring( itos(sizeof(baggins(bl)),0) );newline
+    printstring( "baggins B: address(bl)       ="); WriteHexInteger( addr(baggins(bl)) ); newline
+    printstring( "baggins C: address(bu )      ="); WriteHexInteger( addr(baggins(bu)) ); newline
+    printstring( "baggins D: range             =" ); printstring( itos( range,0) ); newline
+    printstring( "baggins E: base              =" ); printstring( itos( base,0) ); newline
+    printstring( "baggins F: limit             =" ); printstring( itos( limit,0) ); newline
+
+    v = 0
+    %for a = d1l,1,d1u %cycle
+        %for b = d2l,1,d2u %cycle
+            %for c = d3l,1,d3u %cycle
+                v = v + 1
+                bilbo(a,b,c) = v
+            %repeat
+        %repeat
+    %repeat
+
+!    v = 0
+!    a = addr(bilbo(d1l,d2l,d3l))
+!    b = sizeof(bilbo(d1l,d2l,d3l))
+!    c = addr(bilbo(d1u,d2u,d3u))
+!    %for i = a,b,c %cycle
+!        v = v + 1
+!        x == integer( i )
+!        x = v
+!    %repeat
+    printstring("End bilbo array initialisation"); newline
+
+    v = 0
+    printstring("Start bilbo array readout");newline
+    %for a = d1l,1,d1u %cycle
+        %for b = d2l,1,d2u %cycle
+            %for c = d3l,1,d3u %cycle
+                printstring( "bilbo(" )
+                printstring( itos(a,0) )
+                printstring( "," )
+                printstring( itos(b,0) )
+                printstring( "," )
+                printstring( itos(c,0) )
+                printstring( ")=" ); printstring( itos(bilbo(a,b,c),0) )
+                printstring( " entry=" ); printstring( itos(v,0) )
+                printstring( " address="); WriteHexInteger( addr( bilbo(a,b,c) ) )
+                newline
+                v = v + 1
+            %repeat
+        %repeat
+    %repeat
+
+    v = -1
+    offset = 0
+    a = addr(baggins(bl))
+    b = sizeof(baggins(bl))
+    %for c = bl,1,bu %cycle
+!        baggins(c) = c
+
+        x == integer( a + offset )
+        x = c
+!         integer( a + offset ) = c
+!        y == byteinteger( a + offset )
+!        y = c & 255
+
+        offset = offset + b
+        v = v + 1
+    %repeat
+    printstring("End baggins array initialisation"); newline
+
+    printstring("Start array readout");newline
+    %for a = bl,1,bu %cycle
+        b = baggins(a)
+        printstring( "baggins(" )
+        printstring( itos(a,0) )
+        printstring( ")=" )
+        printstring( itos(b,0))
+        printstring( " or as hex " )
+        writehexinteger( baggins(a) )
+        printstring( " address=" )
+        WriteHexInteger( addr( baggins(a) ) )
+        newline
+    %repeat
+    printstring("End baggins array readout"); newline
+
+%endofprogram

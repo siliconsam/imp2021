@@ -1,0 +1,2409 @@
+! IMP77 compiler  first pass
+
+!###########################################################
+! This program is a Copyright work.                        #
+!                                                          #
+! Over the last 40+ years a long and distinguished list of #
+! institutions, individuals and other entities have made   #
+! contributions to portions of this program and may have a #
+! reasonable claim over rights to certain parts of the     #
+! program.                                                 #
+!                                                          #
+! This version is therefore provided for education and     #
+! demonstration purposes only                              #
+!###########################################################
+
+%begin
+    %conststring(4) version = "8.4"
+
+    !configuration parameters
+    { minus one represents all bits set for an %integer     }
+    { %integer could be 16,32,64 bits wide depending on the }
+    { processor being targeted                              }
+    { i.e 8086 (16 bits), 80386 (32 bits), i86_64 (64 bits) }
+    %constinteger minus one    = -1;
+! Wee change needed to cross-compile the compiler when going from 16 bit to 32 bit world
+!    %constinteger minus one    = 16_7fff;
+
+    { now to set up various constants }
+    %constinteger max int      = ((minus one)>>1)//10
+    %constinteger max dig      = (minus one)>>1-maxint*10
+    %constinteger byte size    = 8;            !bits per byte
+    %constinteger max tag      = 800;          !max no. of tags
+    %constinteger max dict     = 6000;         !max extent of dictionary
+    %constinteger name bits    = 11;           !size of name table as a power of two
+    %constinteger max names    = 1<<namebits-1;!table limit (a mask, eg 255)
+    %owninteger   spare names  = max names
+    %constinteger lit max      = 50;           !max no. of constants/stat.
+    %constinteger rec size     = 520;          !size of analysis record
+    %constinteger dim limit    = 6;            !maximum array dimension
+
+    !symbols
+    %constinteger ff     = 12;              !form feed
+    %constinteger marker = '^';             !marker for faults
+    %constinteger squote = '"';             !string quote
+    %constinteger cquote = '''';            !character quote
+
+    !streams
+    %constinteger report = 0,  source = 1
+    %constinteger object = 1, listing = 2
+
+    !types
+    %constinteger integer = 1
+    %constinteger real    = 2
+    %constinteger stringv = 3
+    %constinteger record  = 4
+
+    !forms
+    %constinteger iform = integer<<4+1
+    %constinteger var = 91
+    %constinteger const   = 93
+    %constinteger swit    = 105
+    %constinteger comment = 22
+    %constinteger termin  = 20
+    %constinteger lab     = 3
+    %constinteger jump    = 54
+    %constinteger recfm = 4
+    %constinteger proc  = 7;                     !class for proc
+
+    !phrase entries
+    %constinteger escdec   = 252
+    %constinteger escproc  = 253
+    %constinteger escarray = 254
+    %constinteger escrec   = 255
+
+    !%recordformat arfm(%shortinteger class,sub,link,ptype,papp,pformat,x,pos);!imp77:
+    %recordformat arfm(%integer class,sub,link,ptype,papp,pformat,x,pos)
+
+    %recordformat tagfm(%integer app, format, %integer flags, index, text, link)
+
+    !flags
+    !      *===.===.===.===.===.====.====.====.===.======.======*
+    !      ! u ! c ! c ! p ! s ! a  ! o  ! pr ! s ! type ! form !
+    !      ! 1 ! 1 ! 1 ! 1 ! 1 ! 1  ! 1  ! 1  ! 1 !  3   !  4   !
+    !      *===^===^===^===^===^====^====^====^===^======^======*
+    !        u   c   c   p   s   a    o    p    s    t      f
+    !        s   l   o   a   u   n    w    r    p    y      o
+    !        e   o   n   r   b   a    n    o    e    p      r
+    !        d   s   s   a   n   m         t    c    e      m
+    !            e   t   m   a   e     
+    !            d       s   m
+    !                        e
+    !
+    !                             
+
+    %constinteger used bit   = 2_1000000000000000
+    %constinteger closed     = 2_0100000000000000
+    %constinteger const bit  = 2_0010000000000000
+    %constinteger parameters = 2_0001000000000000
+    %constinteger subname    = 2_0000100000000000
+    %constinteger aname      = 2_0000010000000000
+    %constinteger own bit    = 2_0000001000000000
+    %constinteger prot       = 2_0000000100000000
+    %constinteger spec       = 2_0000000010000000
+
+    %constinteger trans bit  = 16_4000
+    %constinteger error      = 16_8000
+
+    %record(arfm)%array ar(1:rec size)
+
+    %owninteger class        = 0;             !class of atom wanted
+    %owninteger x            = 0;             !usually last tag
+    %owninteger atom1        = 0;             !atom class (major)
+    %owninteger atom2        = 0;             !atom class (minor)
+    %owninteger subatom      = 0;             !extra info about atom
+    %owninteger type         = 0
+    %owninteger app          = 0
+    %owninteger format       = 0;             !atom info
+    %integer hash value
+    %owninteger faulty       = 0;             !fault indicator
+    %owninteger fault rate   = 0;             !fault rate count
+    %owninteger lines        = 0;             !current line number
+    %owninteger text line    = 0;             !starting line for string const
+    %owninteger margin       = 0;             !statement start margin
+    %owninteger error margin = 0
+    %owninteger error sym    = 0
+    %owninteger column       = 0
+    %owninteger stats        = 0;             !statements compiled
+    %owninteger mon pos      = 0;             !flag for diagnose
+    %owninteger sym          = nl;            !current input symbol
+    %owninteger symtype      = 0;             !type of current symbol
+    %owninteger quote        = 0;             !>0 strings, <0 chars
+    %owninteger end mark     = 0;             !%end flag
+    %owninteger cont         = ' '
+    %owninteger csym         = ' ';           !listing continuation marker
+    %owninteger decl         = 0;             !current declarator flags
+    %owninteger dim          = 0;             !arrayname dimension
+    %owninteger spec given   = 0
+
+    %owninteger escape class = 0;             !when and where to escape
+    %owninteger protection   = 0
+    %owninteger atom flags   = 0
+    %owninteger otype        = 0;             !current 'own' type
+    %owninteger reals ln     = 1;             ! =4 for %REALSLONG
+    %owninteger last1        = 0;             !previous atom class
+    %owninteger gen type     = 0
+    %owninteger ptype        = 0;             !current phrase type
+    %owninteger papp         = 0;             !current phrase parameters
+    %owninteger pformat      = 0;             !current phrase format
+    %owninteger force        = 0;             !force next ptype
+    %owninteger g            = 0
+    %owninteger gg           = 0
+    %owninteger map gg       = 0;             !grammar entries
+    %owninteger fdef         = 0;             !current format definition
+    %owninteger this         = -1;            !current recordformat tag
+    %owninteger nmin         = 0;             !analysis record atom pointer
+    %owninteger nmax         = 0;             !analysis record phrase pointer
+    %owninteger rbase        = 0;             !record format definition base
+    %owninteger dmax         = 1
+    %owninteger tmin         = max tag;       !upper bound on tags
+    %owninteger ss           = 0;             !source statement entry
+    %string(63) include file
+    %owninteger include list = 0
+    %owninteger include level= 0
+    %owninteger include      = 0;             !=0 unused, #0 being used
+    %owninteger perm         = 1;             !1 = compiling perm, 0 = program
+    %owninteger progmode     = 0;             !-1 = file, 1 = begin/eop
+    %owninteger sstype       = 0;             !-1:exec stat
+                                              ! 0: declaration
+                                              ! 1: block in
+                                              ! 2: block out
+    %owninteger spec mode    = 0;             !>=0: definition
+                                              ! -1: proc spec
+                                              ! -2: recordformat
+    %owninteger ocount       = -1;            !own constants wanted
+    %owninteger limit        = 0;             !lookup limit
+    %owninteger copy         = 0;             !duplicate name flag
+    %owninteger order        = 0;             !out of sequence flag
+    %owninteger for warn     = 0;             !non-local flag
+    %owninteger dubious      = 0;             !flag for dubious statements
+    %owninteger dp           = 1
+    %owninteger pos1         = 0
+    %owninteger pos2         = 0;             !error position
+    %owninteger pos          = 0;             !input line index
+    %owninteger dimension    = 0;             !current array dimension
+    %owninteger local        = 0;             !search limit for locals
+    %owninteger fm base      = 0;             !entry for format decls
+    %owninteger search base  = 0;             !entry for record_names
+    %owninteger format list  = 0;             !size of current format list
+    %integer recid
+    %ownbyteintegerarray char(0:133) = ;  !input line
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10
+    %integerarray lit pool(0:lit max)
+    %owninteger lit          = 0;             !current literal (integer)
+    %owninteger lp           = 0;             !literals pointer
+    %owninteger block x      = 0;             !block tag
+    %owninteger list         = 1;             !<= to enable
+    %owninteger control      = 0
+    %owninteger diag         = 0;             !diagnose flags
+    %integerarray hash(0:max names)
+    %record(tagfm)%array tag(0:max tag)
+    %integerarray dict(1:max dict)
+    %byteintegerarray buff(1:512)
+    %owninteger bp           = 0
+
+    { grammar related constants }
+    %constinteger max grammar  = 1720
+    %owninteger gmin       = max grammar               ;! upper bound on grammar
+    %constinteger manifest = 120, figurative = 130
+    %constinteger actions  = 180, phrasal    = 200
+
+    %constbyteintegerarray amap(0:15) = %c
+       89,   91,   92,  104,   94,   93,  105,  100,  101,  102,  103,  106,  107,  108,  109,   89
+    !   ?     v     n     l    fm const  swit    rp    fp    mp    pp     a    an    na    nan    ?
+
+    %constbyteintegerarray atoms(0:15) = 89, 1, 1, 10,  9,  1, 10,  7,
+                                          7, 7, 7,  4,  1,  4,  1, 89
+
+    !*** start of generated tables ***
+    %include "i77.tables.imp"
+    !***  end  of generated tables ***
+
+    %routine flush buffer( %integer limit )
+        %integer j
+        %if bp >= limit %start
+        %if faulty = 0 %start
+            selectoutput(object)
+            %for j = 1, 1, bp %cycle
+                printsymbol(buff(j))
+            %repeat
+            selectoutput(listing)
+        %finish
+        bp = 0
+        %finish
+    %end
+
+    %routine add char( %byteinteger ch )
+        bp = bp + 1
+        buff(bp) = ch
+    %end
+
+    %routine op(%integer code, param)
+        buff(bp+1) = code
+        buff(bp+2) = param>>8
+        buff(bp+3) = param
+        bp = bp+3
+    %end
+
+    %routine set const(%integer m)
+        buff(bp+1) = 'N'
+        buff(bp+5) = m;  m = m>>8
+        buff(bp+4) = m;  m = m>>8
+        buff(bp+3) = m;  m = m>>8
+        buff(bp+2) = m
+        bp = bp+5
+    %end
+
+    %routine octal(%integer n)
+        %integer m
+        m = n>>3
+        octal(m) %if m # 0
+        add char( n&7+'0' )
+    %end
+
+    %routine hexadecimal(%integer n)
+        %integer m
+        m = n>>4
+        hexadecimal(m) %if m # 0
+        %if n&15 > 9 %then add char( n&15+'A' ) %else add char( n&15+'0' )
+    %end
+
+    %routine print ident(%integer p, mode)
+
+        %routine putit(%integer ch)
+            %if mode = 0 %then %start
+                printsymbol(ch)
+            %else
+                add char( ch )
+            %finish
+        %end
+
+        %integer k, l
+        p = tag(p)_text
+        %if p = 0 %start
+            putit('?')
+            %return
+        %finish
+        p = p+1;       ! advance to name string
+        k = dict(p)
+        l = k & 255;   ! length
+        %while l > 0 %cycle
+            putit(k>>8)
+            l = l-1
+            p = p+1
+            k = dict(p)
+            %exit %if l = 0
+            putit(k&255)
+            l = l-1
+        %repeat
+    %end
+
+    %routine abandon(%integer n)
+        %switch reason(0:9)
+        %integer stream
+        stream = listing
+        %cycle
+            newline %if sym # nl
+            printsymbol('*');  write(lines,4);  space
+            ->reason(n)
+reason(0):  printstring("compiler error!");          ->more
+reason(1):  printstring("switch vector too large");  ->more
+reason(2):  printstring("too many names");           ->more
+reason(3):  printstring("program too complex");      ->more
+reason(4):  printstring("feature not implemented");  ->more
+reason(5):  printstring("input ended: ")
+            %if quote # 0 %start
+                %if quote < 0 %then printsymbol(cquote) %else printsymbol(squote)
+            %else
+                printstring("%endof")
+                %if progmode >= 0 %then printstring("program") %else printstring("file")
+            %finish
+            printstring(" missing?");                ->more
+reason(6):  printstring("too many faults!");         ->more
+reason(7):  printstring("string constant too long"); ->more
+reason(8):  printstring("dictionary full");          ->more
+reason(9):  printstring("Included file ".include file." does not exist")
+
+more:       newline
+            printstring("***  compilation abandoned ***");  newline
+            %exit %if stream = report
+            close output
+            stream = report
+            select output(report)
+        %repeat
+        !%signal 15,15 %if diag&4096 # 0
+        %stop
+    %end
+
+    %routine compile block(%integer level, block tag, dmin, tmax, id)
+
+        %integerfnspec gapp
+        %routinespec delete names(%integer quiet)
+        %routinespec analyse
+        %routinespec compile
+
+        %integer open;    open       = closed;      !zero if can return from proc
+        %integer dbase;   dbase      = dmax;        !dictionary base
+        %integer tbase;   tbase      = tmax;        !tag base
+        %integer tstart;  tstart     = tmax
+        %integer label;   label      = 4;           !first internal label
+        %integer access;  access     = 1;           !non-zero if accessible
+        %integer inhibit; inhibit    = 0;           !non-zero inhibits declaratons
+
+        %integername bflags;      bflags      == tag(block tag)_flags
+        %integer block type;      block type   = bflags>>4&7
+        %integer block form;      block form   = bflags&15
+        %integer block fm;        block fm     = tag(block tag)_format
+        %integer block otype;     block otype  = otype
+        %integername block app;   block app   == tag(block tag)_app
+
+        %integer l, new app
+
+        %routine fault(%integer n)
+            ! -5 : -1  - warnings
+            !  1 : 22  - errors
+
+            %switch fm(-5:22)
+            %integer st
+
+            %routine print ss
+                %integer s, p
+                %return %if pos = 0
+                space
+                p = 1
+                %cycle
+                    printsymbol(marker) %if p = pos1
+                    %exit %if p = pos
+                    s = char(p);  p = p+1
+                    %exit %if s = nl %or (s='%' %and p = pos)
+                    %if s < ' ' %start;         !beware of tabs
+                        %if s = ff %then s = nl %else s = ' '
+                    %finish
+                    printsymbol(s)
+                %repeat
+                pos = 0 %if list <= 0
+            %end
+
+            pos1 = pos2 %if pos2 > pos1
+            newline %if sym # nl
+            st = report
+            st = listing %if n = -3;              !don't report unused on the console
+            %cycle
+                select output(st)
+                %if n < 0 %then printsymbol('?') %and pos1 = 0 %else printsymbol('*')
+                %if st # report %start
+                    %if list <= 0 %and pos1 # 0 %start
+                        spaces(pos1+margin);  printstring("      ! ")
+                    %finish
+                %finish %else %start
+                    printstring(include file) %if include # 0
+                    write(lines, 4);  printsymbol(csym);  space
+                %finish
+                ->fm(n) %if -5 <= n %and n <= 22
+                printstring("fault");  write(n, 2);              ->ps
+
+fm(-5):         printstring("Dubious statement");  dubious = 0;        ->psd
+fm(-4):         printstring("Non-local")
+                pos1 = for warn;  for warn = 0;                        ->ps
+fm(-3):         print ident(x, 0);  printstring(" unused");            ->nps
+fm(-2):         printstring("""}""");                                  ->miss
+fm(-1):         printstring("access");                                 ->psd
+fm(0):          printstring("form");                                   ->ps
+fm(1):          printstring("atom");                                   ->ps
+fm(2):          printstring("not declared");                           ->ps
+fm(3):          printstring("too complex");                            ->ps
+fm(4):          printstring("duplicate ");  Print Ident(x, 0);         ->ps
+fm(5):          printstring("type");                                   ->ps
+fm(6):          printstring("match");                                  ->psd
+fm(7):          printstring("context");                                ->psd
+fm(8):          printstring("%cycle");                                 ->miss
+fm(9):          printstring("%start");                                 ->miss
+fm(10):         printstring("size");  write(lit, 1) %if pos1 = 0;      ->ps
+fm(11):         printstring("bounds")
+                write(ocount, 1) %unless ocount < 0;                   ->ps
+fm(12):         printstring("index");                                  ->ps
+fm(13):         printstring("order");                                  ->psd
+fm(14):         printstring("not a location");                         ->ps
+fm(15):         printstring("%begin");                                 ->miss
+fm(16):         printstring("%end");                                   ->miss
+fm(17):         printstring("%repeat");                                ->miss
+fm(18):         printstring("%finish");                                ->miss
+fm(19):         printstring("result");                                 ->miss
+fm(20):         printsymbol('"'); print ident(x, 0); printsymbol('"'); ->miss
+fm(21):         printstring("context ");  print ident(this, 0);        ->ps
+fm(22):         printstring("format");                                 ->ps
+
+miss:           printstring(" missing");                               ->nps
+psd:            pos1 = 0
+ps:             print ss
+nps:            newline
+                %exit %if st = listing
+                st = listing
+            %repeat
+            %if n >= 0 %start
+                !%signal 15,15 %if diag&4096 # 0
+                %if n # 13 %start;           !order is fairly safe
+                    ocount = -1
+                    gg = 0
+                    copy = 0;  quote = 0
+                    search base = 0;  escape class = 0
+                    gg = 0
+                %finish
+                faulty = faulty+1
+   
+                !check that there haven't been too many faults
+   
+                fault rate = fault rate+3;  abandon(6) %if fault rate > 30
+                fault rate = 3 %if fault rate <= 0
+            %finish
+            tbase = tstart
+            %if list <= 0 %and sym # nl %start
+                error margin = column
+                error sym = sym;  sym = nl
+            %finish
+        %end
+
+        dmin = dmin-1;  dict(dmin) = -1;            !end marker for starts & cycles
+        abandon(2) %if dmax = dmin
+
+        %if list > 0 %and level > 0 %start
+            write(lines, 5);  spaces(level*3-1)
+            %if block tag = 0 %start
+                printstring("Begin")
+            %finish %else %start
+                printstring("Procedure ");  print ident(block tag, 0)
+            %finish
+            newline
+        %finish
+
+        !deal with procedure definition (parameters)
+        %if block tag # 0 %start;                   !proc
+            analyse;  compile %if ss # 0
+
+            %if block otype # 0 %start;              !external-ish
+                %if bflags&spec = 0 %start;           !definition
+                    %if progmode <= 0 %and level = 1 %then progmode = -1 %else fault(7)
+                %finish
+            %finish
+
+            new app = gapp;                          !generate app grammar
+            %if spec given # 0 %start;               !definition after spec
+                fault(6) %if new app # block app;     !different from spec
+            %finish
+            block app = new app;                     !use the latest
+
+            %if level < 0 %start;                    !not procedure definition
+                delete names(0)
+                %return
+            %finish
+        %finish %else %start
+            open = 0;                                !can return from a block?
+        %finish
+
+        %cycle
+            analyse
+            %if ss # 0 %start
+                compile
+                fault(-5) %if dubious # 0
+                flush buffer( 128 )                    ;! flush if bp >= 128
+                %if sstype > 0 %start;                 !block in or out
+                    %exit %if sstype = 2;               !out
+                    compile block(spec mode, block x, dmin, tmax, id)
+                    %exit %if ss < 0;                   !endofprogram
+                %finish
+            %finish
+        %repeat
+        %if list > 0 %and level > 0 %start
+            write(lines, 5);  spaces(level*3-1)
+            printstring("End")
+            newline
+        %finish
+        delete names(0)
+        %return
+
+        ! generate app grammar (backwards)
+        %integerfn gapp
+            %constinteger comma = 140;               !psep
+            %routinespec set cell(%integer g, tt)
+            %routinespec class(%record(tagfm)%name v)
+            %record(tagfm)%name v
+            %integer p, link, tp, c, ap, t
+
+            %result = 0 %if tmax = local;            !no app needed
+
+            p = gmax1;  link = 0;  t = tmax
+
+            %cycle
+                v == tag(t);  t = t-1
+                class(v);                             ! deduce class from tag
+                %if c < 0 %start;                     ! insert %PARAM
+                    c = -c
+                    set cell(196, tp)
+                    tp = -1
+                %finish
+                set cell(c, tp)
+                %exit %if t = local;                  ! end of parameters
+                set cell(comma, -1);                  ! add the separating comma
+            %repeat
+            abandon(3) %if gmax > gmin
+
+            %result = link
+
+            %routine set cell(%integer g, tt)
+                ! add the cell to the grammar, combining common tails
+                %while p # gmax %cycle
+                    p = p+1
+                    %if glink(p) = link %and gram(p) = g %start
+                        %if tt < 0 %or (gram(p+1) = tt %and glink(p+1)=ap) %start
+                            link = p;                    ! already there
+                            %return
+                        %finish
+                    %finish
+                %repeat
+
+                !add a new cell
+                gmax = gmax+1
+                gram(gmax) = g
+                glink(gmax) = link
+                link = gmax
+
+                %if tt >= 0 %start;             ! set type cell
+                    gmax = gmax+1
+                    gram(gmax) = tt
+                    glink(gmax) = ap
+                %finish
+                p = gmax
+
+            %end
+
+            %routine class(%record(tagfm)%name v)
+                %constinteger err    = 89
+                %constinteger rtp    = 100
+                %constinteger fnp    = 101
+                %constinteger mapp   = 102
+                %constinteger predp  = 103
+                %constintegerarray class map(0:15) = %c
+                          err,1764, 247, err(4), -rtp, -fnp, -mapp, -predp, err, 214,
+                !         err,1764, 247, err(4), -rtp, -fnp, -mapp, -predp, err, 214,
+                          err, 229, err
+                !         err, 229, err
+                %integer tags, type, form
+
+                ap = 0
+                tags = v_flags
+                type = tags>>4&7;  form = tags&15
+                tp = v_format<<3!type
+                c = class map(form)
+                c = 208 %and tp = 0 %if type = 0 %and form = 2;  !%name
+                ap = v_app %if tags&parameters # 0
+            %end
+        %end
+
+        %routine delete names(%integer quiet)
+            %integer flags
+            %record(tagfm)%name tx
+
+            %while tmax > tbase %cycle
+                x = tmax;  tmax = tmax-1
+                tx == tag(x)
+                flags = tx_flags
+                fault(20) %if flags&spec # 0 %and flags&own bit = 0
+                !{spec with no definition & not external}
+                %if flags&used bit = 0 %and level >= 0 %and list <= 0 %start
+                    fault(-3) %if quiet = 0;          !unused
+                %finish
+                dict(tx_text) = tx_link
+            %repeat
+        %end
+
+        %routine analyse
+            %constinteger order bits = 16_3000, order bit = 16_1000
+            %constinteger escape     = 16_1000
+            %integer strp, mark, flags, prot err, k, s, c
+            %owninteger key = 0
+            %integer node
+            %integername z
+            %record(arfm)%name arp
+            %switch act(actions:phrasal), paction(0:15)
+
+            %routine trace analysis
+                !diagnostic trace routine (diagnose&1 # 0)
+                %integer a
+
+                %routine show(%integer a)
+                    %if 0 < a %and a < 130 %start
+                        space
+                        printstring(text(a))
+                    %finish %else write(a, 3)
+                %end
+
+                %owninteger la1=0, la2=0, lsa=0, lt=0
+                newline %if mon pos # pos %and sym # nl
+                mon pos = pos
+                write(g, 3)
+                space
+                printstring(text(class))
+                printsymbol('"') %if gg&trans bit # 0
+                a = gg>>8&15
+                %if a # 0 %start
+                    printsymbol('{')
+                    write(a, 0)
+                    printsymbol('}')
+                %finish
+                %if atom1 # la1 %or atom2 # la2 %or lsa # subatom %or lt # type %start
+                    printstring(" [")
+                    la1 = atom1
+                    show(la1)
+                    la2 = atom2
+                    show(la2)
+                    lsa = subatom
+                    write(lsa, 3)
+                    lt = type
+                    write(lt, 5)
+                    printsymbol(']')
+                %finish
+                newline
+            %end
+
+            %routine get sym
+                readsymbol(sym)
+                abandon(5) %if sym < 0
+                pos = pos+1 %if pos # 133
+                char(pos) = sym
+                printsymbol(sym) %if list <= 0
+                column = column+1
+            %end
+
+            %routine read sym
+                %owninteger Last = 0
+                %constbyteintegerarray mapped(0:127) = %c
+                  0,  0,  0,  0,   0,  0,  0,  0,    0,  0, 10,  0,   3,  0,  0,  0,
+                  0,  0,  0,  0,   0,  0,  0,  0,    0,  0,  0,  0,   0,  0,  0,  0,
+                  0,'!','"','#', '$',  1,'&', 39,  '(',')','*','+', ',','-','.','/',
+                '0','1','2','3', '4','5','6','7',  '8','9',':',';', '<','=','>','?',
+                '@','A','B','C', 'D','E','F','G',  'H','I','J','K', 'L','M','N','O',
+                'P','Q','R','S', 'T','U','V','W',  'X','Y','Z','[', '\',']','^','_',
+                '`','A','B','C', 'D','E','F','G',  'H','I','J','K', 'L','M','N','O',
+                'P','Q','R','S', 'T','U','V','W',  'X','Y','Z', 2 , '|','}','~',  0
+
+                !!   0 = space
+                !!   1 = %
+                !!   2 = {
+                !!   3 = ff
+                !!   other values represent themselves
+
+                %if sym = nl %start
+s1:                 lines = lines+1
+                    printsymbol(end mark) %if end mark # 0
+s11:                pos = 0;  pos1 = 0;  pos2 = 0;  margin = 0;  column = 0
+                    Last = 0
+                    end mark = 0
+                    %if list <= 0 %start
+                        %if include # 0 %start
+                            printstring(" &");  write(lines, -4)
+                        %finish %else  write(lines, 5)
+                        csym = cont;  printsymbol(csym)
+                        space
+                        %if error margin # 0 %start
+                            lines = lines-1
+                            spaces(error margin)
+                            error margin = 0
+                            %if error sym # 0 %start
+                                printsymbol(error sym)
+                                pos = 1;  char(1) = error sym
+                                sym = error sym;  error sym = 0
+                                ->s5
+                            %finish
+                        %finish
+                    %finish
+s2:                 symtype = 1
+                %finish
+s3:             readsymbol(sym)
+                abandon(5) %if sym < 0
+                pos = pos+1 %if pos # 133
+                char(pos) = sym
+                printsymbol(sym) %if list <= 0
+                column = column+1
+s5:             %if sym # nl %start
+                    Last = Sym
+                    %return %if quote # 0;                     !dont alter strings
+                    sym = mapped(sym&127)
+                    %if sym <= 3 %start;                       !special symbol
+                        ->s2 %if sym = 0;                       !space (or dubious control)
+                        symtype = 2 %and ->s3 %if sym = 1;      !%
+                        cont = '+' %and ->s11 %if sym = 3;      !ff
+                        !must be {
+                        %cycle
+                            get sym
+                            ->s3 %if sym = '}'
+                            ->s4 %if sym = nl
+                        %repeat
+                    %finish
+                    key = kdict(sym)
+                    %if key&3 = 0 %and symtype = 2 %start;            !keyword
+                        %if sym = 'C' %and nextsymbol = nl %start;     !%c...
+                            getsym;  cont = '+';  ->s1
+                        %finish
+                    %else
+                        symtype = key&3-2
+                    %finish
+                    %return
+                %finish
+s4:             symtype = quote
+                ->S1 %if last = 0 %and Quote = 0
+                Cont = '+'
+            %end
+
+            %integerfn format selected
+                format list = tag(format)_app;      !number of names
+                %if format list < 0 %start;         !forward ref
+                    atom1 = error+22
+                    %result = 0
+                %finish
+                %if sym = '_' %start
+                    escape class = esc rec
+                    search base = tag(format)_format
+                %finish
+                %result = 1
+            %end
+
+            %routine code atom(%integer target)
+                %integer dbase, da
+                %integer base, n, mul, pend quote
+                %integer j,k,l, pt
+
+                %routine lookup(%integer d)
+                    %integer new name, vid, k1, k2, form
+                    %record(tagfm)%name t
+                    %integer new
+
+                    ! twee little function because SKIMP86 can't do string compare properly
+                    ! returns 1 if the two names are the same, else zero
+                    %integerfn dict match(%integer ptr1, ptr2)
+                        %integer len;
+                        ! start with a cheap check of the length and first character
+                        %if dict(ptr1) # dict(ptr2) %then %result = 0
+                        len = dict(ptr1) & 255
+                        ptr1 = ptr1 + 1
+                        ptr2 = ptr2 + 1
+                        len = len - 1
+                        %while len >= 2 %cycle
+                            %if dict(ptr1) # dict(ptr2) %then %result = 0
+                            ptr1 = ptr1 + 1
+                            ptr2 = ptr2 + 1
+                            len = len - 2
+                        %repeat
+                        ! if the string was odd length, we might need one last byte checked
+                        %if len = 1 %start
+                            %if dict(ptr1)&255 # dict(ptr2)&255 %then %result = 0
+                        %finish
+                        %result = 1
+                    %end
+
+                    !first locate the text of the name
+                    new = dmax+1;     ! points to text of string in dictionary
+                    k1 = hash value & max names;        ! rather crude hash!
+
+                    %cycle
+                        newname = hash(k1)
+                        %exit %if newname = 0;                !not in
+                        ->in %if dict match(newname+1, new) = 1
+                        k1 = (k1+1)&max names
+                    %repeat
+
+                    ! not found
+                    spare names = spare names-1
+                    abandon(2) %if spare names <= 0
+                    hash(k1) = dmax;                               !put it in
+                    dict(dmax) = -1
+                    newname = dmax;  dmax = dp;  ->not in
+
+in:                 search base = rbase %if this >= 0 %and d # 0;  !record elem defn
+                    %if search base # 0 %start;                    !record subname
+                        new = -1
+                        x = search base
+                        %cycle
+                            ->not in %if x < format list
+                            %exit %if tag(x)_text = new name
+                            x = x-1
+                        %repeat
+                    %finish %else %start;                   !hash in for normal names
+                        x = dict(newname)
+                        ->not in %if x <= limit;             !wrong level
+                    %finish
+
+                    subatom = x;                            !name found, extract info
+                    t == tag(x)
+                    atom flags = t_flags
+                    format = t_format;  app = t_app
+                    protection = atom flags&prot
+                    type = atom flags>>4&7;  atom1 = amap(atom flags&15)
+
+                    %if diag&8 # 0 %start
+                        printstring("lookup:")
+                        write(atom1, 3)
+                        write(type, 1)
+                        write(app, 3)
+                        write(format, 5)
+                        write(atom flags, 3)
+                        newline
+                    %finish
+
+                    %if d = 0 %start;                             !old name wanted
+                        t_flags = t_flags!used bit
+                        search base = 0
+
+                        %if atom flags&subname # 0 %and format # 0 %start; !a record
+                            %return %if format selected = 0
+                        %finish
+
+                        %if atom flags&parameters # 0 %start;      !proc or array
+                            %if app = 0 %start;                     !no parameters needed
+                                atom2 = atom1
+                                atom1 = atom1-4
+                                %if 97 <= atom1 %and atom1 <= 98 %start
+                                    map gg = atom1;  atom1 = var
+                                %finish
+                            %finish %else %start
+                                %if sym = '(' %start
+                                    search base = 0;                  !ignore format for now
+                                    %if atom1 >= 106 %start;          !arrays
+                                        app = phrase(app+200)
+                                        escape class = esc array
+                                        atom1 = (atom1-106)>>1+91;     !a,an->v  na,nan->n
+                                    %finish %else %start;             !procedures
+                                        escape class = esc proc
+                                        atom1 = atom1-4
+                                    %finish
+                                    phrase(200) = app
+                                %finish
+                            %finish
+                            pos2 = pos;  %return
+                        %finish
+
+                        !deal with constintegers etc
+                        %if atom flags&const bit # 0 %and atom1 = var %start
+                            map gg = const;  atom2 = const
+                            subatom = -subatom %if type = integer
+                        %finish
+                        %return
+                    %finish
+                                                                !new name wanted
+                    ->not in %if tbase # tstart;                !don't fault proc parm-parm
+                    %if d = lab+spec+used bit %start
+                        t_flags = t_flags!used bit
+                        %return
+                    %finish
+                    %if atom flags&spec # 0 %start;            !a spec has been given
+                        %if d = lab %start;                     !define label
+                            t_flags = t_Flags-Spec
+                            %return
+                        %finish
+                        %if 7 <= decl&15 %and decl&15 <= 10 %and decl&spec = 0 %start
+                            !procedure definition after spec
+                            %if (decl!!atom flags)&2_1111111 = 0 %start;  !correct type?
+                                t_flags = t_flags-spec
+                                spec given = 1
+                                %return
+                            %finish
+                            !note that an external procedure must be speced as a
+                            !non-external procedure.
+                        %finish
+                        %if decl&15 = recfm %start;              !recordformat
+                            t_flags = record<<4+recfm
+                            t_format = fdef
+                            %return
+                        %finish
+                    %finish
+                    %return %if last1 = jump %and atom1 = swit
+                    copy = x %if copy = 0
+notin:              app = 0;  vid = 0
+                    atom1 = error+2
+
+                    %return %if d = 0;                         !old name wanted
+                    type = d>>4&7;  form = d&15;  atom1 = amap(form)
+
+                    %if this < 0 %start;                       !normal scope
+                        new = newname
+                        tmax = tmax+1;  x = tmax
+                    %finish %else %start;                      !recordformat scope
+                        new = -1
+                        recid = recid-1;  vid = recid
+                        tmin = tmin-1;  x = tmin
+                        format list = tmin
+                    %finish
+
+                    %if 11 <= form %and form <= 14 %start;               !arrays
+                        dim = 1 %if dim = 0;                    !set dim for owns
+                        app = dim
+                    %finish
+
+                    d = d!used bit %if (otype > 2 %and d&spec = 0) %or perm # 0 %or Level = Include Level
+
+                    !external definitions need not be used in the file in which
+                    !they are defined, so inhibit a useless unused warning.
+
+                    t == tag(x)
+                    %if form = lab %start
+                        id = id+1;  vid = id
+                    %finish
+                    t_index = vid
+                    t_text   = new name
+                    t_flags = d
+                    t_app    = app
+                    t_format = fdef;  format = fdef
+                    subatom = x
+
+                    %if new >= 0 %start;                             !insert into hash table
+                        t_link = dict(new);  dict(new) = x
+                        %if gmin = max grammar %start;                !proc param params
+                            tmin = tmin-1;  subatom = tmin
+                            tag(tmin) = t
+                        %finish
+                    %finish
+                    abandon(3) %if tmax >= tmin
+                %end
+
+top:            pos1 = pos
+                subatom = 0;  pend quote = 0;  atom flags = 0
+
+                !app and format must be left for assigning to papp & pformat
+                ->name %if symtype = -2;               ! letter
+                ->number %if symtype < 0;              ! digit
+                %if symtype = 0 %start
+                    atom1 = termin;  atom2 = 0
+                    %return
+                %finish
+                %if symtype # 2 %start;                ! catch keywords here
+                    ->text %if quote # 0;              ! completion of text
+                    ->strings %if sym = squote;        ! start of string
+                    ->symbols %if sym = cquote;        ! start of symbol
+                    ->number %if sym = '.' %and '0' <= nextsymbol %and nextsymbol <= '9'
+                %finish
+
+                ! locate atom in fixed dict
+                k = key>>2;  read sym
+                %cycle
+                    j = kdict(k)
+                    %exit %if j&16_4000 # 0
+                    %if j&127 # sym %or symtype < 0 %start
+                        ->err %unless j < 0
+                        k = k+1
+                    %finish %else %start
+                        l = j>>7&127;  read sym
+                        %if j > 0 %start
+                            %if l # 0 %start
+                                ->err %if l # sym %or symtype < 0
+                                read sym
+                            %finish
+                            l = 1
+                        %finish
+                        k = k+l
+                    %finish
+                %repeat
+                atom1 = j&127
+                %if atom1 = 0 %start;                  ! comma
+                    atom1 = 19;  subatom = 19;  atom2 = 0
+                    %if sym = nl %start
+                        %return %if ocount >= 0
+
+                        ! special action needs to be taken with <comma nl> as
+                        ! const array lists can be enormous
+                        read sym
+                    %finish
+                    %return
+                %finish
+                atom2 = j>>7&127
+                subatom = kdict(k+1)&16_3fff
+                !!!!!cont = ' '
+                %return
+
+                ! report an error. adjust the error marker (pos1) to point
+                ! to the faulty character in an atom, but care needs to be taken
+                ! to prevent misleading reports in cases like ...?????
+
+err:            atom1 = error+1;  atom2 = 0
+                pos1 = pos %if pos-pos1 > 2
+                %return
+
+                ! take care with strings and symbol constants.
+                ! make sure the constant is valid here before sucking it in
+                ! (and potentially loosing many lines)
+
+symbols:        atom1 = var;  atom2 = const;  type = integer
+                map gg = const;  protection = prot
+                subatom = lp;  abandon(3) %if lp >= lit max
+                quote = \pend quote
+                %return
+
+                ! an integer constant is acceptable so get it in and
+                ! get the next atom
+chars:          n = 0;  cont = cquote
+                %cycle
+                    read sym
+                    %if sym = cquote %start
+                        %exit %if nextsymbol # cquote
+                        read sym
+                    %finish
+                    %if n&(\((-1)>>byte size)) # 0 %start; ! overflow
+                        pos1 = pos;  atom1 = error+10;  %return
+                    %finish
+                    ->err %if quote = 0
+                    n = n<<byte size+sym
+                    quote = quote+1
+                %repeat
+                quote = 0;  cont = ' '
+                readsym %if sym # nl
+                lit pool(lp) = n;  lp = lp+1
+                ->top
+
+                !sniff the grammar before getting the string
+strings:        atom1 = var;  atom2 = const;  type = stringv
+                subatom = strp!16_4000
+                map gg = const;  protection = prot
+                quote = subatom
+                text line = lines;                     ! in case of errors
+                %return
+
+                ! a string constant is ok here, so pull it in and get
+                ! the next atom
+                ! ABD - temp variable to help pack bytes into words
+                %integer flipflop
+
+text:           ->chars %if quote < 0;                 ! character consts
+                l = strp;                              ! point to beginning
+                k = 0;                                 ! length so far
+                flipflop = 0;                          ! space for the length is up the spout
+
+                %cycle
+                    cont = squote;  quote = 1
+                    %cycle
+                        read sym
+                        %if sym = squote %start;       ! terminator?
+                            %exit %if nextsymbol # squote; ! yes ->
+                            read sym;                  ! skip quote
+                        %finish
+                        %if flipflop >= 0 %start
+                            glink(strp) = sym<<8 + flipflop
+                            strp = strp+1
+                            flipflop = -1
+                        %else
+                            flipflop = sym
+                        %finish
+                        k = k+1
+                        lines = text line %and abandon(7) %if k > 255; ! too many chars
+                    %repeat
+                    %if flipflop >=0 %start;           ! tail-end charlie
+                        glink(strp) = flipflop
+                        strp = strp+1
+                    %finish
+                    glink(l) = glink(l)!k;             ! plug in length
+
+                    quote = 0;  cont = ' ';  read sym
+                    code atom(target)
+                    %return %unless atom1 = 48 %and sym = squote; ! fold "???"."+++"
+                %repeat
+
+                %routine get(%integer limit)
+                    %integer s, shift
+                    shift = 0
+                    %if base # 10 %start
+                        %if base = 16 %start
+                            shift = 4
+                        %finish %else %start
+                            %if base = 8 %start
+                                shift = 3
+                            %finish %else %start
+                                %if base = 2 %start
+                                    shift = 1
+                                %finish
+                            %finish
+                        %finish
+                    %finish
+                    n = 0
+                    %cycle
+                        %if symtype = -1 %start;       ! digit
+                            s = sym-'0'
+                        %finish %else %start
+                            %if symtype < 0 %start;    ! letter
+                                s = sym-'A'+10
+                            %finish %else %start
+                                %return
+                            %finish
+                        %finish
+                        %return %if s >= limit
+                        pt = pt+1;  glink(pt) = sym
+                        %if base = 10 %start;          ! check overflow
+                            %if n >= max int %and (s > max dig %or n > max int) %start
+                                !too big for an integer,
+                                !so call it a real
+                                base = 0;  type = real;  n = 0
+                            %finish
+                        %finish
+                        %if shift = 0 %start
+                            n = n*base+s
+                        %finish %else %start
+                            n = n<<shift+s
+                        %finish
+                        read sym
+                    %repeat
+                %end
+
+number:         base = 10
+bxk:            atom1 = var;  atom2 = const;  type = integer;  subatom = lp
+                map gg = const;  protection = prot
+                abandon(3) %if lp >= lit max
+                pt = strp;  mul = 0
+                %cycle
+                    get(base)
+                    %exit %unless sym = '_' %and base # 0 %and pend quote = 0; ! change of base
+                    pt = pt+1;  glink(pt) = '_'
+                    read sym
+                    base = n
+                %repeat
+
+                %if pend quote # 0 %start
+                    ->err %if sym # cquote
+                    readsym
+                %finish
+                %if sym = '.' %start;                  ! a real constant
+                    pt = pt+1;  glink(pt) = '.'
+                    read sym
+                    type = real;  n = base;  base = 0;  get(n)
+                %finish
+
+                %if sym = '@' %start;                  ! an exponent
+                    pt = pt+1;  glink(pt) = '@';  k = pt
+                    readsym
+                    type = integer;  base = 10
+                    %if sym = '-' %start
+                        read sym;  get(10);  n = -n
+                    %finish %else %start
+                        get(10)
+                    %finish
+                    pt = k+1;  glink(pt) = lp;  litpool(lp) = n;  lp = lp+1
+                    atom1 = error+10 %if base = 0
+                    type = real;                       ! exponents force the type
+                %finish
+
+                %if type = real %start
+                    glink(strp) = pt-strp;             ! store the length (difference)
+                    subatom = (strp)!16_2000;  strp = pt+1
+                %finish %else %start
+                    litpool(lp) = n
+                    lp = lp+1
+                %finish
+                %return
+
+name:           atom1 = 0 %and %return %if 27 <= target %and target <= 41
+                hash value = 0
+
+                ! ABD changed to remove dependency on direct addressing
+                dp = dmax+1
+                dbase = dp
+                n = 0
+                dict(dp) = 0
+                %cycle
+                    hash value = hash value+(hash value+sym); ! is this good enough?
+                    dict(dp) = dict(dp) ! (sym << 8);
+                    n = n+1
+                    dp = dp+1
+                    read sym
+                    %exit %if symtype >= 0
+                    dict(dp) = sym;
+                    n = n+1
+                    read sym
+                    %exit %if symtype >= 0
+                %repeat
+                %if sym = cquote %start
+                    pend quote = 100
+                    ->symbols %if hash value = 'M'
+                    read sym
+                    %if hash value = 'X' %then base = 16 %and ->bxk
+                    %if hash value = 'K' %or hash value = 'O' %then base = 8 %and ->bxk
+                    %if hash value = 'B' %then base = 2 %and ->bxk
+                    ->err
+                %finish
+                dict(dbase) = dict(dbase)!n
+                %if n&1 = 0 %then dp = dp+1
+                abandon(8) %if dp >= dmin
+
+                atom2 = 90;                            ! ident
+                %if last1 = 0 %and sym = ':' %start;   ! label
+                    limit = local;  lookup(lab);  %return
+                %finish
+                %if last1 = jump %start;               ! ->label
+                    limit = local;  lookup(lab+spec+used bit);  %return
+                %finish
+                %if decl # 0 %and target = 90 %start;  ! identifier
+                    search base = fm base
+                    limit = local;  lookup(decl)
+                    search base = 0
+                %finish %else %start
+                    limit = 0;  lookup(0)
+                %finish
+            %end
+
+            %integerfn parsed machine code
+                !   *opcode_??????????
+                atom1 = error %and %result=0 %unless symtype = -2; ! starts with letter
+                flush buffer( 128 );                   ! flush if bp >= 128
+                add char( 'w' )
+                %cycle
+                    add char( sym ); read sym
+                %repeat %until Sym = '_' %or Symtype = 0; ! pull in letters and digits
+                add char( '_' )
+                %if symtype # 0 %start;                ! not terminator
+                    read sym
+                    %while symtype # 0 %cycle
+                        %if symtype < 0 %start;        ! complex
+                            code atom(0);  %result=0 %if atom1&error # 0
+                            %if atom2 = const %and type = integer %start
+                                %if subatom < 0 %then set const(tag(-subatom)_format) %else set const(litpool(subatom))
+                            %finish %else %if 91 <= atom1 %and atom1 <= 109 %start
+                                %if atom1 = 104 %and Tag(Subatom)_Flags&Closed = 0 %start
+                                    This = Subatom;  Atom1 = Error+21
+                                    %result = 0
+                                %finish
+                                op(' ', tag(subatom)_index)
+                            %finish %else %start
+                                atom1 = error;  %result=0
+                            %finish
+                        %finish %else %start
+                            sym = sym!128 %if symtype = 2      {underline with %}
+                            add char( sym ); read sym
+                        %finish
+                    %repeat
+                %finish
+                add char( ';' )
+                %result=1
+            %end
+
+            cont = ' ' %if gg = 0
+            last1 = 0;  mapgg = 0
+            s = 0;  ss = 0;  sstype = -1; fdef = 0
+            fm base = 0
+            app = 0
+
+            ! deal with alignment following an error in one statement
+            ! of several on a line
+            margin = column;                           ! start of statement
+            pos = 0
+            strp = gmax+1;  lp = 0
+            tbase = tstart;                            ! ??????????????
+            local = tbase
+
+            %if gg = 0 %or ocount >= 0 %start;         ! data or not continuation(z)
+again:          %while sym type = 0 %cycle;            ! skip redundant terminators
+                    c = cont
+                    cont = ' ';  cont = '+' %if ocount >= 0
+                    read sym
+                    cont = c
+                %repeat
+                ->skip %if sym = '!';                  ! comment
+                this = -1
+                code atom(0)
+                %if atom1 = comment %start
+skip:               quote = 1
+                    c = cont
+                    read sym %and cont = c %while sym # nl; ! skip to end of line
+                    quote = 0;  symtype = 0
+                    ->again
+                %finish
+            %finish
+            decl = 0;  mark = 0
+            gentype = 0;  force = 0
+            dim = 0;  prot err = 0
+            node = 0;  nmax = 0;  nmin = rec size+1
+            order = 1;  gmin = max grammar+1
+            sstype = 0 %and ->more %if gg # 0;         ! continuation
+            ptype = 0;  spec given = 0
+
+            stats = stats+1;  op('O', lines) %if perm = 0
+
+            ->fail1 %if atom1&error # 0;               ! first atom faulty
+
+            %if escape class # 0 %start;               ! enter the hard way after
+                g = imp phrase;  sstype = -1;  ->a3
+            %finish
+
+            g = initial(atom1);                        ! pick up entry point
+            %if g = 0 %start;                          ! invalid first atom
+                g = initial(0);  sstype = 0;  ->a3;    ! declarator?
+            %finish
+            %if g < 0 %start;                          ! phrase imp
+                g = g&255
+                nmax = 1
+                ar(1)_class = 0;  ar(1)_link = 0;  ar(1)_sub = imp phrase
+            %finish
+
+            gg = gram(g);  class = gg&255;  sstype = gg>>12&3-1
+            ->a1
+
+act(194):   ptype = type;  papp = app;  pformat = format;  ->more
+act(196):   k =g+1;  ->a610
+act(188):   k = ar(nmax)_sub+1
+a610:       papp = glink(k)
+            k = gram(k)
+            ->more %if k = 0;                          ! %name
+            ptype = k&7;  pformat = k>>3
+act(183):   k = type;  gentype = k %if gentype = 0 %or k = real
+            %if pformat < 0 %start;                    ! general type
+                app = papp;  format = pformat
+                k = real %if ptype = real %and type = integer
+                k = force %and force = 0 %if force # 0
+            %finish
+            ->fail2 %unless papp = app %and (ptype = k %or ptype = 0)
+            ->more %if pformat=format %or pformat = 0 %or format = 0
+            ->fail2
+act(197):   arp == ar(nmin)
+            k = arp_sub
+            ->fail3 %unless block form = k&15
+            arp_sub = k>>4
+
+            type = block type
+            ptype = block type;  pformat = block fm;  papp = app
+            pformat = -1 %if ptype # record
+            ->more
+act(195):   ->Fail2 %if Type # 0 %and Type # Integer %and Type # Real
+            arp == ar(nmin)
+            k = arp_sub
+            arp_sub = k>>2
+            k = k&3
+                                                       ! 1 = check integer
+                                                       ! 2 = check real
+                                                       ! 3 = check real + int
+            ->more %if k = 0;                          ! 0 = no action
+            %if k = 1 %start
+                force = integer
+                ->more %if type = integer %or type = 0
+                ->fail2
+            %finish
+            ->fail2 %unless ptype = real %or ptype = 0; ! {or added?}
+            force = integer %if k = 3
+            ->more
+act(198):   ! %OTHER
+            k = gg>>8&15
+            %if k = 0 %start;                          ! restore atom
+                atom1 = last1
+                ->more
+            %finish
+            %if k = 1 %start;                          ! test string
+                ->fail2 %unless type = stringv
+                ->more
+            %finish
+            %if k = 2 %start;                          ! {fault record comparisons}
+                ->fail2 %if type = record
+                ->more
+            %finish
+            %if k = 3 %start;                          ! check OWN variable coming
+                code atom(0)
+                ->A7 %if atom flags&own bit = 0
+                ->more
+            %finish
+            for warn = pos1 %if x <= local;            ! %for TEST
+            ->more
+paction(1): %if type = record %then g = phrase(242) %else pformat = -1; ->a3
+paction(2): ptype = real;     pformat = -1;                             ->a3
+paction(3): ptype = stringv;  pformat = -1;                             ->a3
+paction(4): ptype = integer;  pformat = -1;                             ->a3
+paction(5): ->a3 %if ptype = integer
+            g = phrase(212) %and pformat=-1 %if ptype = real
+            g = phrase(213) %if ptype = stringv
+                                                                        ->a3
+paction(6): ptype = gram(ar(nmax)_sub+1)&7;  pformat = -1;              ->a3
+paction(7): ptype=real %if ptype = integer;  pformat = -1;              ->a3
+
+a1:         last1 = class;  atom1 = 0;  s = subatom
+a2:         %if gg&trans bit = 0 %start;               ! insert into analysis record
+                z == node
+                %cycle;                                ! insert cell in order
+                    k = z
+                    %exit %if gg&order bits = 0 %or k = 0
+                    gg = gg-order bit;  z == ar(k)_link
+                %repeat
+                gg = map gg %if map gg # 0 %and gg&255 = var
+                nmin = nmin-1;  ->fail0 %if nmin = nmax
+                z = nmin
+                arp == ar(nmin)
+                arp_sub = s;  arp_class = (gg&255)!mark
+                arp_link = k
+            %finish
+            mark = 0;  map gg = 0
+more:       g = glink(g);                              ! chain down the grammar
+paction(0):
+a3:         gg = gram(g);  class = gg&255
+            trace analysis %if diag&1 # 0
+            ->a5 %if class = 0;                        ! end of phrase
+
+            %if class < actions %start;                ! not a phrase or an action
+                class = atomic(class) %if class >= figurative
+                ->a2 %if class >= manifest
+                code atom(class) %if atom1 = 0
+                %if escape class # 0 %start;           ! escape to new grammar
+                    class = escape class;  escape class = 0
+                    g = g+escape
+
+                    ! note that following an escape the next item is
+                    ! forced to be transparent!
+
+esc:                gg = 0
+                    arp == ar(nmax+1)
+                    arp_papp = papp;  arp_x = x;  ->a4
+                %finish
+
+                ->a1 %if class = atom1 %or class = atom2
+
+a7:             ->fail1 %if gg >= 0;                   ! no alternative
+                g = g+1
+                ->a3
+            %finish
+
+            %if class >= phrasal %start;               ! a phrase
+a4:             nmax = nmax+1;  ->fail0 %if nmax = nmin
+                arp == ar(nmax)
+                arp_ptype = ptype
+                arp_pos = pos1
+                arp_pformat = pformat
+                arp_link = gentype
+                arp_class = node
+                arp_sub = g
+                node = 0
+                g = phrase(class)
+                ptype = force %and force = 0 %if force # 0
+                gentype = 0
+                ->paction(gg>>8&15)
+            %finish
+            ->act(class);                              ! only actions left
+
+a5:         ;! reverse links
+            s = 0
+            %while node # 0 %cycle
+                z == ar(node)_link
+                k = z;  z = s;  s = node;  node = k
+            %repeat
+            ss = s
+a6:         %if nmax # 0 %start
+                k = gentype;                           ! type of phrase
+                arp == ar(nmax);  nmax = nmax-1
+                node = arp_class
+                gentype = arp_link
+                ptype = arp_ptype
+                pformat = arp_pformat
+                g = arp_sub
+                %if g&escape # 0 %start
+                    g = g-escape
+                    papp = arp_papp
+                    mark = 255
+                    subatom = s
+                    ->a3
+                %finish
+                gentype = k %if gentype = 0 %or k = real
+                type = gen type
+
+                k = gg;                                ! exit-point code
+                %cycle
+                    gg = gram(g)
+                    ->a2 %if k = 0
+                    ->fail1 %if gg >= 0;               ! no alternative phrase
+                    k = k-order bit
+                    g = g+1;                           ! sideways step
+                %repeat
+            %finish
+
+            Fault(4)  %if copy # 0
+            fault(13) %if order = 0
+            fault(-4) %if for warn # 0
+            pos1 = 0
+            fault rate = fault rate-1
+            %return
+
+act(193):   gg = 0 %and ->a5 %unless sym = '=' %or sym = '<'; ! cdummy
+act(181):   atom1 = amap(decl&15);                     ! dummy
+            ->more
+
+act(182):   class = escdec;  g = glink(g)              ! escape
+            decl = 0;  otype = 0;  ->esc;              ! decl
+
+act(199):   ;                                          ! compile
+            s = 0
+            %while node # 0 %cycle
+                z == ar(node)_link
+                k = z;  z = s;  s = node;  node = k
+            %repeat
+            ss = s
+
+            code atom(28) %if quote # 0;               ! expend
+            compile;  ->more %if atom1&error = 0
+            ->fail1
+
+act(184):   ->fail4 %unless type = integer
+            %if subatom < 0 %then lit = tag(-subatom)_format %else lit = lit pool(subatom)
+            ->fail4 %if lit # 0
+            ->more
+act(185):   ;                                          ! apply parameters
+            s = 0
+            %while node # 0 %cycle
+                z == ar(node)_link
+                k = z;  z = s;  s = node;  node = k
+            %repeat
+            ss = s
+
+            atom1 = ar(s)_class;  atom2 = 0
+            atom1 = var %if atom1 = 97 %or atom1 = 98
+            arp == ar(nmax)
+            x = arp_x
+            pos1 = arp_pos
+            pos2 = 0
+            app = 0
+            format = tag(x)_format
+            flags = tag(x)_flags
+            type = flags>>4&7
+            protection = flags&prot
+            protection = 0 %if flags&aname # 0
+
+            %if flags&subname # 0 %and format # 0 %start
+                ->fail1 %if format selected = 0
+            %finish
+
+            ->a6
+
+act(187):   protection = prot;  ->more;                ! %SETPROT
+act(186):   ->More %if protection&prot = 0
+            prot err = nmin
+            ->A7
+act(191):   k = protection;                            ! %GUARD
+            code atom(0)
+            protection = k %if atom flags&aname = 0
+            ->more
+
+act(192):   ->fail1 %if parsed machine code=0
+            ->more
+
+act(189):   k = gapp;                                  ! %GAPP
+            delete names(1)
+            tmax = tbase;  tbase = gram (gmin);        ! restore tmax
+            local= tbase
+            gmin = gmin+1
+
+            x = ar(ar(nmax)_class)_sub
+            tag(x)_app = k;                            ! update app
+            ->more
+
+act(190):   gmin = gmin-1;                             ! %LOCAL
+            abandon(2) %if gmin <= gmax
+            gram (gmin) = tbase;  tbase = tmax
+            local = tbase
+            ->more
+
+            ! errors
+
+fail4:      k = error+10;            ->failed;         ! *size
+fail3:      k = error+7;             ->failed;         ! *context
+fail2:      k = error+5;  pos2 = 0;  ->failed;         ! *type
+fail0:      k = error+3;             ->failed;         ! *too complex
+fail1:      k = atom1;    pos2 = 0
+failed:     %if diag&32 # 0 %start
+                printstring("Atom1 =");      write(atom1, 3)
+                printstring("  Atom2 =");    write(atom2, 3)
+                printstring("  subatom =");  write(subatom, 3); newline
+                printstring("Type =");       write(type, 1)
+                printstring("   Ptype =");   write(ptype, 1);   newline
+                printstring("App =");        write(app, 1)
+                printstring("   Papp =");    write(papp, 1);    newline
+                printstring("Format =");     write(format, 1)
+                printstring("   Pformat ="); write(pformat, 1); newline
+                !%signal 13,15
+            %finish
+
+            quote = 0 %and readsym %while sym # nl %and sym # ';'
+            %if k&error # 0 %start
+                fault(k&255)
+            %finish %else %start
+                %if prot err = nmin %then fault(14) %else fault(0)
+            %finish
+            gg = 0;  ss = 0;  symtype = 0
+        %end;                                          ! of analyse
+
+        %routine compile
+            %constinteger then = 4, else = 8, loop = 16
+
+            %switch c(0:actions), litop(1:12)
+
+            %constbyteintegerarray operator(1:14) = '[', ']', 'X', '/', '&', '!', '%', '+', '-', '*', 'Q', 'x', '.', 'v'
+            %constbyteintegerarray cc(0 : 7) = '#','=',')','<','(','>', 'k','t'
+            %constbyteintegerarray anyform(0:15) = 1,0,1,1,1,1,1,1,0,1,1,0,1,1,1,1
+
+            %constintegerarray decmap(0:15) = %c
+            1,             2,
+            16_100B,       16_100D,       16_140C,      16_140E,
+            3,             4,
+            16_1007,       16_1008,       16_1009,      16_100A,
+            6,             0,             0,            0
+            %ownbyteintegerarray cnest(0:15)
+            %integer lmode, clab, dupid
+            %integer resln
+            %owninteger last def = 0
+            %owninteger lb, ub
+            %integer cp, ord
+            %integer next, link, j, k, n, done
+            %integer class
+            %integer lit2, defs, decs, cident
+            %integer pending;  %ownintegerarray pstack(1:40)
+            %ownstring(8) name = ""
+            %owninteger count = 0
+
+            %routine def lab(%integer l)
+                op(':', l)
+                access = 1
+            %end
+
+            %routine get next
+                %record(arfm)%name p
+gn:             %if next = 0 %start;                   ! end of phrase
+                    class = 0 %and %return %if link = 0; ! end of statement
+                    p == ar(link)
+                    next = p_link
+                    link = p_sub
+                %finish
+                %cycle
+                    p == ar(next)
+                    x = p_sub
+                    class = p_class
+                    %exit %if class < actions;         ! an atom
+                    %if x = 0 %start;                  ! null phrase
+                        next = p_link;  ->gn
+                    %finish
+                    %if p_link # 0 %start;             ! follow a phrase
+                        p_sub = link;  link = next
+                    %finish
+                    next = x
+                %repeat
+                next = p_link
+                %if diag&2 # 0 %start
+                    spaces(8-length(name)) %unless length(name) = 0
+                    name = text(class)
+                    write(x, 2)
+                    space
+                    printstring(name)
+                    space
+                    count = count-1
+                    %if count <= 0 %start
+                        count = 5
+                        name = ""
+                        newline
+                    %finish
+                %finish
+            %end
+
+            %routine set subs(%integer n)
+                !update the app field in n array descriptors
+                %integer p
+                p = tmax
+                %while n > 0 %cycle
+                    !%signal 15,15 %if p < tbase
+                    tag(p)_app = dimension
+                    p = p-1;  n = n-1
+                %repeat
+            %end
+
+            %routine set bp
+                !define a constant bound pair from the last stacked constants
+                pending = pending-2
+                lb = pstack(pending+1);  ub = pstack(pending+2)
+                %if ub-lb+1 < 0 %start
+                    pos1 = 0;  next = link;  fault(11)
+                    ub = lb
+                %finish
+                set const(lb);  set const(ub)
+                add char( 'b' ) %unless class = 146
+            %end
+
+            %routine compile end(%integer type)
+                ! type = 0:eof, 1:eop, 2:end
+                %if access # 0 %start
+                    open = 0
+                    fault(19) %if block form > proc;   ! can reach end
+                %finish
+
+                %while dict(dmin) >= 0 %cycle;         ! finishes & repeats
+                    fault(17+dict(dmin)&1)
+                    dmin = dmin+1
+                %repeat
+                !{delete names(0)}
+                add char( ';' )
+                add char( ';' ) %if type = 1;          ! endofprogram
+
+                bflags = bflags!open;                  ! show if it returns
+
+                def lab(0) %if block tag # 0 %and level # 1; ! for jump around
+                %if type # 2 %start;                   ! eop, eof
+                    fault(16) %if level # type;        ! end missing
+                %finish %else %start
+                    %if level = 0 %start
+                        fault(15);                     ! spurious end
+                    %finish
+                %finish
+
+                end mark = 11;               !******Mouses specific******
+            %end
+
+            %routine def(%integer p)
+                !dump a descriptor
+                %integer t, f, type
+                %record(tagfm)%name v
+                flush buffer( 1 );                     ! flush if bp > 0
+                defs = defs+1
+                v == tag(p)
+                t = 0
+                %unless v_index < 0 %start;            ! no index for subnames
+                    id = id+1 %and v_index = id %if v_index = 0
+                    last def = v_index
+                    t = last def
+                %finish
+                op('$', t)
+                print ident(p, 1);                     ! output the name
+                t = v_flags
+                type = t
+                type = type&(\(7<<4)) %if type&(7<<4) >= 6<<4;!routine & pred
+                op(',', type&2_1111111);               ! type & form
+                f = v_format
+                f = tag(f)_index %if t&16_70 = record<<4
+                f = v_index %if f < 0
+                op(',', f);                            ! format
+                f = otype+t>>4&2_1111000
+                f = f!8 %if class = 125;               ! add spec from %DUP
+                dim = v_app;                           ! dimension
+                dim = 0 %unless 0 < dim %and dim <= dim limit
+                op(',', f+dim<<8);                     ! otype & spec & prot
+                defs = 0 %if t&parameters = 0
+                f = t&15
+                %if v_flags&spec # 0 %start
+                    v_flags = v_flags&(\spec) %unless 3 <= f %and f <= 10
+                    ocount = -1;                       ! external specs have no constants
+                %finish
+                dimension = 0
+                %if otype = 2 %and (f=2 %or f=12 %or f=14) %start
+                    v_flags = v_flags-1;               ! convert to simple
+                %finish
+            %end
+
+            %routine def s lab(%integer n)
+                ! define a switch label, x defines the switch tag
+                %integer p, l, b, w, bit
+                p = tag(x)_format;                     ! pointer to table
+                l = dict(p);                           ! lower bound
+                %if l <= n %and n <= dict(p+1) %start
+                    b = n-l
+                    w = b>>4+p
+                    bit = 1<<(b&15)
+                    %if dict(w+2)&bit # 0 %start;      ! already set
+                        fault(4) %if pending # 0
+                        %return
+                    %finish
+                    dict(w+2) = dict(w+2)!bit %if pending # 0
+                    set const(n)
+                    op('_', tag(x)_index)   
+                %finish %else %start
+                    fault(12)
+                %finish
+                access = 1
+            %end
+
+            %routine call
+                %record(tagfm)%name T
+                t == tag(x)
+                op('@', t_index)
+                access = 0 %if t_flags&closed # 0;     ! never comes back
+                add char( 'E' ) %if t_app = 0;         ! no parameters
+            %end
+
+            %routine pop def
+                set const(pstack(pending));  pending = pending-1
+            %end
+
+            %routine pop lit
+                %if pending = 0 %then lit = 0 %else %start
+                    lit = pstack(pending);  pending = pending-1
+                %finish
+            %end
+
+            !conditions & jumps
+            %routine push(%integer x)
+                %if cnest(cp)&2 # x %start
+                    cnest(cp) = cnest(cp)!1;  x = x+4
+                %finish
+                clab = clab+1 %if cnest(cp)&1 # 0
+                cnest(cp+1) = x;  cp = cp+1
+            %end
+
+            %routine pop label(%integer mode)
+                lmode = dict(dmin)
+                %if lmode < 0 %or lmode&1 # mode %start
+                    fault(mode+8)
+                %finish %else %start
+                    dmin = dmin+1;  label = label-3
+                %finish
+            %end
+
+            %if sstype < 0 %start;                     ! executable statement
+                %if level = 0 %start;                  ! outermost level
+                    fault(13);                         ! *order
+                %finish %else %start
+                    %if access = 0 %start
+                        access = 1;  fault(-1);        ! only a warning
+                    %finish
+                %finish
+            %finish
+
+            %if diag&2 # 0 %start
+                newline %if sym # nl
+                printstring("ss =")
+                write(ss, 1)
+                newline
+                count = 5
+                name = ""
+            %finish
+
+            next = ss
+            pending = 0;  lmode = 0
+            link = 0;  decs = 0
+            defs = 0;  resln = 0;  done = 0
+            ord = level
+            ord = 1 %if this >= 0;                     ! recordformat declarations
+c(0):
+top:        %if next # link %start
+                get next;  ->c(class)
+            %finish
+
+            !all done, tidy up declarations and jumps
+            newline %if diag&2 # 0 %and count # 5
+
+            %if lmode&(loop!then!else) # 0 %start;     ! pending labels and jumps
+                op('B', label-1) %if lmode&loop # 0;   ! repeat
+                def lab(label)   %if lmode&then # 0;   ! entry from then
+                def lab(label-1) %if lmode&else # 0;   ! entry from else
+            %finish
+
+            %return %if decs = 0
+            atom1 = error %and %return %if atom1 # 0;  ! %integerroutine
+            order = ord
+            decl = decl&(\15)+decmap(decl&15);         ! construct declarator flags
+            atom1 = atoms(decl&15);                    ! generate class
+            %if otype # 0 %start;                      ! own, const etc.
+                atom1 = atom1+1 %if atom1 # proc
+                %if otype = 2 %start;                  ! const
+                    n = decl&15
+                    %if n&1 # 0 %start
+                        decl = decl!prot
+                        decl = decl!const bit %if decl&2_1111111 = iform
+                    %finish
+                %else
+                    decl = decl!own bit
+                %finish
+            %finish
+            sstype = 1 %if sstype = 0 %and atom1 = proc
+            atom1 = atom1+1 %if decl&spec # 0;         ! onto spec variant
+            ocount = 0 %and cont = '+' %if atom1 = 5;  ! own array
+            %if anyform(decl&15) = 0 %start;           ! check meaningful
+                %if decl>>4&7 = record %start
+                    this = fdef %if tag(fdef)_flags&spec # 0
+                    atom1 = error+21 %if fdef = this;  ! *context for format
+                %finish
+                atom1 = error+10 %if fdef = 0;         ! *size
+            %finish
+            %return
+
+atop:       access = 0;  ->top
+            ! declarators
+c(88):      ;                                          ! rtype
+c(28):      decl = x&(\7);                             ! stype
+            fdef = x&7;                                ! precision
+            fdef = reals ln %if x&2_1110001 = real<<4+1; ! convert to long
+            decs = 1;  ->top
+c(34):      ;                                          ! own
+c(35):      otype = x;  ord = 1;  ->top;               ! external
+c(152):     decl = decl+x<<1;  ->top;                  ! xname
+c(31):      ;                                          ! proc
+c(32):      spec mode = level+1;                       ! fn/map
+            decl = decl!prot %if x = 9;                ! function
+c(29):      ord = 1;                                   ! array
+            dim = 0
+c(30):      decl = decl+x;                             ! name
+            decs = 1
+            ->top
+c(27):      lit = 0;                                   ! arrayd
+            %if pending # 0 %start
+                pop lit
+                %unless 0<lit %and lit<=dim limit %start
+                    atom1 = error + 11;  %return
+                %finish
+            %finish
+            dim = lit
+            decl = decl + x;  decs = 1
+            -> top
+c(37):      x = x!subname;                             ! record
+c(36):      lit = 0;                                   ! string
+            %if pending # 0 %start
+                pop lit
+                %unless 0 < lit %and lit <= 255 %start; ! max length wrong
+                    atom1 = error+10;  %return
+                %finish
+            %finish
+            fdef = lit;                                ! format or length
+c(33):      decl = x;                                  ! switch
+            decs = 1
+            ->top
+c(39):      decl = decl!spec;                          ! spec
+            ocount = -1;                               ! no initialisation
+            spec mode = -1
+            ->top
+c(38):      decl = 64+4;                               ! recordformat (spec)
+            order = 1
+            atom1 = x
+            decl = decl!spec %if atom1 = 12;           ! formatspec
+            fdef = tmax+1;                             ! format tag
+            %return
+c(175):     id = id+1;  tag(x)_index = id;  %return;   ! FSID
+c(41):      decs = 1;  decl = x!spec!closed;  ->top;   ! label
+c(133):     recid = 0;  rbase = tmin-1;                ! fname
+            this = x
+            fm base = fdef;  format list = tmin
+            def(this);                      ->top
+c(148):     fdef = 0 %and ->top %if next = 0;          ! reclb
+            get next;                                  ! skip name
+            fdef = x
+            ->top
+
+c(127):     add char( '}' );             ->top;        ! %POUT
+c(126):     add char( '{' );             ->top;        ! %PIN
+c(174):     set bp;                                    ! rangerb
+c(171):     ;                                          ! fmlb
+c(172):     ;                                          ! fmrb
+c(173):     add char( '~' )
+            add char( class-171+'A' );   ->top;        ! fmor
+c(168):     rbase = -rbase;                            ! orrb
+            sstype = 0;  spec mode = 0
+
+c(147):     search base = 0;                           ! recrb
+            tag(this)_app = tmin
+            tag(this)_format = rbase
+            ->top
+
+c(45):      add char( 'U' ) %if x = 36;  ->top;        ! sign
+c(46):      add char( '\' );             ->top;        ! uop
+c(47):;                                                ! mod
+c(48):;                                                ! dot
+c(42):;                                                ! op1
+c(43):;                                                ! op2
+c(44):      add char( operator(x) );     ->top;        ! op3
+c(56):      ;                                          ! and
+c(57):      push(x);  ->top;                           ! or
+c(58):      cnest(cp) = cnest(cp)!!2;  ->top;          ! not
+c(138):     x = 128+32+16+4;                           ! csep: treat like %while
+c(59):      ;                                          ! while
+c(60):      %if class = 138 %then op('f', label-1) %else def lab(label-1); ! until
+c(166):     ;                                          ! runtil
+c(62):      lmode = (lmode&(else!loop)) !(x>>3);       ! cword
+            clab = label;  cp = 1;  cnest(1) = x&7
+            ->top
+c(72):      pop label(0);                              ! repeat
+            def lab(label+1) %if lmode&32 # 0;  ->atop
+c(69):      pop label(1);               ->top;         ! finish
+c(163):     ;                                          ! xelse
+c(70):      pop label(1);                              ! finish else ...
+            fault(7) %if lmode&3 = 3;                  ! dangling else
+c(68):      lmode = (lmode&else)!3;                    ! ...else...
+            %if access # 0 %start
+                op('F', label-1);  lmode = else!3
+            %finish
+            def lab(label)
+            ->top %if next # 0
+c(120):     ;                                          ! %MSTART
+c(67):      ;                                          ! start
+c(71):      ;                                          ! cycle
+stcy:       def lab(label-1) %and lmode = loop %if lmode = 0; ! cycle
+            dmin = dmin-1;  abandon(3) %if dmin <= dmax
+            dict(dmin) = lmode
+            label = label+3
+            %return
+
+c(64):      fault(13) %if dict(dmin) >= 0 %or inhibit # 0; ! on event
+            inhibit = 1
+            n = 0
+            n = 16_FFFF %if pending = 0;               ! * = all events
+            %while pending > 0 %cycle
+                pop lit;  fault(10) %if lit&(\15) # 0; ! too big
+                j = 1<<lit
+                dubious = 1 %if n&j # 0
+                n = n!j;                               ! construct bit mask
+            %repeat
+            op('o', n);  op(',', label)
+            lmode = then!1;  ->stcy
+
+c(104):     op('J', tag(x)_index);                     ! l
+            inhibit = 1;            ->atop
+c(149):     stats = stats-1;                           ! lab
+            access = 1;  inhibit = 1
+            op('L', tag(x)_index);  ->top
+
+c(63):      j = dmin;  l = label-3;                    ! exit, continue
+            %cycle
+                fault(7) %and ->top %if dict(j) < 0
+                %exit %if dict(j)&1 = 0
+                j = j+1;  l = l-3
+            %repeat
+            l = l+1 %if x = 32;                        ! continue
+            op('F', l)
+            dict(j) = dict(j)!x;                       ! show given
+            ->atop
+
+c(50):      add char( 'C' );          ->cop;           ! acomp
+c(49):
+            %if next # 0 %start;                       ! comparator
+                add char( '"' )
+                push(0);                               ! double sided
+            %finish %else %start
+                add char( '?' )
+            %finish
+
+cop:        x = x!!1 %if cnest(cp)&2 # 0;              ! invert the condition
+            j = cp;  l = clab
+            %while cnest(j)&4 = 0 %cycle
+                j = j-1;  l = l-cnest(j)&1
+            %repeat
+            op(cc(x), l)
+            def lab(clab+1) %if cnest(cp)&1 # 0
+            cp = cp-1
+            clab = clab-cnest(cp)&1
+            ->top
+
+c(78):      ;                                          ! fresult
+c(79):      ;                                          ! mresult
+c(80):      open = 0;                                  ! return, true, false
+c(82):      access = 0;                                ! stop
+c(89):      ;                                          ! addop
+c(81):      add char( x );              ->top;         ! monitor
+c(65):      pop lit;  op('e', lit);     ->atop;        ! signal
+c(51):      add char( 'S' );            ->top;         ! eq
+c(53):      add char( 'j' );            ->top;         ! jam transfer
+c(52):      add char( 'Z' );            ->top;         ! eqeq
+c(74):      %if level = 0 %start;                      ! begin
+                %if progmode <= 0 %then progmode = 1 %else fault(7)
+                !{Permit BEGIN after external defs}
+            %finish
+            spec mode = level+1
+            block x = 0
+            add char( 'H' )
+            %return
+c(77):      perm = 0;  lines = 0;  stats = 0;          ! endofperm
+            close input
+            select input(source)
+            list = list-1
+            tbase = tmax;  tstart = tmax
+            %return
+c(76):      %if include # 0 %and x = 0 %start;         ! end of ...
+                lines = include;  sstype =  0;         ! include
+                close input
+                list = include list
+                include level = 0
+                include = 0;  select input(source);  %return
+            %finish
+            ss = -1;                                   ! prog/file
+c(75):      compile end(x);  %return;                  ! %end
+
+c(85):      %if x=0 %then control=lit %else %start;    ! control
+                diag = lit&16_3FFF %if lit>>14&3 = 1
+            %finish
+            op('z'-x, lit)
+            ->top
+c(83):      list = list+x-2;   ->top;                  ! %LIST/%endoflist
+c(84):      reals ln = x;      ->top;                  ! %REALS long/normal
+c(86):      %if include # 0 %start;                    ! include "file"
+                fault(7);  %return
+            %finish
+            get next;                                  ! sconst
+            x = x-16_4000
+            j = glink(x)
+            k = j&255
+            !ABD - another little copy loop because SKIMP can't do the string map
+            include file = ""
+            %cycle
+                k = k-1; %exit %if k < 0
+                include file = include file.tostring(j>>8)
+                x = x+1
+                j = glink(x)
+                k = k-1; %exit %if k < 0
+                include file = include file.tostring(j&255)
+            %repeat
+            ! include file = string(x-16_4000+stbase)
+            ! remove this event block for SKIMP or pre-event IMP versions
+            %begin
+                %on 9 %start;  Abandon(9);  %finish
+                open input(3, include file)
+            %end
+            include = lines;  lines = 0
+            include list = list;  include level = level
+            select input(3)
+            ->top
+
+c(154):     dimension = dimension+1;                   ! dbsep
+            fault(11) %if dimension = dim limit+1
+            ->top
+c(145):     set bp;                       ->top;       ! crb
+c(146):     set bp;                                    ! rcrb
+c(142):     ;                                          ! bplrb
+            dimension = 1 %if dimension = 0
+            op('d', dimension);  op(',', defs)
+            %if class # 146 %start
+                set subs(defs)
+                fault(13) %if dict(dmin) >= 0 %or inhibit # 0 %or level=0
+            %finish
+            dimension = 0;  defs = 0
+            ->top
+c(128):     id = dupid;  ->top;                        ! EDUP
+c(130):     block x = x
+            op('F', 0) %if decl&spec = 0 %and level # 0; ! jump round proc
+c(125):     dupid = id;                                ! %DUP
+            %return %if Level < 0;                     ! {spec about}
+c(90):      def(x);  ->top;                            ! ident
+c(131):     ;                                          ! cident
+            %if tag(x)_flags&(2_1111111+const bit) = iform+const bit %start
+                tag(x)_format = lit
+            %finish %else %start
+                set const(lit) %if pending # 0
+                def(x)
+                op('A', 1)
+            %finish
+            cident = x
+            ->top
+c(124):     dubious = 1 %if tag(cident)_flags&prot # 0; ! %DUBIOUS
+            ->top
+c(97):      ;                                          ! f
+c(98):      ;                                          ! m
+c(99):      ;                                          ! p
+c(96):      call;  ->top;                              ! r
+c(165):     ;                                          ! nlab
+c(100):     ;                                          ! rp
+c(101):     ;                                          ! fp
+c(102):     ;                                          ! mp
+c(103):     ;                                          ! pp
+c(91):      ;                                          ! v
+c(92):      ;                                          ! n
+c(106):     ;                                          ! a
+c(107):     ;                                          ! an
+c(108):     ;                                          ! na
+c(109):     ;                                          ! nan
+            k = tag(x)_index
+            %if k < 0 %then op('n', -k) %else op('@', k)
+            ->top
+c(121):     set const(0);                   ->top;     ! special for zero
+c(167):     add char( 'G' );                ->pstr;    ! aconst (alias)
+c(const):   ;                                          ! const
+            %if x < 0 %start;                          ! constinteger
+                set const(tag(-x)_format);  ->top
+            %finish
+            %if x&16_4000 # 0 %start;                  ! strings
+                add char( '''' )
+pstr:           x = x-16_4000
+                j = glink(x)
+                k = j&255
+                add char( k )
+                %cycle
+                    k = k-1; ->top %if k < 0
+                    add char( j>>8 );
+                    x = x+1
+                    j = glink(x)
+                    k = k-1; ->top %if k < 0
+                    add char( j&255 )
+                %repeat
+            %finish
+            %if x&16_2000 # 0 %start;                  ! real - ABD also string-like, but NOT packed
+                x = x-16_2000
+                k = glink(x)
+                op('D', k);  add char( ',' )
+                %cycle
+                    ->top %if k = 0
+                    k = k-1
+                    x = x+1;  j = glink(x)
+                    %if j = '@' %start
+                        op('@', litpool(glink(x+1)));  ->top
+                    %finish
+                    add char( j )
+                %repeat
+            %finish
+            set const(lit pool(x))
+            ->top
+
+c(137):     add char( 'i' );                ->top;     ! asep
+c(141):     add char( 'a' );                ->top;     ! arb
+
+            !own arrays
+c(132):     ocount = ub-lb+1
+            def(x);                                    ! oident
+            dimension = 1;  set subs(1)
+            %if next = 0 %start;                       ! no initialisation
+                op('A', ocount) %if ocount > 0
+                ocount = -1
+            %finish %else %start;                      ! initialisation given
+                get next
+            %finish
+            ->top
+c(162):     lit = ocount;  ->ins;                      ! indef
+c(143):     pop lit;                                   ! orb
+ins:        fault(10) %and lit = 0 %if lit < 0
+            get next
+            ->inst
+c(139):     ;                                          ! osep (x=19)
+c(153):     lit = 1
+inst:       pop def %if pending # 0;                   ! ownt (x=0)
+            op('A', lit)
+            ocount = ocount-lit
+            %if ocount >= 0 %start
+                ->top %if x # 0;                       ! more coming
+                ocount = -1 %and %return %if ocount = 0; ! all done
+            %finish
+            fault(11);  %return
+
+c(swit):    op('W', tag(x)_index);  inhibit = 1;  ->atop
+c(134):     def(x);                                    ! swid
+            n = ub-lb+1
+            n = (n+15)>>4;                             ! slots needed (includes zero)
+            j = dmax;  dmax = dmax+n+2
+            abandon(1) %if dmax >= dmin
+            tag(x)_format = j
+            dict(j) = lb;  dict(j+1) = ub
+            %cycle
+                n = n-1
+                ->top %if n < 0
+                j = j+1;  dict(j+1) = 0
+            %repeat
+c(151):     stats = stats-1;                           ! slab
+            fault(7) %and %return %if x < tbase
+            %if pending # 0 %start;                    ! explicit label
+                def s lab(pstack(1))
+            %finish %else %start
+                fault(4) %and %return %if tag(x)_app # 0
+                tag(x)_app = 1
+                n = tag(x)_format
+                %for j = dict(n), 1, dict(n+1) %cycle
+                    def s lab(j)
+                    flush buffer( 128 );               ! flush if bp >= 128
+                %repeat
+            %finish
+            inhibit = 1
+            %return
+
+c(140):     add char( 'p' );         ->top;            ! psep
+c(144):     ;                                          ! prb
+            add char( 'p' );
+            add char( 'E' );         ->top
+
+            !constant expressions
+c(155):     ;                                          ! pconst
+            %if x < 0 %then lit = tag(-x)_format %else lit = lit pool(x)
+            pending = pending+1;     pstack(pending) = lit;  ->top
+c(156):     lit = pstack(pending);  lit = -lit %if lit < 0
+            pstack(pending) = lit;  ->top;  !cmod
+c(157):     lit = -pstack(pending);  pstack(pending) = lit;  ->top; ! csign
+c(158):     lit = \pstack(pending);  pstack(pending) = lit;  ->top; ! cuop
+c(159):     ;                                          ! cop1
+c(160):     ;                                          ! cop2
+c(161):     pending = pending-1;                       ! cop3
+            lit2 = pstack(pending+1);  lit = pstack(pending)
+            ->litop(x>>2)
+
+litop(1):   lit = lit<<lit2;           ->setl
+litop(2):   lit = lit>>lit2;           ->setl
+litop(3):   n = 1;                                     ! lit = lit\\lit2
+            fault(10) %if lit2 < 0
+            %while lit2 > 0 %cycle
+                lit2 = lit2-1
+                n = n*lit
+            %repeat
+            lit = n;                   ->setl
+litop(4):   %if lit2 = 0 %then fault(10) %else lit = lit//lit2
+                                       ->setl
+litop(5):   lit = lit&lit2;            ->setl
+litop(6):   lit = lit!lit2;            ->setl
+litop(7):   lit = lit!!lit2;           ->setl
+litop(8):   lit = lit+lit2;            ->setl
+litop(9):   lit = lit-lit2;            ->setl
+litop(10):  lit = lit*lit2;            ->setl
+litop(11):  lit = lit+lit2;            ->setl
+litop(12):  n = 1;                                     ! lit = lit\\lit2
+            fault(10) %if lit2 < 0
+            %while lit2 > 0 %cycle
+                lit2 = lit2-1
+                n = n*lit
+            %repeat
+            lit = n;                   ->setl
+setl:       pstack(pending) = lit;     ->top
+
+c(170):     ;
+            !Fault(4) %if IMPCOM_Option # ""
+            !IMPCOM_Option = String(x-x'4000'+Stbase); ! Option string
+            ->Top
+
+            !string resolution
+c(135):     resln = 2;                    ->top;       ! dotl
+c(136):     resln = resln+1;              ->top;       ! dotr
+c(55):      op('r', resln);    resln = 0; ->top;       ! resop
+c(164):     op('r', resln+4);  resln = 0;              ! cresop
+c(122):     x = 6;                        ->cop;       ! %PRED
+c(87):      set const(pstack(1));                      ! mass
+            bp=bp+1 %and buff(bp)='P';    ->top
+        %end
+
+    %end;                                              ! of compile block
+
+    %on 9 %start
+        abandon(5)
+    %finish
+
+    selectinput(2);  selectoutput(listing)
+    tag(max tag) = 0;                                  ! %begin defn
+    tag(0) = 0;  tag(0)_flags = 7;                     ! %begin tag!
+    Hash(x) = 0 %for x = 0, 1, max names
+    printstring("         Edinburgh IMP77 Compiler - Version ")
+!    printstring("         Preston IMP2020 Compiler - Version ")
+    printstring(version);  newlines(2)
+    op('l', 0)
+    compile block(0, 0, max dict, 0, 0)
+    add char( nl );                                    ! {for bouncing off}
+    flush buffer( 0 );                                 ! flush if bp >= 0
+
+    x = listing
+    newline
+    %cycle
+        %if faulty = 0 %start
+            write(stats, 5)
+            printstring(" Statements compiled")
+        %else
+            printstring(" Program contains ")
+            write(faulty, 1)
+            printstring(" fault")
+            printsymbol('s') %unless faulty = 1
+        %finish
+        newline
+        %exit %if x = report
+        x = report
+        selectoutput(report)
+    %repeat
+
+    %if faulty # 0 %then %stop;        ! try to flag to shell that we failed
+
+%endofprogram

@@ -1,0 +1,101 @@
+IMP-77 for UNIX
+
+This distribution contains the IMP compiler and the run-time library for
+Intel 386 UNIX machines that use ELF object files.
+
+POSSIBLE REQUIRED TWEAKS:
+
+The Makefiles supplied don't try to figure out local installed software or
+policies, so you may need to make some changes.  In particular:
+
+1.  The Makefiles assume GCC is your compiler.
+2.  The Makefiles, AND THE SHELL SCRIPT IN "compiler/imp" assume that you
+    will install to /usr/local/bin, /usr/local/lib and /usr/local/include.
+3.  The "install" command is particularly sensitive to the UNIX variant you
+    are running, and the install section of the Makefiles will likely need fixing.
+4.  The loader script "ld.i77.script" in "imp-linux/compiler" ass-u-mes
+    that ld will concatenate this script into the default loader script.
+    This ld.i77.script is ESSENTIAL.
+    If not then
+        * run "ld --verbose"
+        * copy the generated ld script into a file "compiler/ld.script"
+        * insert the "section" contents of ld.i77.script before the .data
+          instructions into the "compiler/ld.script"
+        * rename the "compiler/ld.script" to be "compiler/ld.i77.script"
+    This potential amendment to ld.i77.script MUST be done before running
+    the "make bootstrap" in the compiler folder
+
+    Imp-77 event handling depends on the individual event traps being in
+    one section "ITRAP" in the order of ITRAP$B, all ITRAP$D the ITRAP%F sections.
+    The Windows linker does this automatically, but the loader ld needs to be told!
+
+BOOTSTRAPPING
+
+You don't necessarily have an IMP compiler already installed, so the library
+and compiler directories contain some object files as well as sources.  When
+packed the archive, the object files are up-to-date, so "make" should only
+need to compile the C portions, and link the object files.
+Be aware of the possible tweaks mentioned above.
+
+Let me know if this bootstapping step doesn't work, but only after you have tried
+all of the above installation "tweaks".
+Bootstrapping has been tested on a Centos-7 virtual machine, hence the list of
+possible tweaks.
+
+The order of bootstrapping is...
+	cd imp-linux/lib
+	make bootstrap
+	cd ../compiler
+    make bootstrap
+
+This should have installed the IMP compiler and libraries
+Next do a general tidy-up of the temporary files
+    cd ../lib
+    make superclean
+    cd ../compiler
+    make superclean
+
+I strongly suggest you then make copies of:-
+    * the installed compiler (ass-u-med in /usr/local/bin)
+    * installed library (/usr/local/bin)
+    * installed include files. (usr/local/include)
+    * the ../compiler folder
+    * the ../lib folder
+
+Now, you can start to "enhance" the IMP compiler by modifying the source files
+in the compiler and lib folders.
+
+Then to re-build the libraries and compiler
+    cd ../lib
+    make
+	cd ../compiler
+	make
+
+To verify the re-built (but un-installed) compilers and libraries,
+use the various imp examples in imp-linux/test
+Specify the -e option (== testmode) to the imp77 script when compiling a single
+IMP-77 file, so that the un-installed compiler and libraries are used.
+
+For multi-file IMP-77 programs you can use the imp77link script, however this script
+only uses the installed compiler and librsries.
+As an exercise, create a new script "imp77elink" which uses the un-installed/testmode
+compiler and libraries 
+ 
+If there are no errors and you feel confident with your new "enhancements"
+Then to install the new version of compiler and libraries
+    cd ../lib
+	make install
+	cd ../compiler
+	make install
+
+Remember, always keep backups of the previos source files and the installed files
+
+Good luck and enjoy!
+
+Original implementation by:
+Andy Davis
+andy@nb-info.co.uk
+
+Refreshed and enhanced by:
+John McMullin
+jdmcmullin@aol.com

@@ -1,0 +1,28 @@
+{----------------------------------------------------------------------------}
+    %external %string(255) %function sub string(%string(255) s, %integer from, to)
+        %integer get, put
+        %string(255) temp
+
+        ! Do some defensive error checking first
+        %signal 6, 2, from %if from < 0 %or from > length(s)
+        %signal 6, 2, to %if to < 0 %or to > length(s)
+        %signal 5, 3 %if from > to
+
+        ! We don't use string operations, and instead hand-poke
+        ! the characters, relying on the compiler primitive map
+        ! functions to plant efficient code
+
+        length(temp) = (to - from) + 1
+        put = 1
+        get = from
+        %while get <= to %cycle
+            charno(temp, put) = charno(s, get)
+            put = put + 1
+            get = get + 1
+        %repeat
+
+        %result = temp
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

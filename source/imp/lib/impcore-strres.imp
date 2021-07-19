@@ -1,0 +1,130 @@
+{------------------------------------------------------------------------------}
+    ! IMP resolution - S->A.(B).C; returns 1 for success, 0 for failure
+    %external %integer %function impstrres ( %byte %name c,b,a,s )
+        %integer index, count, i
+        %byte slen, alen, blen, clen
+        %byte %name sx,ax,bx,cx
+
+        ! Although s,a,b,c are declared equivalent to C format string arrays
+        ! we can access a char at index i by x[i]
+        ! However the string arrays are formatted as IMP strings
+        ! Hence, x[0] contains the length of the string.
+        ! And x[x[0] is therefore the last char in the IMP string.
+        ! DANGER, IMP format string arrays are at most 256 chars (1 for length, 255 for actual string text)
+        ! DANGER, DANGER. The compiler/programmer may have assigned a lesser size so beware overflow
+
+        ! case 1:   S -> A.(B).C
+        !  sub-case 1A: length(B) > length(S) => result = 0, A := S,       C := ""
+        !  sub-case 1B: B not in S            => result = 0, A := S,       C := ""
+        !  sub-case 1C: B in S                => result = 1, A := S\(B.C), C := S\(A.B)
+    
+        ! case 2:   S -> A.(B)
+        !  sub-case 2A: length(B) > length(S) => result = 0, A := S
+        !  sub-case 2B: B not in S            => result = 0, A := S
+        !  sub-case 2C: B in S                => result = 1, A := S\B
+
+        ! case 3:   S ->   (B).C
+        !  sub-case 3A: length(B) > length(S) => result = 0,         C := ""
+        !  sub-case 3B: B not in S            => result = 0,         C := ""
+        !  sub-case 3C: B in S                => result = 1,         C := S\B
+
+        ! General case S -> A.(B).C    (S,B inputs, A,C outputs)
+        ! initialise:
+        ! if addr(A) # 0 then A := S
+        ! if addr(C) # 0 then C := ""
+        ! case A: length(B) > length(S) => result = 0, if addr(A) # 0 then length(A) := length(S)
+        ! case B: B not in S            => result = 0, if addr(A) # 0 then length(A) := length(S)
+        ! case C: B in S                => result = 1, if addr(A) # 0 then length(A) := length(S) - length(B.C), if addr(C) # 0 then C := S\(A.B)
+
+        ! Assume a == %string(255), c == %string(255)
+        ! We don't care about the size of s,b since we use length(s), length(b)
+        ! Algorithm regards each s,a,b,c as an array of char in memory
+        ! where x[MAXLENIMPSTRING+1] == x[0..MAXLENIMPSTRING] and x[0] == length(x)
+
+        ! successively try to fit B into S
+        ! initialise A = "" (if addr(A) # 0)
+
+        ! successively try to fit B into S
+        sx == byteinteger( addr( s ) )
+        bx == byteinteger( addr( b ) )
+        slen = s                     ;! pick up respective lengths
+        blen = b
+
+        alen = 0
+        %if (addr(a) # 0) %start
+            ax == byteinteger( addr( a ) )
+            ax = alen
+        %finish
+
+        clen = 0
+        %if (addr(c) # 0) %start
+            cx == byteinteger( addr(c) )
+            cx = clen
+        %finish
+
+        %if (blen > slen) %start ;! can't possibly work
+            %result = 0
+        %finish
+
+        index = 1
+        %while ( (index + blen) <= slen + 1) %cycle
+            ! see if there is a match starting from index
+            count = 0
+            %while (count <= blen) %cycle
+                sx == byteinteger( addr(s) + index + count )
+                bx == byteinteger( addr(b) + 1 + count )
+
+                %exit %if (sx # bx)
+
+                count = count + 1;
+            %repeat
+
+            ! check if a match was found, at offset INDEX
+            %if (count = blen) %start
+                %if (addr(a) # 0) %start
+                    alen = index - 1
+
+                    ! copy the results
+                    ! Now to remember the prefix string A in S-> A.(B).C
+                    ax == byteinteger( addr(a) )
+                    ax = alen
+                    %for i = 1,1,alen %cycle
+                        sx == byteinteger( addr(s) + i )
+                        ax == byteinteger( addr(a) + i )
+                        ax = sx;
+                    %repeat
+                %finish
+
+                ! Now to remember the postfix string C in S-> A.(B).C
+                %if (addr(c) # 0) %start
+                    clen = (slen - (alen + blen))
+                    ! Ok, we have somewhere to store C
+                    cx == byteinteger( addr(c) )
+                    cx = clen
+                    %for i = 1,1,clen %cycle
+                        sx == byteinteger( addr(s) + i + alen + blen )
+                        cx == byteinteger( addr(c) + i )
+                        cx = sx
+                    %repeat
+                %finish
+
+                %result = 1
+            %finish
+
+            ! here = no match
+            index = index + 1
+        %repeat
+
+        %if (addr(a) # 0) %start
+            %for count = 0,1,slen %cycle
+                sx == byteinteger( addr(s) + count )
+                ax == byteinteger( addr(a) + count )
+                ax = sx
+            %repeat
+        %finish
+
+        %result = 0
+    %end
+
+{------------------------------------------------------------------------------}
+%endoffile

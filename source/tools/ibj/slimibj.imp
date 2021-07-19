@@ -1,0 +1,328 @@
+{ **************************************** }
+{ *                                      * }
+{ * Copyright (c) 2020 J.D.McMullin PhD. * }
+{   All rights reserved.                 * }
+{ *                                      * }
+{ **************************************** }
+%begin
+
+   %include "ibjdef.inc"
+
+   ! define the layout of ibj records
+   %record %format ibj line (%byteinteger itype, %integer external id, %string(255) data)
+
+   ! Declare the largest count of ibj records expected
+   %constinteger max records = 50000
+   %integer external count
+   %integer rec count
+
+   ! Make space for the collection of ibj records  
+   %record(ibj line)%array ibj(1:max records)
+
+   %integerfn to nibble ( %integer hex )
+      %result = hex - 'A' + 10 %if 'A' <= hex <= 'F'
+      %result = hex - '0' %if '0' <= hex <= '9'
+      %result = 0
+   %end
+
+   %integerfn to byte ( %integer nh, nl )
+      %result = 16*to nibble ( nh ) + to nibble( nl )
+   %end
+
+   %integerfn to unsigned value ( %integer hh,hl,lh,ll )
+      %integer xx
+      xx = 256*to byte( hh, hl ) + to byte( lh, ll )
+      %result = xx
+   %end
+
+   %integerfn to integer value ( %integer hh,hl,lh,ll )
+      %integer xx
+      xx = to unsigned value ( hh,hl,lh,ll )
+      %if (xx > 32767) %then xx = xx - 65536
+      %result = xx
+   %end
+
+   %string(255)%fn to string value ( %string(255) hex text )
+      %integer i, char count, hi, lo
+      %string(255) the string = ""
+      char count = length(hex text) // 2
+      %for i = 1, 1, char count %cycle
+         the string = the string . to string ( to byte ( charno( hextext, 2*i - 1 ), charno( hextext, 2*i )) )
+      %repeat
+
+      %result = the string
+   %end
+
+   %string(255)%fn find ext ref( %integer ref id )
+      %integer rec id = 0, i
+      %string(255) ext ref = ""
+      %for i = 1,1,rec count %cycle
+         ext ref = ibj(i)_data %if ibj( i )_external id = ref id
+      %repeat
+      %result = ext ref
+   %end
+
+   %routine write a record( %integer line id, %record(ibj line)%name the line)
+      %switch ibj(0:29)
+
+      print string( ibj name(the line_itype) )
+      print string( "," )
+      -> ibj(the line_itype)
+ibj(IF OBJ):
+      print string( the line_data ); -> default;
+
+ibj(IF DATA):
+      print string( the line_data ); -> default;
+
+ibj(IF CONST):
+      print string( the line_data ); -> default;
+
+ibj(IF DISPLAY):
+      print string( the line_data ); -> default;
+
+ibj(IF JUMP):
+      %begin
+         %integer hh,hl,lh,ll
+         hh = charno(the line_data,3);
+         hl = charno(the line_data,4);
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         print string( itos( to integer value(hh,hl,lh,ll), 0) )
+      %end; -> default;
+
+ibj(IF JCOND):
+      %begin
+         %integer hh,hl,lh,ll, cond
+         hh = 0
+         hl = 0
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         cond = to integer value(hh,hl,lh,ll)
+         print string( condition name(cond) )
+         print string( "," )
+         hh = charno(the line_data,5);
+         hl = charno(the line_data,6);
+         lh = charno(the line_data,3);
+         ll = charno(the line_data,4);
+         print string( itos( to integer value(hh,hl,lh,ll), 0) )
+      %end; -> default;
+
+ibj(IF CALL):
+      %begin
+         %integer hh,hl,lh,ll
+         hh = charno(the line_data,3);
+         hl = charno(the line_data,4);
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         print string( itos( to integer value(hh,hl,lh,ll), 0) )
+      %end; -> default;
+
+ibj(IF LABEL):
+      %begin
+         %integer hh,hl,lh,ll
+         hh = charno(the line_data,3);
+         hl = charno(the line_data,4);
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         print string( itos( to integer value(hh,hl,lh,ll), 0) )
+      %end; -> default;
+
+ibj(IF FIXUP):
+      %begin
+         %integer hh,hl,lh,ll
+         hh = charno(the line_data,3);
+         hl = charno(the line_data,4);
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         print string( itos( to integer value(hh,hl,lh,ll), 0) )
+         print string( "," )
+         hh = 0
+         hl = 0
+         lh = charno(the line_data,5);
+         ll = charno(the line_data,6);
+         print string( itos( to integer value(hh,hl,lh,ll), 0) )
+         print string( "," )
+         print string( """".to string value (substring(the line_data,7,length(the line_data) ))."""")
+      %end; -> default;
+
+ibj(IF SETFIX):
+      %begin
+         %integer hh,hl,lh,ll,x1,x2,x3,x4,x5
+         hh = charno(the line_data,3);
+         hl = charno(the line_data,4);
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         x1 =  to integer value(hh,hl,lh,ll)
+
+         hh = charno(the line_data,7);
+         hl = charno(the line_data,8);
+         lh = charno(the line_data,5);
+         ll = charno(the line_data,6);
+         x2 =  to integer value( hh,hl,lh,ll)
+
+         hh = charno(the line_data,11);
+         hl = charno(the line_data,12);
+         lh = charno(the line_data,9);
+         ll = charno(the line_data,10);
+         x3 =  to integer value( hh,hl,lh,ll)
+
+         hh = charno(the line_data,15);
+         hl = charno(the line_data,16);
+         lh = charno(the line_data,13);
+         ll = charno(the line_data,14);
+         x4 =  to integer value( hh,hl,lh,ll)
+
+         hh = charno(the line_data,19);
+         hl = charno(the line_data,20);
+         lh = charno(the line_data,17);
+         ll = charno(the line_data,18);
+         x5 =  to integer value( hh,hl,lh,ll)
+
+         print string( itos( x1, 0) )
+         print string( "," )
+         print string( itos( x2, 0) )
+         print string( "," )
+         print string( itos( x3, 0) )
+         print string( "," )
+         print string( itos( x4, 0) )
+         print string( "," )
+         print string( itos( x5, 0) )
+      %end; -> default;
+
+ibj(IF REQEXT):
+      %begin
+         print string( itos(the line_external id,0) ); 
+         print string( ",""".the line_data."""" ); 
+      %end; -> default;
+
+ibj(IF REFLABEL):
+      %begin
+         %integer hh,hl,lh,ll
+         hh = charno(the line_data,3);
+         hl = charno(the line_data,4);
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         print string( itos( to integer value(hh,hl,lh,ll), 0) )
+      %end; -> default;
+
+ibj(IF REFEXT):
+      %begin
+         %integer hh,hl,lh,ll, ref id, xx
+         hh = charno(the line_data,3);
+         hl = charno(the line_data,4);
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         ref id = to integer value(hh,hl,lh,ll)
+         hh = charno(the line_data,7);
+         hl = charno(the line_data,8);
+         lh = charno(the line_data,5);
+         ll = charno(the line_data,6);
+         xx = to integer value(hh,hl,lh,ll)
+         print string( """".find ext ref( ref id)."""" )
+         print string( "," )
+         print string( itos( xx, 0) )
+      %end; -> default;
+
+ibj(IF BSS):
+      print string( the line_data ); -> default;
+
+ibj(IF COTWORD):
+      print string( the line_data ); -> default;
+
+ibj(IF DATWORD):
+      print string( the line_data ); -> default;
+
+ibj(IF SWTWORD):
+      %begin
+         %integer hh,hl,lh,ll
+         hh = charno(the line_data,3);
+         hl = charno(the line_data,4);
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         print string( itos( to integer value(hh,hl,lh,ll), 0) )
+      %end; -> default;
+
+ibj(IF SOURCE):
+      print string( """".the line_data."""" ); -> default;
+
+ibj(IF DEFEXTCODE):
+      %begin
+!         print string( itos(the line_external id,0)."," ); 
+         print string( """".the line_data."""" ); 
+      %end; -> default;
+
+ibj(IF DEFEXTDATA):
+      %begin
+         print string( """".the line_data."""" ); 
+      %end; -> default;
+
+ibj(IF SWT):
+      print string( the line_data ); -> default;
+
+ibj(IF LINE):
+      %begin
+         %integer hh,hl,lh,ll
+         hh = charno(the line_data,3);
+         hl = charno(the line_data,4);
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         print string( itos( to integer value(hh,hl,lh,ll), 0) )
+      %end; -> default;
+
+ibj(IF ABSEXT):
+      %begin
+         %integer lh,ll, ref id, offset
+         lh = charno(the line_data,1);
+         ll = charno(the line_data,2);
+         offset = to unsigned value(0,0,lh,ll)
+         lh = charno(the line_data,5);
+         ll = charno(the line_data,6);
+         ref id = to unsigned value(0,0,lh,ll)
+         print string( """".find ext ref( ref id )."""" )
+         print string( "," )
+         print string( itos( offset - ref id, 0) )
+      %end; -> default;
+
+default:
+      newline
+   %end
+
+   %routine read a record( %integer line id, %record(ibj line)%name the line)
+      %integer a char, i, count, low char, high char
+
+      readsymbol( a char )
+      the line_itype = (a char - 'A') & 255
+      the line_data = "";
+      %if (the line_itype = IF REQEXT) %start
+         external count = external count + 1
+         the line_external id = external count
+      %finish %else the line_external id = 0
+
+      readsymbol ( high char ); readsymbol ( low char );
+      count = to byte( high char, low char)
+      %if (count > 0) %start
+         %for i = 1, 1, count %cycle
+            read symbol ( high char ); readsymbol ( low char );
+            %if (the line_itype = IF REQEXT) %or (the line_itype = IF DEFEXTDATA) %or (the line_itype = IF DEFEXTCODE) %or (the line_itype = IF SOURCE) %start
+               the line_data = the line_data .to string ( to byte( high char, low char) );
+            %finish %else %start
+               the line_data = the line_data .to string ( high char ).to string( low char );
+            %finish
+         %repeat
+      %finish
+      skip symbol
+   %end
+
+   select input(1)
+   select output(1)
+   rec count = 0
+   external count = 0
+
+   %while (next symbol # eof) %cycle
+      rec count = rec count + 1;
+      read a record ( rec count, ibj ( rec count ) )
+      write a record( rec count, ibj ( rec count ) )
+   %repeat
+
+%end
+%end %of %file

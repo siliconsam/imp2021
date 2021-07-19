@@ -1,0 +1,223 @@
+
+    ! There are 2 forms of IMP program
+    ! Type 1: %begin ... %end
+    ! Type 2: %external %routine XXX %alias "__impmain" ... %end
+    !
+    ! Both types of IMP "program" are compiled as an external routine,
+    ! where the external entry symbol is "__impmain"
+    !
+    ! To ensure both types use a single runt-time library
+    ! an intermediate "wrapper" routine "SELECTIMPTYPE" is used
+
+    ! Trick to remember the pointer to the command line parameters
+    %own %integer %name arguments
+    ! Trick to remember the pointer to the environment variables
+    %own %integer %name environs
+
+    %external %routine %spec impmain %alias "__impmain"
+    %external %integer %function %spec split io list ( %string(255) io list )
+    %external %routine %spec initialise io
+    %external %routine %spec terminate io
+
+    ! This acts as a "wrapper" routine around the "__impmain" routine
+    ! Forward declarations (just to ensure routine trap tables follow in order)
+    %routine %spec selectimptype
+
+    ! IMP main has the parameters in reverse order to the C main
+    ! define main so that the environment variables can be accessed
+    ! The external symbol name "_main" (or "main" for Unix/Linux) is used
+    ! to ensure IMP programs can be used in Windows/Unix/Linux environments
+    ! that provide a c interface
+    %external %routine StartImp %alias "main" (%integer %name envp, %integer %name argv, %integer argc )
+
+        %on %event * %start
+            %integer event = get event
+            %integer sub = get event sub
+            %integer info  = get event info
+            %string(255) msg
+
+            get eventmessage( msg )
+
+            debugnewline
+            debugstring( "**** Arrgh! Last chance event handler has been triggered." );debugnewline
+            debugstring("**** Triggered by error event (".itos(event,0).",".itos(sub,0).",".itos(info,0)."). Error message '".msg."'");debugnewline
+
+            %if event=6 %and sub = 2 %and info = 1 %start
+                debugstring("**** Error likely caused by missing command line parameters for input/output file(s)");debug newline
+            %finish
+
+            %if event = 9 %start
+                %if (sub = 4) %start
+                    debugstring("**** Error likely caused by missing/invalid command line parameters for input file(s)");debug newline
+                %finish
+                %if (sub = 5) %start
+                    debugstring("**** Error likely caused by missing/invalid command line parameters for output files(s)");debug newline
+                %finish
+            %finish
+
+            %if event = 10 %start
+                debugstring("**** Error caused by missing/invalid command line parameter(s)");debug newline
+            %finish
+
+            debugnewline
+
+            %stop
+
+        %finish
+
+        arguments == argv
+        environs == envp
+
+        ! Intialise the runtime system
+        ! ass-u-me no debug required
+        set debug level( 0 )
+
+        %if (length( getenv( getenvindex( "IMP_DEBUG" ) ) ) # 0) %start
+            ! ok, we want ALL debug levels
+            set debug level ( 16_ffffffff )
+        %finish
+
+        initialise io
+
+        ! ok, let's see which flavour of IMP program we have
+        ! We defer selection of %external %routine XXX %alias "__impmain" IMP program type
+        ! so that potentially extra ways of calling the compiler generated IMP program code
+        ! can be implemented
+        selectimptype
+
+        ! don't forget to close down the I/O system
+        terminateio
+
+        ! Switch off all debug now we are about to exit
+        set debug level ( 0 )
+
+        ! If the IMP program exits through %endofprog then report success to the shell
+        exit(0)
+    %end
+
+    ! Enable access to the environment variables
+    ! Used by routines in "imprtl-system"
+    %external %integer %name %function getenvironment
+        %result == environs
+    %end
+
+    ! Enable access to the command line parameters
+    ! Used by routines in "imprtl-system"
+    %external %integer %name %function getarguments
+        %result == arguments
+    %end
+
+    ! for a %begin ... %end IMP program, indicate the expected command line parameters
+    %routine usage
+        debugstring( "Usage: <imp program> [in1[,in2[,in3]]]".tostring(FILE SEP)."[out1[,out2[,out3]]] [debug]" )
+        debug newline
+        debugstring( "   NB: the '".tostring(FILE SEP)."' separates the input files from the output files" )
+        debug newline
+        debugstring( "   NB: debug triggers extra run time debug messages)" )
+        debug newline
+        debugstring( "   NB: For debug activation (even if there are no I/O files requested) the '".tostring(FILE SEP)."' is mandatory" )
+        debug newline
+        exit(1)
+    %end
+
+    ! Kludge to see if the program is a %begin .. %end block with file parameters
+    %predicate runmode(%string(255) arg1)
+        %string(255) s,a,b,c
+
+        s = arg1
+        length( a ) = 0
+        b = tostring(FILE SEP)
+        length( c ) = 0
+
+        ! ok, now check to see if the first program parameter indicates a file list
+        s->a.(b).c
+
+        %false %if (s = a)        ;! no FILE SEP found
+        %true %if (s = b)         ;! a FILE SEP found (but, no I/O files requested) could want to invoke debug?
+        %true %if (length(a) > 0) ;! input files found
+        %true %if (length(c) > 0) ;! output files found
+
+        %false                    ;! it looks like this is not a %begin .. %end program
+    %end
+
+    ! This activates a %begin ... %end IMP program
+    ! This is in a separate routine to allow future enhancements
+    %routine imptype1
+        %integer errcount = 0
+        %integer argcount = getargcount
+
+        ! Type 1 IMP PROGRAM?
+        ! Ok, this is a suspected %begin ... %end IMP program
+        ! set up the input and output streams
+        ! argc = 1 param 0 == progname
+        ! argc = 2 param 1 == input file list/output file list
+        ! argc = 3 param 2 => we want debug mode (any value will do for the moment!)
+
+        ! Possible enhancement is to disable access to the command line parameters
+        ! if this type of IMP program is written.
+        ! The only command line access possible would then be in this module
+        %if (argcount > 1) %start
+            ! Check we don't have too many parameters
+            %if (argcount > 3) %start
+                usage
+                errcount = errcount + 1
+            %finish %else %start
+                ! We may want to debug the I/O initialisation
+                ! if so, then uncomment the next line
+!                set debug level( debug mode ! DBGIO ! DBGPRIM )
+                %if (split io list( getarg(1) ) # 0) %then errcount = errcount + 1;
+            %finish
+        %finish
+
+        %if (errcount = 0) %start
+            ! check for debug mode
+            %if (argcount > 2) %then set debug level( debug mode ! DBGMAIN ! DBGPROG ! DBGCORE )
+
+            %if ((debug mode & DBGMAIN) # 0) %start
+                debug string( "IMPMAINX: About to enter the IMP program")
+                debug newline
+            %finish
+
+            ! ok, let's go IMPing!!
+            impmain
+
+            %if ((debug mode & DBGMAIN) # 0) %start
+                debug string( "IMPMAINX: Completed the IMP program")
+                debug newline
+            %finish
+        %finish
+    %end
+
+    ! This activates a suspected %external %routine XXX %alias "__impmain" ... %end IMP program
+    ! This is in a separate routine to allow future enhancements
+    %routine imptype2
+
+        ! Type 2 IMP PROGRAM?
+        ! Ok, this is a suspected %external %routine XXX %alias "__impmain" ... %end
+        ! It is the IMP programmers resposibility to open files and read the command line
+
+        %if ((debug mode & DBGMAIN) # 0) %start
+            debug string( "IMPMAIN: About to enter the IMP program")
+            debug newline
+        %finish
+
+        ! ok, let's go IMPing!!
+        impmain
+
+        %if ((debug mode & DBGMAIN) # 0) %start
+            debug string( "IMPMAIN: Completed the IMP program")
+            debug newline
+        %finish
+    %end
+
+    %routine selectimptype
+        %if runmode( getarg(1) ) %start
+            ! Type 1 IMP PROGRAM?
+            imptype1
+        %finish %else %start
+            ! Type 2 IMP PROGRAM?
+            imptype2
+        %finish
+    %end
+
+%endoffile

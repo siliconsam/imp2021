@@ -1,0 +1,20 @@
+{----------------------------------------------------------------------------}
+    ! Simple trig library functions to demonstrate
+    ! how to cross-link with the C library functions
+    ! Copyright 2002 NB Information Limited
+    !
+    ! Declare useful trignometry functions
+    !
+    %external %long %real %function sine(%longreal r)
+
+        %external %long %real %fn %spec C Lib Sine %alias "sin" ( %longreal r)
+
+        ! Slightly arbitrary - the C library tries to work with larger values,
+        ! but this demonstrates keeping the error case in the IMP world
+        %if |r| > 30000 %then %signal 10,1,5
+
+        %result = C Lib Sine(r)
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

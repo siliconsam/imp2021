@@ -1,0 +1,72 @@
+
+    %externalroutine bilbo %alias "__impmain"
+        %integer i,j,max
+        %string(255) varname,varvalue
+
+!        setdebuglevel(dbgtrap)
+
+debugstring("BILBO: argc='".itos(getargcount,0)."'"); debug newline
+debugstring("BILBO: envc='".itos(getenvcount,0)."'"); debug newline
+debug newline
+
+%for i = 0,1,getargcount - 1 %cycle
+debugstring("BILBO: Param(".itos(i,0).")='".getarg(i)."'" ); debug newline
+%repeat
+debug newline
+
+        %signal 10,1,(getargcount - 1) %if (getargcount = 1)
+
+        openoutput(1,getarg(1))
+        selectoutput(1)
+        printstring("argc='".itos(getargcount,0)."'"); newline
+        printstring("envc='".itos(getenvcount,0)."'"); newline
+        newline
+
+        j = length(itos(getargcount,0))
+        %for i = 0,1,getargcount - 1 %cycle
+            printstring( "Arg(".itos(i,j).") = '" )
+            printstring( getarg(i)."'" )
+            newline
+        %repeat
+        newline
+
+        ! find the length of the longest env name
+        max = 0
+        %for i = 1,1,getenvcount %cycle
+            varname = getenvname( i )
+            %if (length(varname) > max) %then max = length(varname) + 1
+        %repeat
+
+        j = length(itos(getenvcount,0))
+        %for i = 1,1,getenvcount %cycle
+            varname = getenvname( i )
+            varvalue = getenv( i )
+
+debugstring("BILBO: (".itos(i,j).") ")
+debugstring( varname )
+debugspaces( max - length(varname) )
+debugstring( " = " )
+%if (length(varvalue) # 0) %start
+debugstring( "'".varvalue."'" )
+%else
+debugstring( "'        **** too long for an IMP string'" )
+%finish
+debug newline
+
+            printstring("(".itos(i,j).") ")
+            printstring( varname ); spaces( max - length(varname) )
+            printstring( " = " )
+
+            %if (length(varvalue) # 0) %start
+                printstring( "'".varvalue."'" )
+            %else
+                printstring( "'        **** too long for an IMP string'" )
+            %finish
+            newline
+        %repeat
+        debug newline
+        newline
+
+    %end
+
+%endoffile

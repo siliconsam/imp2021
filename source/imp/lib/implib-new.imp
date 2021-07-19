@@ -1,0 +1,21 @@
+{----------------------------------------------------------------------------}
+    !
+    ! NEW/DISPOSE routines used to acquire/free heap variables
+    ! NEW/DISPOSE routines based on C library malloc/free routines
+    !
+    ! declare heap access routines
+    !
+    %external %record(*) %map New ( %name Template )
+
+        %external %record(*) %map %spec impmalloc %alias "_malloc" ( %integer s )
+
+        %record(*) %name Res
+        %integer Bytes = (Size Of(Template)+3) & (\3) {round to longword}
+
+        Res == impmalloc(Bytes)
+
+        %result == Res
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

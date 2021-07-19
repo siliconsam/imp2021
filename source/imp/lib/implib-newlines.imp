@@ -1,0 +1,10 @@
+{----------------------------------------------------------------------------}
+    %external %routine newlines( %integer count )
+        %while count > 0 %cycle
+            printsymbol(nl)
+            count = count - 1
+        %repeat
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

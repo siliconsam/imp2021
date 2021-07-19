@@ -1,0 +1,85 @@
+{----------------------------------------------------------------------------}
+    ! Print a floating point number out, along the lines of
+    ! +/-nnn.nnn@+/-nn, to occupy Places character spaces.
+    ! Note - there's a bug in this code such that it does not
+    ! round the number properly.  EG 3.999999999 to 4 places
+    ! should be 4.00 but we print 3.99
+
+    %external %routine print(%longreal x, %integer places)
+        %integer exponent, digit, point, printexpo
+
+        %if x = 0 %start
+            printsymbol('0')
+            printsymbol('.')
+            printsymbol('0')
+            %while places > 3 %cycle
+                printsymbol('0')
+                places = places - 1
+            %repeat
+            %return
+        %finish
+
+        %if x < 0 %then printsymbol('-') %and x = -x %and places = places - 1
+
+        %if places < 3 %then places = 3
+   
+        exponent = 0
+        printexpo = 0
+
+        %while x < 1 %cycle
+            x = x * 10
+            exponent = exponent - 1
+        %repeat
+
+        %while x >= 10 %cycle
+            x = x / 10
+            exponent = exponent + 1
+        %repeat
+
+        ! Now X is between 1.0 and 9.99 and exponent is set accordingly
+        ! If the exponent is "large" we will use scientific notation
+        point = places - 2;     ! for useful digits after the "0."
+        %if exponent >= places %or exponent < -point %start
+            printexpo = exponent
+            exponent = 0
+            places = places - 2
+        %finish
+
+        ! Now the exponent is small-ish
+        %if exponent < 0 %start;      ! 0.nnnn
+            printsymbol('0')
+            printsymbol('.')
+            places = places - 2
+
+            %while exponent < -1 %cycle
+                printsymbol('0')
+                exponent = exponent + 1
+                places = places - 1
+            %repeat
+
+            point = -1; ! because we've already passed that
+        %else;          ! nnn.nnn
+            point = exponent
+        %finish
+
+        %while places > 0 %cycle
+            digit = int pt(x)
+            ! Rounding as we go through this loop can "oversize" the digit.  This
+            ! of course tells us that we should have printed (eg) 40000 but we
+            ! are now stuck with printing 39999
+            %if digit > 9 %then digit = 9
+            printsymbol(digit + '0')
+            x = (x - digit)*10
+            %if point = 0 %then printsymbol('.') %and places = places - 1
+            point = point - 1
+            places = places - 1
+        %repeat
+
+        %if printexpo # 0 %start
+            printsymbol('@')
+            write(printexpo, 1)
+        %finish
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

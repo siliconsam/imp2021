@@ -1,0 +1,238 @@
+%begin
+
+    %constinteger max grammar  = 1720
+    %constinteger max kdict    = 618
+
+    !*** start of generated tables ***
+    %include "i77.tables.imp"
+    !***  end  of generated tables ***
+
+    %integer max symbol length
+
+    %routine showsymbol( %shortinteger ch )
+        %if ch >= 32 %start
+            printstring("'")
+            printsymbol(ch)
+            printstring("'")
+        %finish %else %start
+            printstring(itos(ch,2))
+        %finish
+
+    %end
+
+    %routine dumpText
+        %integer i
+        %integer nlflag
+
+        max symbol length = 0
+        %for i = 0, 1, 255 %cycle
+            %if text(i) <> "" %start
+                %if length(text(i)) > max symbol length %start
+                    max symbol length = length(text(i))
+                %finish
+            %finish
+        %repeat
+
+        nlflag = 1
+        printstring("Start dumpText"); newline
+        %for i = 0, 1, 255 %cycle
+            %if text(i) <> "" %start
+                nlflag = 1
+                printstring("text[".itos(i,3)."]== ")
+                spaces( max symbol length - length(text(i)));
+                printstring(text(i))
+                newline
+
+            %finish %else %if nlflag = 1 %start
+                nlflag = 0
+                newline
+            %finish
+        %repeat
+        newline
+
+    %end
+
+    %routine dumpPhrase
+        %integer i
+        %integer nlflag
+		
+        nlflag = 1
+        printstring("Start dumpPhrase"); newline
+        %for i = 200, 1, 255 %cycle
+            %if text(i) <> "" %start
+                nlflag = 1
+                printstring("phrase[".itos(i,3)."] == ")
+                spaces( max symbol length - length(text(i)))
+                printstring(text(i))
+                printstring(" @ ".itos(phrase(i),0))
+                newline
+            %finish %else %if nlflag = 1 %start
+                nlflag = 0
+                newline
+            %finish
+        %repeat
+        newline
+
+    %end
+
+    %routine dumpAtomic
+        %integer i
+        %integer nlflag
+
+        nlflag = 1
+        printstring("Start dumpAtomic"); newline
+        %for i = 130, 1, 179 %cycle
+            %if atomic(i) <> 0 %start
+                %if text(atomic(i)) <> "" %start
+                    nlflag = 1
+                    printstring("atomic[".itos(i,3)."]=> ")
+                    spaces( max symbol length - length(text(i)))
+                    printstring(text(i))
+                    printstring(" == ".text(atomic(i)))
+                    newline
+                %finish
+            %finish %else %if nlflag = 1 %start
+                nlflag = 0
+                newline
+            %finish
+        %repeat
+        newline
+
+    %end
+
+    %routine dumpInitial
+        %integer i
+        %integer value
+        %integer flag,o1,ss,o2,t,link
+
+        printstring("Start dumpInitial"); newline
+        %for i = 0, 1, 119 %cycle
+            %if initial(i) <> 0 %start
+                value = initial(i)
+
+                flag = (value >> 15) & 1
+                o1 = (value >> 14) & 1
+                ss = (value >> 12) & 3
+                o2 = (value >> 9) & 7
+                t = (value >> 8) & 1
+                link = value & 255
+
+                printstring(text(i))
+                spaces( max symbol length - length(text(i)))
+                printstring("== ")
+
+                %if (flag = 1) %then printstring("flag ") %else spaces(5)
+                %if (o1 = 1) %then printstring("o1 ") %else spaces(3)
+                printstring("ss=".itos(ss,0)." ")
+                printstring("o2=".itos(o2,0)." ")
+                %if (t = 1) %then printstring("t ") %else spaces(2)
+                printstring("link=<".itos(link,0)."> ")
+                newline
+            %finish
+        %repeat
+        newline
+
+    %end
+
+    %routine dumpGram
+        %integer i
+        %integer value
+        %integer more,o1,order,type,class
+
+        printstring("Start dumpGram"); newline
+        %for i = 0, 1, gmax1 %cycle
+            %if gram(i) <> 0 %start
+                value = gram(i)
+
+                more = (value >> 15) & 1
+                o1 = (value >> 14) & 1
+                order = (value >> 12) & 3
+                type = (value >> 8) & 15
+                class = value & 255
+
+                printstring("gram[".itos(i,3)."]== ")
+                %if more = 1 %then printstring("more ") %else spaces(5)
+                %if o1 = 1 %then printstring("o1 ") %else spaces(3)
+                printstring("order=");printstring(itos(order,0));printstring(" ")
+                printstring("type=");printstring(itos(type,0));printstring(" ")
+                spaces( max symbol length - length(text(class)));printstring(text(class))
+                newline
+            %finish
+        %repeat
+        newline
+
+    %end
+
+    %routine dumpGLink
+        %integer i
+        %integer value
+        %integer class
+        %integer newlineflag
+
+        printstring("Start dumpGLink"); newline
+        newlineflag = 0
+        %for i = 0, 1, gmax1 %cycle
+            %if glink(i) > 0 %start
+                newlineflag = 1
+                value = gram(glink(i))
+
+                class = value & 255
+                printstring(text(class));printstring(" ")
+            %finish %else %if newlineflag = 1 %start
+                newlineflag = 0
+                newline
+            %finish
+
+        %repeat
+        newline
+
+    %end
+
+    %routine dumpkdict
+        %integer i
+        %integer value
+        %shortinteger ch1,ch2,flag
+
+        printstring("Start dumpkdict"); newline
+        %for i = 32, 1,max kdict %cycle
+            value = kdict(i)
+
+            printstring("kdict[".itos(i,3)."] = ")
+
+            %if value&16_8000 # 0 %start
+                printstring(" FLAG15 ")
+            %else
+                printstring("        ")
+            %finish
+
+            %if value&16_4000 # 0 %start
+                printstring(" FLAG14 ")
+            %else
+                printstring("        ")
+            %finish
+			
+            ch1 = value & 16_7f
+            ch2 = (value >> 7) & 16_7f
+
+            printstring(" ch2=")
+            showsymbol( ch2 )
+
+            printstring(" ch1=")
+            showsymbol( ch1 )
+
+            newline
+
+        %repeat
+        newline
+
+    %end
+
+    dumpText
+    dumpPhrase
+    dumpAtomic
+    dumpInitial
+    dumpGram
+    dumpGLink
+    dumpkdict
+
+%endofprogram

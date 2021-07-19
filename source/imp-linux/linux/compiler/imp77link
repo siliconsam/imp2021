@@ -1,0 +1,21 @@
+#! /bin/bash
+
+BINDIR=/usr/local/bin
+LIBDIR=/usr/local/lib
+IMPLIB=${LIBDIR}/libimp77.a
+LDSCRIPT=ld.i77.script
+
+line="gcc -m32 -o $1"
+
+for var in "$@"
+do
+    compile="imp77 -c -Fc -Fs -Fi $var.imp"
+    eval $compile
+
+    line=" $line $var.o"
+done
+
+line="$line ${IMPLIB} -lm -T $BINDIR/$LDSCRIPT"
+
+eval $line
+

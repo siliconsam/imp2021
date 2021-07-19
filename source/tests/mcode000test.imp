@@ -1,0 +1,18 @@
+%begin
+
+    %external %integer %function %spec mcode000( %integer number )
+    %external %routine %spec dumpalltrapinfo
+
+    %integer i
+    %integer fred
+
+    %for i = 5,5,20 %cycle
+        fred = mcode000( i )
+
+        debugstring( "fred('".itos(i,0)."')='".itos(fred,0)."'"); debugnewline
+    %repeat
+
+    dumpalltrapinfo
+
+%endofprogram
+

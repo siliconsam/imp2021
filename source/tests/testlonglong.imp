@@ -1,0 +1,9 @@
+%begin
+  %constant %long %long %integer bilbo = 2 << 34
+
+  %long %long %integer fred
+
+  fred = bilbo
+  printstring("Addr(fred)=(0x'".int2ascii(addr(fred),16,0)."') fred='".int2ascii(fred,10,0)."'");newline
+
+%endofprogram

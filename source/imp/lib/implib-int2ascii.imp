@@ -1,0 +1,70 @@
+{----------------------------------------------------------------------------}
+    %external %string(255) %function int2ascii( %integer nn, base, places )
+
+        %own %string(36) basechar = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        %string(255) reversed, human
+        %integer n, np, r, i, negative;
+
+        ! Validate the number base
+        ! Since basechar has from 1 to 36 characters, we can only output numbers
+        ! to base 2 thru 36. Of course if we add more characters then ...
+        ! NB a number to base 1 cannot sensibly be displayed
+        %if (base < 2) %then base = 10
+        %if (base > 36) %then base = 10
+
+        length(reversed) = 0
+        n = nn
+        %if (n = 0) %start
+            r = 0
+            ! string index starts at 1 - but r starts from 0
+            ! so if r = 0 we want char 1 in the "basechar" string etc...
+            length(reversed) = length(reversed) + 1
+            charno(reversed,length(reversed)) = charno(basechar,r + 1)
+        %else
+            ! Now to avoid problems with -MAXINT
+            %if (n > 0) %start
+                negative = 0
+                n = -n
+            %else
+                negative = 1
+            %finish
+
+            %while (n < 0) %cycle
+                np = n // base
+                r = (np * base) - n
+                ! string index starts at 1 - but r starts from 0
+                ! so if r = 0 we want char 1 in the "basechar" string etc...
+                length(reversed) = length(reversed) + 1
+                charno(reversed,length(reversed)) = charno(basechar,r + 1)
+                n = np
+            %repeat
+
+            %if (negative > 0) %start
+                length(reversed) = length(reversed) + 1
+                charno(reversed,length(reversed)) = '-'
+            %finish
+        %finish
+
+        ! Now we adjust Places, also slightly mysteriously
+        %if places <= 0 %then places = -places %else places = places + 1
+
+        ! Pad out the digits with blank spaces if places more than actual number of 'digits'
+        %if (places > length(reversed)) %start
+            %while length(reversed) < places %cycle
+                length(reversed) = length(reversed) + 1
+                charno(reversed,length(reversed)) = ' '
+            %repeat
+        %finish
+
+        ! Now reverse the digits for human readability.
+        length(human) = 0
+        %for i = length(reversed), -1, 1 %cycle
+            length(human) = length(human) + 1
+            charno(human,length(human)) = charno( reversed, i )
+        %repeat
+
+        %result = human
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

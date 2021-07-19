@@ -1,0 +1,68 @@
+%begin
+    %const %integer amax = 3
+    %const %integer max = 8
+
+    %record %format x ( %record(x) %name link, ( %byte %integer %array a(0:amax) %or %integer b ) )
+    %record(x) %name rxx,ryy
+    %integer i
+
+!    char *buffer;
+!    buffer = malloc(512);          // ask for 512 bytes of memory
+!    if (buffer==NULL) return -1;   // if no more memory available
+!    ...
+!    free(buffer);                  // return the memory again
+
+    %routine dumpx ( %record(x) %name p )
+        %integer i
+
+        %if (p == nil) %start
+            print string ( " sizeof(p) ='".int2ascii(0,16,8)."'" )
+        %else
+            print string ( " sizeof(p) ='".int2ascii(sizeof(p),16,8)."'" )
+        %finish
+
+        %if (p == nil) %start
+            print string ( " p ='".int2ascii(0,16,8)."'" )
+        %else
+            print string ( " p ='".int2ascii(addr(p),16,8)."'" )
+        %finish
+
+        %if (p_link == nil) %start
+            print string ( " p_link ='".int2ascii(0,16,8)."'" )
+        %else
+            print string ( " p_link ='".int2ascii(addr(p_link),16,8)."'" )
+        %finish
+
+        print string ( " p_b = ".itos( p_b, 0 ) )
+        spaces(4)
+        %for i = 0,1,amax %cycle
+            print string ( " a(".itos( i , 0 ).") == ".itos( p_a( i ), 0 ) )
+        %repeat
+        newline
+    %end
+
+    print string ( "Now to allocate memory" ); newline
+    !start with an empty queue
+    rxx == nil
+    %for i = 0,1,max - 1 %cycle
+        ! create a new heap entry
+        ryy == new ( ryy )
+        ryy_b = i
+
+        ! insert entry at front of queue
+        ryy_link == rxx
+        rxx == ryy
+        ! dump the queue head entry (just created)
+        dumpx ( rxx )
+    %repeat
+
+    print string ( "Now to free memory" ); newline
+    %while (rxx ## nil) %cycle
+        ryy == rxx
+        rxx == rxx_link
+        dumpx ( ryy )
+
+        %if (ryy ## nil) %then dispose( ryy )
+    %repeat
+
+%end %of %program

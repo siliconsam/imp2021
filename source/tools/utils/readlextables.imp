@@ -1,0 +1,147 @@
+%begin
+
+  { grammar related constants }
+  %constinteger max grammar  = 1720
+  %constinteger manifest = 120, figurative = 130
+  %constinteger actions  = 180, phrasal    = 200
+
+  %integer i,j,k
+  %integer x
+
+  %include "inc.ascii"
+
+  !*** start of generated tables ***
+  %include "i77.tables.imp"
+  !***  end  of generated tables ***
+
+  %routine showchar( %integer c )
+    %integer x
+
+    x = c & 127
+    printstring( asciichar(x) )
+  %end
+
+  !  FLAG<1> 0<1> SS<2> 0<3> T<1> LINK<8>
+  printstring( "Initial Table" ); newline
+  %for i=0,1,(manifest - 1) %cycle
+    %if initial(i) # 0 %start
+      x = initial(i)
+      printstring( " ".text(i)." =>")
+      printstring( " flag=".itos( (x >>15) & 1,1))
+      printstring( " o=".itos((x >>14) & 1 ,1) )
+      printstring( " ss=".itos( (x >> 12) & 3, 1 ) )
+      printstring( " o3=".itos( (x >> 9) & 7, 1 ) )
+      printstring( " t=".itos( (x >> 8) & 1, 1 ) )
+      printstring( " link=".itos( (x & 255), 3 ) )
+      newline
+    %finish
+  %repeat
+  newline
+
+  printstring( "Phrase Table" ); newline
+  %for i=phrasal,1,255 %cycle
+    %if phrase(i) # 0 %start
+      printstring( "phrase '".text(i)."' == ".itos(phrase(i),3) )
+      newline
+    %finish
+  %repeat
+  newline
+
+  !  MORE<1> 0<1> ORDER<2> TYPE<4> CLASS<8>
+  printstring( "Grammar Table" ); newline
+  %for i=0,1,gmax1 %cycle
+    x = gram(i)
+    printstring( " gram(".itos(i,3).")=>")
+    printstring( " m=".itos( (x >> 15) & 1, 1 ) )
+    printstring( " o=".itos( (x >> 14) & 3, 1 ) )
+    printstring( " order=".itos( ((x >> 12) & 3), 1 ) )
+    printstring( " type=".itos( ((x >> 8) & 15), 2 ) )
+    printstring( " class=".text( (x & 255) ) )
+    printstring( " link=".itos( glink(i), 3 ));
+    newline
+  %repeat
+  newline
+
+!  %for i=0,1,gmax1 %cycle
+!    j = i
+!    printstring( "'".text( gram(j) & 255 )."'" )
+!    %while glink(j) > 0 %cycle
+!      printstring( " '".text( gram(glink(j)) & 255 )."'" )
+!      j = glink(j)
+!    %repeat
+!    newline
+!  %repeat
+
+  ! Keyword dictionary
+  %integer atom1,atom2,subatom
+  printstring( "KDict Table" ); newline
+  %for i=32,1,618 %cycle
+    x = kdict(i)
+    printstring( " kdict(".itos(i,3).")=>")
+
+    %if 31 < i < 128 %start
+      printstring( " startchar=" ); showchar( i )
+
+      printstring( " mappedchar=" )
+      %if (mapped( i ) = 0) %start
+        showchar( 32 )
+      %finish %else %if (mapped( i ) = 1) %start
+        printstring( "%  " )
+      %finish %else %if (mapped( i ) = 2) %start
+        printstring( "!  " )
+      %finish %else %if (mapped( i ) = 3) %start
+        printstring( "FF " )
+      %finish %else %start
+        showchar( mapped( i ) )
+      %finish
+
+      printstring( " flag15=".itos( (x & 16_8000) >> 15 , 1) )
+      printstring( " flag14=".itos( (x & 16_4000) >> 14 , 1) )
+
+      printstring( " atom1=" ); showchar( x )
+      printstring( " atom2=" ); showchar( x >> 7 )
+      printstring( " subatom=".itos( kdict(i+1)&16_3fff , 5) )
+
+    %finish %else %start
+
+      %if (x = 0) %start
+        printstring( " ACCEPT TOKEN?" )
+      %finish %else %if ((x & 16_4000)>>14 = 1) %start
+        printstring( " flag15=".itos( (x & 16_8000) >> 15 , 1) )
+        printstring( " flag14=".itos( (x & 16_4000) >> 14 , 1) )
+
+        %if x&127 = 0 %start
+          ! char1 == comma
+          ! char2 == nul
+          ! subatom == comma
+          printstring( " atom1=" ); showchar( 44 )
+          printstring( " atom2=" ); showchar( x >> 7 )
+          printstring( " subatom=".itos( 19 , 5) )
+        %finish %else %start
+          printstring( " atom1=" ); showchar( x )
+          printstring( " atom2=" ); showchar( x >> 7 )
+          printstring( " subatom=".itos( kdict(i+1)&16_3fff , 5) )
+        %finish
+
+      %finish %else %start
+        printstring( " flag15=".itos( (x & 16_8000) >> 15 , 1) )
+        printstring( " flag14=".itos( (x & 16_4000) >> 14 , 1) )
+
+        printstring( " atom1=" ); showchar( x )
+        printstring( " atom2=" ); showchar( x >> 7 )
+
+        %if (((x & 16_8000) >> 15) = 1) %start
+          printstring( " error if char # atom1")
+        %else %if (x>>7&127 # 0)
+          printstring( " error if lookaheadchar # atom2")
+        %else
+          printstring( " check next entry" )
+        %finish
+      %finish
+
+    %finish
+    newline
+  %repeat
+  newline
+
+%endofprogram

@@ -1,0 +1,174 @@
+! PRIMS must NOT be changed in order...
+! These are internal MACRO's within the pass2 phase of the compiler
+%prim     %integer       %fn  %spec		rem( %integer p,q )
+%prim     %real          %fn  %spec		float( %integer n )
+%prim     %string(1)     %fn  %spec		tostring( %integer c )
+%prim     %integer       %fn  %spec		addr( %name p )
+%prim     %integer       %map %spec		integer( %integer n )
+%prim     %byte %integer %map %spec		byteinteger( %integer n )
+%prim     %string(*)     %map %spec		string( %integer n )
+%prim     %record(*)     %map %spec		record( %integer n )
+%prim     %real          %map %spec		real( %integer n )
+%prim     %long %real    %map %spec		longreal( %integer n )
+%prim     %byte %integer %map %spec		length( %string(255) s )
+%prim     %byte %integer %map %spec		charno( %string(255) s,%integer n )
+%prim     %integer       %fn  %spec		typeof( %name n )
+%prim     %integer       %fn  %spec		sizeof( %name n )
+%prim     %integer       %fn  %spec		int( %longreal r )
+
+! Remaining routines are included within the IMP RTL
+
+! Event handler routines
+%const    %integer                      max event = 16
+%external %integer       %fn  %spec 	event
+%external %integer       %fn  %spec 	subevent
+%external %integer       %fn  %spec 	eventinfo
+
+! Event handler routines (implemented in Imp)
+%external %integer       %fn  %spec 	get event
+%external %integer       %fn  %spec 	get eventsub
+%external %integer       %fn  %spec 	get eventinfo
+%external %routine            %spec     get eventmessage( %string(*) %name message )
+
+! Starting point for Seek Input, Seek Output random access routines
+%const    %integer from start   = 0
+%const    %integer from current = 1
+%const    %integer from end     = 2
+! General I/O routines (implemented in C)
+! File I/O routines
+! Input routines
+%external %integer       %fn  %spec		Input Stream
+%external %string(255)   %fn  %spec		Input Name
+%external %routine            %spec		Select Input( %integer  n )
+%external %routine            %spec		Open Input( %integer  n, %string(255) fd )
+%external %routine            %spec		Open Binary Input( %integer  n, %string(255) fd )
+%external %routine            %spec		Close Input
+%external %routine            %spec		Reset Input
+%external %routine            %spec		Seek Input( %integer displacement, %integer start point)
+%external %integer       %fn  %spec     Tell Input
+%external %routine            %spec		Read Symbol( %integername p )
+%external %integer       %fn  %spec		Next Symbol
+%external %integer       %fn  %spec     Read Buffer( %name ptr, %integer count )
+%external %routine            %spec		Set Prompt( %string(31) S )
+
+! Output routines
+%external %integer       %fn  %spec		Output Stream
+%external %string(255)   %fn  %spec		Output Name
+%external %routine            %spec		Select Output( %integer  n )
+%external %routine            %spec		Open Output( %integer  n,%string(255) fd )
+%external %routine            %spec		Open Binary Output( %integer  n,%string(255) fd )
+%external %routine            %spec		Close Output
+%external %routine            %spec		Reset Output
+%external %routine            %spec		Seek Output( %integer displacement, %integer start point)
+%external %integer       %fn  %spec     Tell Output
+%external %routine            %spec		Print Symbol( %integer sym )
+%external %integer      %fn   %spec     Write Buffer( %name ptr, %integer count )
+%external %routine            %spec		Print Real( %longreal d )
+%external %routine            %spec		Debug Symbol( %integer sym )
+%external %routine            %spec		Debug Real( %longreal d )
+
+! Core routines implemented in IMP
+%external %routine            %spec		skip symbol
+%external %routine            %spec		print string( %string(255)  s )
+%external %routine            %spec		debug string( %string(255)  s )
+%external %routine            %spec		debug newline
+%external %routine            %spec     debug space
+%external %routine            %spec     debug spaces( %integer count)
+%external %routine            %spec		write( %integer  v,p )
+%external %routine            %spec		space
+%external %routine            %spec		spaces( %integer  n )
+%external %routine            %spec		newline
+%external %routine            %spec		newlines( %integer n )
+%external %routine            %spec		print( %longreal r, %integer places )
+%external %integer       %fn  %spec		int pt( %longreal r )
+%external %routine            %spec		to upper( %string(*)%name s )
+%external %routine            %spec		to lower( %string(*)%name s )
+%external %string(255)   %fn  %spec		I to S( %integer n, places )
+%external %routine            %spec		read( %name ptr )
+%external %string(255)   %fn  %spec		sub string( %string(255) s, %integer from, to )
+%external %string(255)   %fn  %spec		trim( %string(255) s, %integer max )
+
+%constant %integer                      nl=10
+%constant %integer                 		eof=-1
+%constant %integer                      Max Len Imp String = 255
+%constant %integer                      File Sep = '='
+
+! Debug definitions
+%constant %integer                      lvlprog = 0
+%constant %integer                      lvlmain = 1
+%constant %integer                      lvllib  = 2
+%constant %integer                      lvlio   = 3
+%constant %integer                      lvlevnt = 4
+%constant %integer                      lvlcore = 5
+%constant %integer                      lvlprim = 6
+%constant %integer                      lvltrap = 7
+
+%constant %integer                      dbgoff  = 0
+%constant %integer                      dbgprog = 1 << lvlprog  ;! dbgprog =  1
+%constant %integer                      dbgmain = 1 << lvlmain  ;! dbgmain =  2
+%constant %integer                      dbglib  = 1 << lvllib   ;! dbglib  =  4
+%constant %integer                      dbgio   = 1 << lvlio    ;! dbgio   =  8
+%constant %integer                      dbgevnt = 1 << lvlevnt  ;! dbgevnt = 16
+%constant %integer                      dbgcore = 1 << lvlcore  ;! dbgcore = 32
+%constant %integer                      dbgprim = 1 << lvlprim  ;! dbgprim = 64
+%constant %integer                      dbgtrap = 1 << lvltrap  ;! dbgprim =128
+
+%external %routine            %spec     Set Debug
+%external %routine            %spec     Clear Debug
+%external %integer       %fn  %spec		Debug Mode
+%external %routine            %spec     Set Debug Level( %integer level )
+
+! multi-number base version of I to S (number base in range 2..36)
+%external %string(255)   %fn  %spec		int2ascii( %integer nn, base, places )
+! Enhanced version of int2ascii which indicates number base before the number
+%external %string(255)   %fn  %spec		formatNumber( %integer n,base,places)
+
+! Experimental library routines in IMP (calling external C routines)
+! nil needed for heap routine record manipulation and comparison
+%const    %record(*)          %name 	nil == 0
+%external %record(*)     %map %spec		new( %name template )
+%external %routine            %spec		dispose( %name template )
+
+! Example routines to provide limited mathematical functions
+%external %long %real    %fn  %spec		sine( %longreal r )
+%external %long %real    %fn  %spec		cosine( %longreal r )
+
+! Routines to access the environment variables (implemented in IMP)
+%external %integer       %fn  %spec     getenvcount
+%external %string(255)   %fn  %spec     getenvname( %integer index )
+%external %string(255)   %fn  %spec     getenv( %integer index )
+%external %integer       %fn  %spec     getenvindex( %string(255) varname )
+
+! Routines to access the command line parameters (implemented in IMP)
+%external %integer       %fn  %spec     getargcount
+%external %string(255)   %fn  %spec     getarg( %integer index )
+! NB getarg(0) == prog name
+!    getarg(i) == i'th parameter
+!    last command line parameter has index = getargcout - 1
+
+! External Library routines acting as interfaces to C routines
+! External routines provided by the O/S
+! Usually implemented in C
+! Remember the IMP routine spec reverses the order of the C routine spec
+! Specification of how to call remaining C run-time library file I/O routines
+%external %integer       %fn  %spec     get error
+%external %integer       %fn  %spec     getstderrhandle
+%external %integer       %fn  %spec     getstdinhandle
+%external %integer       %fn  %spec     getstdouthandle
+%external %routine            %spec     put double( %integer handle, %long %real d )
+
+%external %integer       %fn  %spec     openfile( %integer mode address, %integer file name address )
+%external %integer       %fn  %spec     tell( %integer handle )
+%external %routine            %spec     file rewind( %integer handle )
+%external %routine            %spec     file seek( %integer handle, displacement, pos )
+%external %routine            %spec     close( %integer handle )
+%external %integer       %fn  %spec     readbytes( %integer handle, count, itemsz, %byte %name buffer )
+%external %integer       %fn  %spec     writebytes( %integer handle, count, itemsz,%byte %name buffer )
+%external %integer       %fn  %spec     get char( %integer handle )
+%external %routine            %spec     put char( %integer handle,ch )
+%external %routine            %spec     flush( %integer handle )
+
+! Additional C utility routines to exit program
+%external %routine            %spec     exit( %integer status )
+
+%endofperm

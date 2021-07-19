@@ -1,0 +1,51 @@
+%begin
+    %include "inc.test.external"
+
+    init;
+
+    %externalrecord(Eventfm)%spec ASHANTI %alias "_XASHANTI"
+
+    %integer E, S, X
+    %string(255) sm
+    %integer i
+	
+    E = ASHANTI_Event
+    S = ASHANTI_Sub
+    X = ASHANTI_Extra
+
+    debugstring( "Reading Event data via functions" ); debugnewline
+    debugstring( "Event: ".itos(E,0)." Sub: ".itos(S,0)." Extra: ".itos(X,0) ); debugnewline
+
+    sm = GetMessage
+    debugstring( "Reading Event message via functions" ); debugnewline
+    debugstring( "Message: '".sm."'" ); debugnewline
+
+    SetEvent( 101 )
+    SetSub( 103 )
+    SetExtra( 107 )
+
+    E = ASHANTI_Event
+    S = ASHANTI_Sub
+    X = ASHANTI_Extra
+
+    debugstring( "Reading Event data via functions" ); debugnewline
+    debugstring( "Event: ".itos(E,0)." Sub: ".itos(S,0)." Extra: ".itos(X,0) ); debugnewline
+
+    sm = "Oops!"
+    SetMessage( String(addr(sm)) )
+
+    sm = GetMessage
+    debugstring( "Reading Event message via functions" ); debugnewline
+    debugstring( "Message: '".sm."'" ); debugnewline
+
+    %for i = 0,1,20 %cycle
+        sm = "Oops again!"
+        SetMessage( String(addr(sm)) )
+
+        sm = ASHANTI_Message
+        debugstring( "Reading Event message via functions" ); debugnewline
+        debugstring( "Message: '".sm."' with length ".itos(GetMsgLen,0) ); debugnewline
+    %repeat
+
+%end %of %program
+

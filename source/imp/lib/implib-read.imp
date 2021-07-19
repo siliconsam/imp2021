@@ -1,0 +1,146 @@
+{----------------------------------------------------------------------------}
+    ! General Imp READ routine
+    ! Copyright 2002 NB Information Limited
+    ! Enhanced JD McMullin 2021
+
+    ! Types extracted from general names
+    ! Curious naming strategy because we don't want to clobber
+    ! the built-in functions and maps like "integer" or "int"
+    %constinteger  intgr  = 1
+    %constinteger  float  = 2
+    %constinteger  strng  = 3
+    %constinteger  byte   = 6
+    %constinteger  double = 8
+
+    ! Limits
+    %constinteger  MaxInt = ((-1)>>1)
+    %constinteger  MaxByte = 255
+    %constlongreal MaxFloat = 3.3@38
+
+    %external %routine Read( %name ptr)
+        %string(255)  s
+        %integer ch
+        %integer sign, digit, len, adr, type, base, found
+        %longreal  r, exp, frac
+        ! following variables used when copying %string s into %name ptr
+        %byte %name dst,src
+        %integer i
+
+        len = size of(ptr)
+        adr = addr(ptr)
+        type = type of(ptr)
+
+        %unless intgr <= type <= strng %or type = byte %or type = double %start
+            %signal 5,5,type
+        %finish
+
+        ! skip white space
+        skip symbol %while next symbol = ' ' %or next symbol = 8 %or next symbol = NL %or next symbol = 13
+
+        %if type = strng %start
+            length(s) = 0
+            %cycle
+                ch = next symbol
+                %exit %if ch = ' ' %or ch = NL %or ch = 8
+                length(s) = length(s) + 1
+                charno(s,length(s)) = ch
+                skip symbol
+            %repeat
+
+            %signal 6,1 %if length(s) > len
+
+            ! Now to put the string just "read", into the variable specified
+            %for i = 0,1,length(s) %cycle
+                dst == byteinteger( adr + i )
+                src == byteinteger( addr(s) + i )
+                dst = src
+            %repeat
+
+            %return
+        %finish
+
+        ! The rest (int/real/byte/lreal) all expect a number
+        ! We collect it in a longreal so that we can correctly read
+        ! an integer into a real that is bigger than MaxInt
+        base = 10
+        sign = 0
+
+        readsymbol(sign) %if next symbol = '-' %or next symbol = '+'
+
+        %cycle
+            r = 0
+            found = 0
+
+            %cycle
+                ch = next symbol
+                %if '0' <= ch <= '9' %start
+                    digit = ch - '0'
+                %else %if 'A' <= ch & 95 <= 'Z'
+                    digit = ch & 95 - 'A' + 10
+                %finish %else %exit
+                %exit %if digit >= Base
+                found = 1
+                skip symbol
+                r = r * Base + digit
+            %repeat
+
+            %exit %if ch # '_' %or r = 0
+
+            base = int(r)
+            skipsymbol
+        %repeat
+
+        ! here we've got an integer in R - if that's what we want, exit now
+        %if type = intgr %or type = byte %start
+
+            %signal 3,1,ch %if found = 0; ! no digits?  Then report the char we found
+
+            %if type = intgr %start
+                %if r > MaxInt %then %signal 1,1
+                %if sign = '-' %then r = -r
+                integer(adr) = int(r)
+            %else
+                %if r > MaxByte %or sign = '-' %then %signal 1,1
+                byte integer(adr) = int(r)
+            %finish
+            %return
+        %finish
+
+        ! If we're still here, we are collecting a floating point number
+        %if ch = '.' %start
+            skip symbol
+            frac = 0
+            exp = 10
+
+            %cycle
+                ch = next symbol
+                %exit %unless '0' <= ch <= '9'
+                frac = frac + (ch - '0')/exp
+                exp = exp*10
+                found = 1
+                skip symbol
+            %repeat
+
+            r = r + frac
+        %finish
+
+        ! We should really worry about @Exponent at this point...
+        ! ... add that to the to-do list!
+
+        %signal 3,1,ch %if found = 0
+
+        %if type = float %and r > MaxFloat %then %signal 1,2
+
+        %if sign = '-' %start
+            r = -r
+        %finish
+
+        %if type = float %start
+            real(adr) = r
+        %else
+            long real(adr) = r
+        %finish
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

@@ -1,0 +1,14 @@
+
+	%recordformat Eventfm(%integer Event, Sub, Extra, Ra, Fp, Sb,%string(255) Message)
+	%external	%routine			%spec init			%alias "_LL_INIT"
+	%external	%integer		%fn	%spec GetEvent		%alias "_GETEVENT"
+	%external	%integer		%fn	%spec GetSub		%alias "_GETSUB"
+	%external	%integer		%fn	%spec GetExtra		%alias "_GETEXTRA"
+	%external	%integer		%fn	%spec GetMsgLen		%alias "_GETMSGLEN"
+	%external	%string(255)	%fn	%spec GetMessage	%alias "_GETMESSAGE"
+	%external	%routine			%spec SetEvent		%alias "_SETEVENT"		( %integer e )
+	%external	%routine			%spec SetSub		%alias "_SETSUB"		( %integer s )
+	%external	%routine			%spec SetExtra		%alias "_SETEXTRA"		( %integer e )
+	%external	%routine			%spec SetMessage	%alias "_SETMESSAGE"	( %string(*) %name m )
+
+%endoffile

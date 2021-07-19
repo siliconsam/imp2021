@@ -1,0 +1,52 @@
+! Code to read records from the IMP compiler intermediate code
+
+! Record format is:
+! <type><length><data>
+! For debug purposes, the elements are all written as ascii
+! hex characters, where <type> and <length> are each a single
+! digit, length refers to the number of bytes (2 chars) of data.
+
+! define the layout of ibj records
+%record %format ibj record (%byteinteger ibj type, %string(255) ibj data)
+
+%integerfn readnibble
+  %integer c
+
+  readsymbol( c );
+  %result = -1 %if (c < 0)
+  %result = c - '0' %if '0' <= c <= '9'
+  %result = c + (10 - 'A') %if 'A' <= c <= 'F'
+  %result = 0
+%end
+
+%external %record(ibj record)%fn readifrecord
+  %record(ibj record) fred
+  %integer t, l, i, j, c, c1, c2
+
+  fred_ibj type = -1
+  fred_ibj data = ""
+
+  %cycle
+    readsymbol( t )
+  %repeat %until (t < 0) %or ('A' <= t <='Z')
+
+  %result = fred %if (t < 0)
+
+  t = t - 'A'
+  l = (readnibble << 4) ! readnibble
+
+  %result = fred %if (l < 1) %or (l > 255)
+
+  %for i = 1, 1, j %cycle
+    c1 = readnibble
+    c2 = readnibble
+    %result = fred %if ((c1 < 0) %or (c2< 0)); { end of file }
+    fred_ibj data = fred_ibj data.tostring( (c1<<4) ! c2 )
+  %repeat
+
+  fred_ibj type = t
+
+  %result = fred
+%end
+
+%endoffile

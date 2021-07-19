@@ -1,0 +1,65 @@
+%begin
+  %integer i,j,k
+  %integer x
+
+  %constinteger max grammar  = 1720
+  { grammar related constants }
+  %constinteger manifest = 120, figurative = 130
+  %constinteger actions  = 180, phrasal    = 200
+
+  !*** start of generated tables ***
+  %include "i77.tables.imp"
+  !***  end  of generated tables ***
+
+  !  FLAG<1> 0<1> SS<2> 0<3> T<1> LINK<8>
+  printstring( "Initial Table" ); newline
+  %for i=0,1,(manifest - 1) %cycle
+    %if initial(i) # 0 %start
+      x = initial(i)
+      printstring( " ".text(i)." =>")
+      printstring( " flag=".itos( (x >>15) & 1,1))
+      printstring( " o=".itos((x >>14) & 1 ,1) )
+      printstring( " ss=".itos( (x >> 12) & 3, 1 ) )
+      printstring( " o3=".itos( (x >> 9) & 7, 1 ) )
+      printstring( " t=".itos( (x >> 8) & 1, 1 ) )
+      printstring( " link=".itos( (x & 255), 3 ) )
+      newline
+    %finish
+  %repeat
+  newline
+
+  printstring( "Phrase Table" ); newline
+  %for i=phrasal,1,255 %cycle
+    %if phrase(i) # 0 %start
+      printstring( "phrase '".text(i)."' == ".itos(phrase(i),3) )
+      newline
+    %finish
+  %repeat
+  newline
+
+  !  MORE<1> 0<1> ORDER<2> TYPE<4> CLASS<8>
+  printstring( "Grammar Table" ); newline
+  %for i=0,1,gmax1 %cycle
+    x = gram(i)
+    printstring( " gram(".itos(i,3).")=>")
+    printstring( " m=".itos( (x >> 15) & 1, 1 ) )
+    printstring( " o=".itos( (x >> 14) & 3, 1 ) )
+    printstring( " order=".itos( ((x >> 12) & 3), 1 ) )
+    printstring( " type=".itos( ((x >> 8) & 15), 2 ) )
+    printstring( " class=".text( (x & 255) ) )
+    printstring( " link=".itos( glink(i), 3 ));
+    newline
+  %repeat
+  newline
+
+!  %for i=0,1,gmax1 %cycle
+!    j = i
+!    printstring( "'".text( gram(j) & 255 )."'" )
+!    %while glink(j) > 0 %cycle
+!      printstring( " '".text( gram(glink(j)) & 255 )."'" )
+!      j = glink(j)
+!    %repeat
+!    newline
+!  %repeat
+
+%endofprogram

@@ -1,0 +1,907 @@
+!Revision history:
+! 001 23-Jun-88 PSR Adjusted SWJUMP to skip extra debugger word
+!                   and jump from the in-line code
+
+%constinteger R0=0,   R1=1,   R2=2,   R3=3,   R4=4,   R5=5,   R6=6,   R7=7,
+              R8=8,   R9=9,  R10=10, R11=11, R12=12, R13=13, R14=14, R15=15,
+              Sb=R9,  Fp=R10, Sp=R12, Pc=R15, Link=R14
+
+%constinteger F0 = 16+0, F1 = 16+1
+
+%externalroutinespec Call Signal %alias "3L___signal"
+
+%permroutine SIGNAL
+   {Corrupts everything}
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine ASSTEST      {already checked}
+   *MOV _ R1, #8
+   *MOV _ R2, #1
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine RTMONITOR
+   {Corrupts everything}
+   *MOV _ R1, #4
+   *MOV _ R2, #0
+   *MOV _ R3, #7
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine SWJUMP
+   {Corrupts everything}
+   {WARNING -- pass3 assumes that SWJUMP+24 is the error routine}
+   {           for missing switch labels}
+   {Link points at disp of switch vector from info vector}
+   *BIC   _ Link, Link, #16_FC00 0000 {clear top bits}
+   *LDR   _ R2, [Link, #4]            {address of switch vector} {001}
+   *LDMIA _ R2!, <R4, R5>             {R4=UB, R5=LB}
+   *CMPS  _ R4, R1
+   *SUBGES_ R5, R1, R5
+!!!*LDRGE _ Pc, [R2, R5, %LSL #2]     {jump there}
+   *MOVGE _ Pc, Link                  {return to LDR_Pc,[R2,R5,%LSL #2]}
+   {out of range}
+   {*** missing switch labels come here too - KNOWN TO PASS3 ***}
+   *MOV   _ R3, R1        {index}
+   *MOV   _ R2, #4        {SUB}
+   *MOV   _ R1, #6        {EVENT, switch label error}
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine PRIMDIV               {signed divide}
+   {Corrupts: 012345}
+   {R1//R2, Quo=R0, Rem=R1}
+   %label L0, L1, L2
+   *CMPS   _ R2, #0
+   *BNE    _ L0
+   *MOV _ R1, #14;  *MOV _ R2, #2;  *MOV _ R3, #0
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+L0:*MOV    _ R4, #1                {result sign}
+   *RSBLT  _ R2, R2, #0            {R2 = |R2|}
+   *RSBLT  _ R4, R4, #0            {invert result sign}
+   *ADDS   _ R5, R1, #0            {preserve Dividend & test sign}
+   *RSBLT  _ R1, R1, #0            {R1 = |R1|}
+   *RSBLT  _ R4, R4, #0            {invert result sign}
+   *MOV    _ R3, #1
+L1:*CMPS   _ R2, #16_80000000
+   *CMPCCS _ R2, R1
+   *MOVCC  _ R2, R2, %LSL #1
+   *MOVCC  _ R3, R3, %LSL #1
+   *BCC    _ L1
+   *MOV    _ R0, #0
+L2:*CMPS   _ R1, R2
+   *SUBCS  _ R1, R1, R2
+   *ADDCS  _ R0, R0, R3
+   *MOVS   _ R3, R3, %LSR #1
+   *MOVNE  _ R2, R2, %LSR #1
+   *BNE    _ L2
+   {now adjust signs of quotient & remainder}
+   *CMPS   _ R4, #0
+   *RSBLT  _ R0, R0, #0         {negate quotient}
+   *CMPS   _ R5, #0
+   *RSBLT  _ R1, R1, #0         {negate remainder}
+   *MOV    _ Pc, Link
+%end
+
+%permroutine PRIMUDIV         {unsigned divide}
+   {Corrupts: 0123}
+   {R1//R2, Quo=R0, Rem=R1}
+   %label L0, L1, L2
+   *CMPS   _ R2, #0
+   *BNE    _ L0
+   *MOV _ R1, #14;  *MOV _ R2, #2;  *MOV _ R3, #0
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+L0:*MOV    _ R3, #1
+L1:*CMPS   _ R2, #16_80000000
+   *CMPCCS _ R2, R1
+   *MOVCC  _ R2, R2, %LSL #1
+   *MOVCC  _ R3, R3, %LSL #1
+   *BCC    _ L1
+   *MOV    _ R0, #0
+L2:*CMPS   _ R1, R2
+   *SUBCS  _ R1, R1, R2
+   *ADDCS  _ R0, R0, R3
+   *MOVS   _ R3, R3, %LSR #1
+   *MOVNE  _ R2, R2, %LSR #1
+   *BNE    _ L2
+   *MOV    _ Pc, Link
+%end
+
+%permroutine SCONC
+   {Corrupts: 2345}
+   {R3 = address of string to be added}
+   {R2 = address of destination first character}
+   {R0 is locked}
+   %label L1
+   *LDRB   _ R4, [R3], #1         {length of new bit}
+L1:*SUBS   _ R4, R4, #1
+   *LDRGEB _ R5, [R3], #1       {next character}
+   *STRGEB _ R5, [R2], #1       {plug it into destination}
+   *BGT    _ L1
+   *MOV    _ Pc, Link
+%end
+
+%permroutine SCOMP
+   {Corrupts: 123456}
+   {R1 = address of LHS}
+   {R2 = address of RHS}
+   %label S1, S2
+   *LDRB  _ R3, [R1], #1
+   *LDRB  _ R4, [R2], #1
+   *SUBS  _ R3, R3, R4
+   *ADDLT _ R4, R3, R4        {r4 is now the minimum length}
+S1:*SUBS  _ R4, R4, #1
+   *BLT   _ S2                {common bits the same - use R3 for answer}
+   *LDRB  _ R5, [R1], #1
+   *LDRB  _ R6, [R2], #1
+   *CMPS  _ R5, R6
+   *BEQ   _ S1
+   *MOV   _ Pc, Link          {characters differ, return CC}
+S2:*CMPS  _ R3, #0            {set CC on difference in lengths}
+   *MOV   _ Pc, Link          {return}
+%end
+
+%permroutine CSCOMP
+   {Corrupts: 0}
+   {R2 = address of LHS - a string}
+   {R1 = single character}
+   %label L1
+   *LDRB  _ R0, [R2]           {length of string}
+   *CMPS  _ R0, #1
+   *MOVLT _ Pc, Link           {compare against null - return LT}
+   *LDRB  _ R0, [R2, #1]       {first character}
+   *BEQ   _ L1
+   *CMPS  _ R0, R1
+   *MOVNE _ Pc, Link
+   *MOV   _ R0, #256           {to give >}
+L1:*CMPS  _ R0, R1             {lengths the same}
+   *MOV   _ Pc, Link           {return}
+%end
+
+%permroutine SRES
+   {Corrupts: 012345678}
+   {R1 = address of string to be searched}
+   {R2 = address of pattern}
+   {Returns CC=EQ on success, CC=NE on failure}
+   {left  fragment = @R1 length R7}
+   {right fragment = @R3, length R6}
+   %label L1, L2, L3
+   *LDRB  _ R7, [R1], #1         {length of source}
+   *LDRB  _ R3, [R2], #1         {length of pattern}
+   *MOVS  _ R6, R3               {test the length}
+   *MOVEQ _ Pc, Link             {null pattern -> success}
+   *LDRB  _ R0, [R2], #1         {first character of pattern}
+   *ADD   _ R4, R7, R1
+   *SUB   _ R4, R4, R3           {limit of search}
+   *MOV   _ R5, R1
+L1:*CMPS  _ R5, R4               {check against limit}
+   *MOVGT _ Pc, R14              {greater implies failure}
+   *LDRB  _ R6, [R5], #1         {look for first character}
+   *CMPS  _ R6, R0
+   *BNE   _ L1
+   *SUBS  _ R7, R3, #2           {found}
+   *BLT   _ L3                   {only searching for a single character}
+L2:*LDRB  _ R8, [R5, R7]         {compare the rest}
+   *LDRB  _ R6, [R2, R7]
+   *CMPS  _ R8, R6
+   *BNE   _ L1                   {no match, continue looking for first character}
+   *SUBS  _ R7, R7, #1
+   *BGT   _ L2
+L3:*SUB   _ R5, R5, #1           {complete match}
+   *SUB   _ R7, R5, R1           {length of left fragment}
+   *SUB   _ R6, R4, R5           {length of right fragment}
+   *ADD   _ R3, R3, R5           {address of right fragment}
+   *CMPS  _ R3, R3               {set CC=EQ - success}
+   *MOV   _ Pc, Link             {return}
+%end
+
+%permroutine FRAG1
+   {Corrupts: 0127}
+   {R1 = first datum of fragment}
+   {R7 = length}
+   {R2 = address of destination}
+   %label F1
+   *STRB  _ R7, [R2],#1       {plug length}
+F1:*SUBS  _ R7, R7, #1
+   *MOVLT _ Pc, Link          {all done}
+   *LDRB  _ R0, [R1], #1      {copy next character}
+   *STRB  _ R0, [R2], #1
+   *BR    _ F1
+%end
+
+%permroutine FRAG2
+   {Corrupts: 0236}
+   {R3 = first datum of fragment}
+   {R6 = length}
+   {R2 = address of destination}
+   %label F1
+   *STRB  _ R6, [R2],#1       {plug length}
+F1:*SUBS  _ R6, R6, #1
+   *MOVLT _ Pc, Link          {all done}
+   *LDRB  _ R0, [R3], #1      {copy next character}
+   *STRB  _ R0, [R2], #1
+   *BR    _ F1
+%end
+
+%permroutine RESFLOP
+   {Corrupts: everything}
+   *MOVEQ _ Pc, Link          {return if OK}
+   *MOV _ R1, #4
+   *MOV _ R2, #0
+   *MOV _ R3, #8
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine PRIM COMP
+   {R0 = bytes, R1 = left, R2 = right}
+   {Corrupts: 034}
+   %label L
+   *CMPS  _ R0, #0         {beware of null strings}
+   *MOVEQ _ Pc, Link       {return equal}
+L: *LDRB  _ R3, [R1], #1
+   *LDRB  _ R4, [R2], #1
+   *CMPS  _ R3, R4
+   *MOVNE _ Pc, Link
+   *SUBS  _ R0, R0, #1
+   *BNE   _ L
+   *MOV   _ Pc, Link       {return equal}
+%end
+
+%permroutine SJAM
+   {Corrupts: 0123}
+   {R2 = LHS}
+   {R1 = RHS}
+   {R0 = Max+1}
+   %label L1
+   *LDRB   _ R3, [R1],#1      {actual length}
+   *CMPS   _ R0, R3           {compare with max+1}
+   *SUBLE  _ R3, R0, #1       {replace with max if nesc}
+   *STRB   _ R3, [R2], #1     {plug new length}
+L1:*SUBS   _ R3, R3, #1
+   *MOVLT  _ Pc, Link
+   *LDRB   _ R0, [R1], #1
+   *STRB   _ R0, [R2], #1
+   *BR     _ L1
+%end
+
+%permroutine INTEXP
+   {Corrupts: 01235}
+   {return R1 = R1^^R2}
+   %label Ng, L1, L2
+   *MOV    _ R0, R1         {preserve multiplier}
+   *MOV    _ R1, #1
+   *CMPS   _ R2, #0
+   *BLE    _ Ng
+L1:*MOV    _ R3, R1         {Ra}
+   *MOV    _ R5, R0         {Rb}
+   *MOV    _ R1, #0
+L2:*MOVS   _ R3, R3, %LSR #1
+   *ADDCS  _ R1, R1, R5
+   *ADD    _ R5, R5, R5
+   *BNE    _ L2
+   *SUBS   _ R2, R2, #1
+   *BNE    _ L1
+Ng:*MOVEQ  _ Pc, Link       {return 1 if zero}
+   *MOV _ R1, #4
+   *MOV _ R2, #0
+   *MOV _ R3, #20
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine DYNAMIC1
+   {Corrupts: 0123678}
+   {Create a dope-vector for a 1-dimensional dynamic array}
+   {R3 = Lower Bound}
+   {R4 = Upper bound}
+   {R5 = item size}
+   {Be careful to multiply by the item size which is likely to be small}
+   %label M1, M2, No
+   *MOV   _ R2, #0      {calculate zero'th disp}
+   *MOV   _ R0, R5      {save multiplier}
+   *MOV   _ R6, R3      {save lower bound}
+   *MOV   _ R7, R4      {save upper bound}
+   *MOV   _ R8, R5      {save multiplier}
+
+M1:*MOVS  _ R0, R0, %LSR #1
+   *ADDCS _ R2, R2, R6
+   *ADD   _ R6, R6, R6
+   *BNE   _ M1          {R2 = Lower*Item}
+   *RSB   _ R2, R2, #0  {R2 = -Lower*Item = Zero'th Disp}
+
+   *MOV   _ R1, #0      {calculate total size}
+   *ADD   _ R7, R7, #1
+M2:*MOVS  _ R8, R8, %LSR #1
+   *ADDCS _ R1, R1, R7
+   *ADD   _ R7, R7, R7
+   *BNE   _ M2          {R1 = (Upper+1)*Item}
+   *ADDS  _ R1, R1, R2  {R1 = (Upper+1)*Item-Lower*Item = (Upper-Lower+1)*Item}
+   *BLT   _ No          {inside-out}
+   *ADD   _ R1, R1, #3
+   *BIC   _ R1, R1, #3  {round up}
+   *MOV   _ R0, #1      {dimension}
+   *STMDB _ Sp!, <R0,R1,R2,R3,R4,R5>
+   *MOV   _ R3, Sp      {address of dope vector}
+   *MOV   _ Pc, Link
+No:*MOV _ R1, #4
+   *MOV _ R2, #0
+   *MOV _ R3, #9
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine DYNAMIC2
+   {Corrupts: 01234567}
+   {R3 = lower bound 1 = L1}
+   {R4 = upper bound 1 = U1}   {M1 = U1 - L1 + 1}
+   {R6 = lower bound 2 = L2}
+   {R7 = upper bound 2 = U2}   {M2 = U2 - L2 + 1}
+   {R8 = item size = item}
+   {Create a dope-vector for a 2-dimensional dynamic array}
+
+   {-A0   =  (L1*M2 + L2)*Item  }
+   {      = L1*M2*Item + L2*Item}
+   {Total = M1*M2*Item          }
+
+   {if T1 = M2*Item then A0 = -(L1*T1 + L2*Item) }
+   {                  Total = M1*T1               }
+
+   %label L1, L2, L3, L4, No
+
+   *SUB   _ R5, R7, R6
+   *ADDS  _ R5, R5, #1  {number of elements in second dimension, M2}
+   *BLT   _ No          {inside out}
+
+   *STMDB _ Sp!, <R3,R4,R5,R6,R7,R8>  {half of dope vector}
+
+   *SUB   _ R4, R4, R3
+   *ADDS  _ R4, R4, #1        {elements in first dimension, M1}
+   *BLT   _ No
+
+   *MOV   _ R0, R8            {protect item size}
+   *MOV   _ R7, #0
+L1:*MOVS  _ R0, R0, %LSR #1
+   *ADDCS _ R7, R7, R5
+   *ADD   _ R5, R5, R5
+   *BNE   _ L1                {R7 = M2*Item = T1}
+
+   *MOV   _ R0, R8
+   *MOV   _ R2, #0
+L2:*MOVS  _ R0, R0, %LSR #1
+   *ADDCS _ R2, R2, R6
+   *ADD   _ R6, R6, R6
+   *BNE   _ L2                {R2 = L2*Item}
+
+   *MOV   _ R1, R7
+   *MOV   _ R0, #0
+L3:*MOVS  _ R1, R1, %LSR #1
+   *ADDCS _ R0, R0, R3
+   *ADD   _ R3, R3, R3
+   *BNE   _ L3                {R0 = L1*T1}
+
+   *ADD   _ R2, R2, R0        {R2 = L2*item + L1*T1}
+   *RSB   _ R2, R2, #0        {R2 = -R2 = disp of A(0)}
+
+   *MOV   _ R1, #0
+L4:*MOVS  _ R4, R4, %LSR #1
+   *ADDCS _ R1, R1, R7
+   *ADD   _ R7, R7, R7
+   *BNE   _ L4                {R1 = T1*M1 = total size}
+
+   *ADD   _ R1, R1, #3
+   *BIC   _ R1, R1, #3        {round up}
+   *MOV   _ R0, #2            {2 dimensions}
+   *STMDB _ Sp!, <R0,R1,R2>
+   *MOV   _ R3, Sp            {pointer to dope vector}
+   *MOV   _ Pc, Link
+No:*MOV _ R1, #4
+   *MOV _ R2, #0
+   *MOV _ R3, #1
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine DYNAMIC N
+   {Create a dope-vector for a >2-dimensional dynamic array}
+   *MOV _ R1, #4
+   *MOV _ R2, #0
+   *MOV _ R3, #1
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine SETADD
+   {Corrupts: 0123456789}
+   {R8  = @DEST}
+   {R11 = @SOURCE}
+   *LDMIA _ R8,   <R0,R1,R2,R3>
+   *LDMIA _ R11!, <R4,R5,R6,R7>
+   *ORR   _ R0, R0, R4
+   *ORR   _ R1, R1, R5
+   *ORR   _ R2, R2, R6
+   *ORR   _ R3, R3, R7
+   *STMIA _ R8!,  <R0,R1,R2,R3>
+   *LDMIA _ R8,   <R0,R1,R2,R3>
+   *LDMIA _ R11!, <R4,R5,R6,R7>
+   *ORR   _ R0, R0, R4
+   *ORR   _ R1, R1, R5
+   *ORR   _ R2, R2, R6
+   *ORR   _ R3, R3, R7
+   *STMIA _ R8!, <R0,R1,R2,R3>
+   *MOV   _ Pc, Link
+%end
+
+%permroutine SETSUB
+   {Corrupts: 0123456789}
+   {R8  = @DEST}
+   {R11 = @SOURCE}
+   *LDMIA _ R8,   <R0,R1,R2,R3>
+   *LDMIA _ R11!, <R4,R5,R6,R7>
+   *BIC   _ R0, R0, R4
+   *BIC   _ R1, R1, R5
+   *BIC   _ R2, R2, R6
+   *BIC   _ R3, R3, R7
+   *STMIA _ R8!,  <R0,R1,R2,R3>
+   *LDMIA _ R8,   <R0,R1,R2,R3>
+   *LDMIA _ R11!, <R4,R5,R6,R7>
+   *BIC   _ R0, R0, R4
+   *BIC   _ R1, R1, R5
+   *BIC   _ R2, R2, R6
+   *BIC   _ R3, R3, R7
+   *STMIA _ R8!, <R0,R1,R2,R3>
+   *MOV   _ Pc, Link
+%end
+
+%permroutine SETINTER
+   {Corrupts: 0123456789}
+   {R8  = @DEST}
+   {R11 = @SOURCE}
+   *LDMIA _ R8,   <R0,R1,R2,R3>
+   *LDMIA _ R11!, <R4,R5,R6,R7>
+   *AND   _ R0, R0, R4
+   *AND   _ R1, R1, R5
+   *AND   _ R2, R2, R6
+   *AND   _ R3, R3, R7
+   *STMIA _ R8!,  <R0,R1,R2,R3>
+   *LDMIA _ R8,   <R0,R1,R2,R3>
+   *LDMIA _ R11!, <R4,R5,R6,R7>
+   *AND   _ R0, R0, R4
+   *AND   _ R1, R1, R5
+   *AND   _ R2, R2, R6
+   *AND   _ R3, R3, R7
+   *STMIA _ R8!, <R0,R1,R2,R3>
+   *MOV   _ Pc, Link
+%end
+
+%permroutine SETGE
+   {Corrupts: 0123456789}
+   {Returns CC set EQ for true, NE for false}
+   {R8  = @LHS}
+   {R11 = @RHS}
+   *LDMIA  _ R8! , <R0,R1,R2,R3>
+   *LDMIA  _ R11!, <R4,R5,R6,R7>
+   *BICS   _ R0, R4, R0
+   *BICEQS _ R1, R5, R1
+   *BICEQS _ R2, R6, R2
+   *BICEQS _ R3, R7, R3
+   *MOVNE  _ Pc, Link
+   *LDMIA  _ R8! , <R0,R1,R2,R3>
+   *LDMIA  _ R11!, <R4,R5,R6,R7>
+   *BICS   _ R0, R4, R0
+   *BICEQS _ R1, R5, R1
+   *BICEQS _ R2, R6, R2
+   *BICEQS _ R3, R7, R3
+   *MOV    _ Pc, Link
+%end
+
+%permroutine SETIN
+   {Corrupts: 03}
+   {R1 = X}
+   {R2 = @S}
+   %label No
+   *CMPS _ R1, #255
+   *BHI  _ No
+   *AND  _ R3, R1, #7            {bit index into byte}
+   *LDRB _ R0, [R2, R1, %LSR #3]
+   *MOV  _ R0, R0, %LSR R3       {get relevant bit to least significant end}
+   *TSTS _ R0, #1                {set CC}
+   *MOV  _ Pc, Link
+No:*CMPS _ R1, R1                {set EQ i.e. False}
+   *MOV  _ Pc, Link
+%end
+
+%permroutine SETBIT
+   %label No
+   {Corrupts: 034}
+   {R1 = X}
+   {R8 = @S}
+   *CMPS _ R1, #255
+   *BHI  _ No
+   *AND  _ R3, R1, #7           {bit index into byte}
+   *LDRB _ R0, [R8, R1, %LSR #3]
+   *MOV  _ R4, #1
+   *ORR  _ R0, R0, R4, %LSL R3
+   *STRB _ R0, [R8, R1, %LSR #3]
+   *MOV  _ Pc, Link
+No:*MOV  _ R3, R1
+   *MOV  _ R1, #14
+   *MOV  _ R2, #3
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine CLEARBIT
+   {Corrupts: 034}
+   {R1 = X}
+   {R8 = @S}
+   %label No
+   *CMPS _ R1, #255
+   *BHI  _ No
+   *AND  _ R3, R1, #7           {bit index into byte}
+   *LDRB _ R0, [R8, R1, %LSR #3]
+   *MOV  _ R4, #1
+   *BIC  _ R0, R0, R4, %LSL R3
+   *STRB _ R0, [R8, R1, %LSR #3]
+   *MOV  _ Pc, Link
+No:*MOV  _ R3, R1
+   *MOV  _ R1, #14
+   *MOV  _ R2, #3
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine SETBITS
+   {Corrupts: 1345}
+   {R0 = Lb}
+   {R1 = Ub}
+   {R8 = @S}
+   %label X1, X2, L1
+   *CMPS  _ R0, R1
+   *MOVGT _ Pc, Link       {return if inside-out}
+   *CMPS  _ R0, #255
+   *BHI   _ X1
+   *CMPS  _ R1, #255
+   *BHI   _ X2
+   *MOV   _ R4, #1
+
+L1:*AND  _ R3, R1, #7           {bit index into word}
+   *LDRB _ R5, [R8, R1, %LSR #3]
+   *ORR  _ R5, R5, R4, %LSL R3
+   *STRB _ R5, [R8, R1, %LSR #3]
+   *SUB  _ R1, R1, #1
+   *CMPS _ R0, R1
+   *BLE  _ L1
+   *MOV  _ Pc, Link
+
+X1:*MOV _ R1, R0
+X2:*MOV _ R3, R1
+   *MOV _ R1, #14
+   *MOV _ R2, #3
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine CLEARBITS
+   {Corrupts: 1345}
+   {R0 = Lb}
+   {R1 = Ub}
+   {R8 = @S}
+   %label X1, X2, L1
+   *CMPS  _ R0, R1
+   *MOVGT _ Pc, Link       {return if inside-out}
+   *CMPS  _ R0, #255
+   *BHI   _ X1
+   *CMPS  _ R1, #255
+   *BHI   _ X2
+   *MOV   _ R4, #1
+
+L1:*AND  _ R3, R1, #7           {bit index into word}
+   *LDRB _ R5, [R8, R1, %LSR #3]
+   *BIC  _ R5, R5, R4, %LSL R3
+   *STRB _ R5, [R8, R1, %LSR #3]
+   *SUB  _ R1, R1, #1
+   *CMPS _ R0, R1
+   *BLE  _ L1
+   *MOV  _ Pc, Link
+
+X1:*MOV _ R1, R0
+X2:*MOV _ R3, R1
+   *MOV _ R1, #14
+   *MOV _ R2, #3
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine SET ZERO
+   {Corrupts: 12345678}
+   {R0 = address of set}
+   *LDMIA  _ R0, <R1,R2,R3,R4,R5,R6,R7,R8>
+   *ORRS   _ R1, R1, R2
+   *ORREQS _ R1, R3, R4
+   *ORREQS _ R1, R5, R6
+   *ORREQS _ R1, R7, R8
+   *MOV    _ Pc, Link
+%end
+
+%permroutine SET EQUAL
+   {Corrupts: 0123456789}
+   {R0 = address Lhs}
+   {R1 = address Rhs}
+   *LDMIA   _ R0!, <R2,R3,R4,R5>
+   *LDMIA   _ R1!, <R6,R7,R8,R11>
+   *CMPS    _ R2, R6
+   *CMPEQS  _ R3, R7
+   *CMPEQS  _ R4, R8
+   *CMPEQS  _ R5, R11
+   *MOVNE   _ Pc, Link
+   *LDMIA   _ R0!, <R2,R3,R4,R5>
+   *LDMIA   _ R1!, <R6,R7,R8,R11>
+   *CMPEQS  _ R2, R6
+   *CMPEQS  _ R3, R7
+   *CMPEQS  _ R4, R8
+   *CMPEQS  _ R5, R11
+   *MOV     _ Pc, Link
+%end
+
+%permroutine PSYM
+   {Corrupts: everything}
+   {R0 = Sym}
+   %externalintegerspec Current Out %alias "3L___cur_out"
+   *LDR     _ R1, Current Out          {address of IMP_CUR_OUT}
+   *LDMIA   _ R1, <R2, R3, R4, R5, R6> {next, limit, handler, Break, Bhandler}
+                                       {R2    R3     R4       R5     R6}
+   *CMPS    _ R0, R5                   {break character?}
+   *MOVLE   _ Pc, R6                   {yes, use caller's return address}
+   *CMPS    _ R2, R3                   {empty?}
+   *MOVGE   _ Pc, R4                   {flush & add next character}
+   *STRB    _ R0, [R2], #1             {store & increment}
+   *STR     _ R2, [R1]                 {update the pointer}
+   *MOV     _ Pc, Link                 {return}
+%end
+
+%permroutine REAL RND    {ROUND}
+   {Corrupts: F0, R0}
+   {round(F0) -> R0}
+   *CMF    _ F0, #0
+   *ADFGTE _ F0, F0, #1/2 {really 0.5}
+   *SUFLTE _ F0, F0, #1/2 {really 0.5}
+   *FIXEZ  _ R0, F0
+   *MOV    _ Pc, Link
+%end
+
+%permroutine REALINT
+   {Corrupts: R0, F01}
+   {int(F0) -> R0}
+   *ADFE  _ F0, F0, #1/2 {really 0.5}
+   *FIXEM  _ R0, F0
+   *MOV   _ Pc, Link
+%end
+
+%permroutine REAL EXP
+   {Corrupts: R0 F01}
+   {F0 = N, R0 = exponent}
+   %label Pl, Nl
+   *MVFE _ F1, F0
+   *MVFE _ F0, #1
+   *CMPS _ R0, #0     {test sign of exponent}
+   *BLT _ Nl
+
+   {positive}
+Pl:*MUFGTE _ F0, F0, F1   {beware of ^0}
+   *SUBS _ R0, R0, #1
+   *BGT  _ Pl
+   *MOV  _ Pc, Link
+
+   {negative}
+Nl:*DVFE _ F0, F0, F1
+   *ADDS _ R0, R0, #1
+   *BNE  _ Nl
+   *MOV  _ Pc, Link
+%end
+
+%permroutine SET RANGE
+   {Corrupts: 345}
+   %label L1, L2, No
+   {R0 = addr(Set)}
+   {R1 = LB}
+   {R2 = UB}
+
+   *MOV  _ R3, R1, %lsr #5
+   *MOV  _ R3, R3, %lsl #2
+   *AND  _ R4, R1, #31
+   *MVN  _ R5, #0              {R5=-1}
+   *MOV  _ R5, R5, %lsl R4
+L1:*LDR  _ R4, [R0, R3]
+   *BICS _ R4, R4, R5
+   *BNE  _ No
+   *MOV  _ R5, #0              {R5 = 0}
+   *SUBS _ R3, R3, #4
+   *BGE  _ L1
+
+   *ADD  _ R2, R2, #1          {onto first free bit}
+   *MOV  _ R3, R2, %lsr #5
+   *MOV  _ R3, R3, %lsl #2
+   *AND  _ R4, R2, #31
+   *MVN  _ R5, #0
+   *MOV  _ R5, R5, %lsl R4
+L2:*CMPS _ R3, #32
+   *MOVGE_ Pc, Link            {success}
+   *LDR  _ R4, [R0, R3]
+   *ANDS _ R4, R4, R5
+   *MVNEQ_ R5, #0              {R5 = -1}
+   *ADDEQ_ R3, R3, #4
+   *BEQ  _ L2
+
+No:*MOV _ R3, #16_80000000
+   *MOV _ R2, #3
+   *MOV _ R1, #14
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine RANGE
+   {Corrupts: nothing}
+   {R1 = value}
+   {R3 = limit}
+   *CMPS _ R1, R3
+   *MOVLS_ Pc, Link         {ok if 0 <= R1 <= R3}
+   *MOV _ R3, R1
+   *MOV _ R1, #14
+   *MOV _ R2, #4
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine TEST NIL
+   {Corrupts: nothing}
+   *CMPS  _ R1, #0
+   *MOVGT _ Pc, Link
+   *MOV _ R1, #14
+   *MOV _ R2, #5
+   *MOV _ R3, #0
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine TEST VAR
+   {Corrupts: nothing}
+   {R3 = value in record key}
+   {R1 = value used here}
+   *CMPS   _ R3, R1
+   *CMPNES _ R3, #0
+   *MOVEQ  _ Pc, Link
+   *MOV _ R1, #14
+   *MOV _ R2, #6
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine DYN RANGE
+   {Corrupts: nothing}
+   *CMPS   _ R2, R1
+   *CMPLES _ R1, R3
+   *MOVLE  _ Pc, Link
+   *MOV _ R3, R1
+   *MOV _ R1, #14
+   *MOV _ R2, #4
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine Make LOCAL
+   {Corrupts: 0123}
+   {R0 = bytes, R1 = zero disp, R2 = @location}
+   %label L
+   *SUB _ Sp, Sp, R0     {claim space}
+   *BIC _ Sp, Sp, #3     {keep it word aligned}
+   *LDR _ R3, [R2]       {pointer to source}
+   *ADD _ R3, R3, R1     {onto first element}
+   *SUB _ R1, Sp, R1     {onto zero'th address}
+   *STR _ R1, [R2]       {update pointer}
+   *MOV _ R1, Sp         {pointer for copying}
+L: *LDRB_ R2, [R3], #1
+   *STRB_ R2, [R1], #1
+   *SUBS_ R0, R0, #1
+   *BNE _ L
+   *MOV _ Pc, Link
+%end
+
+%permroutine MODULUS
+   {Corrupts: 1235}
+   {A = R1, B = R2, R1 = A MOD B}
+   %label No, L0, L1, L2
+   *ADDS _ R4, R2, #0              {preserve divisor & test it}
+   *BLE  _ No
+   {calculate the IMP remainer}
+   {R1//R2, Quo=R0, Rem=R1}
+   {we know that R2 > 0}
+L0:*ADDS   _ R5, R1, #0            {preserve Dividend & test sign}
+   *RSBLT  _ R1, R1, #0            {R1 = |R1|}
+   *MOV    _ R3, #1
+L1:*CMPS   _ R2, #16_80000000
+   *CMPCCS _ R2, R1
+   *MOVCC  _ R2, R2, %LSL #1
+   *MOVCC  _ R3, R3, %LSL #1
+   *BCC    _ L1
+L2:*CMPS   _ R1, R2
+   *SUBCS  _ R1, R1, R2
+   *MOVS   _ R3, R3, %LSR #1
+   *MOVNE  _ R2, R2, %LSR #1
+   *BNE    _ L2
+   {now adjust signs of quotient & remainder}
+   *CMPS   _ R5, #0
+   *MOVGE  _ Pc, Link
+   *RSBS   _ R1, R1, #0         {negate remainder}
+   *ADDNE  _ R1, R1, R4         {and add in divisor}
+   *MOV    _ Pc, Link
+No:*MOV _ R1, #14
+   *MOV _ R2, #7
+   *MOV _ R3, R4
+   *STMDB _ Sp!, <R1, R2, R3, Fp, Sb, Link>
+   Call Signal
+%end
+
+%permroutine GENMOVE {general string move}
+   {R1 = addr(To),      R3 = Length(To)  }
+   {R2 = addr(From),    R4 = Length(From)}
+   %label L1, L2, L3, L4
+
+   *ADDS   _ R3, R3, #0
+   *ADDEQS _ R3, R4, #0     {Tlen=0 implies Tlen=Flen}
+   *MOVLE  _ Pc, Link       {return if Tlen <= 0}
+   *SUBS   _ R6, R3, R4     {R6 = Tlen - Flen}
+   *BGT    _ L3             {Tlen > Flen}
+
+   {Tlen <= Flen, just move in Tlen chars}
+   {Note: R3 > 0}
+
+L1:*LDRB _ R0, [R2], #1
+   *STRB _ R0, [R1], #1
+   *SUBS _ R3, R3, #1
+   *BNE  _ L1
+   *MOV  _ Pc, Link
+
+   {Tlen > Flen, move in Flen chars then move in remainder spaces}
+   {Note: R4 could be <= 0}
+
+L2:*LDRB _ R0, [R2], #1
+   *STRB _ R0, [R1], #1
+L3:*SUBS _ R4, R4, #1
+   *BGE  _ L2
+   *MOV  _ R0, #32       {space}
+   {Note: R6 > 0}
+L4:*STRB _ R0, [R1], #1
+   *SUBS _ R6, R6, #1
+   *BNE  _ L4
+   *MOV  _ Pc, Link
+%end
+
+%permroutine CALLP
+   {R4 = Address of <Context><Ep>}
+   *LDMIA _ R4, <R8, Pc>
+%end
+
+%permroutine EnterP
+   {R4 = address of procedure}
+   *MOV _ Pc, R4
+%end
+
+%permroutine Dalloc
+   {R4 = number of bytes to allocate & set unassigned}
+   %label L1
+   *LDR _ R11, [Sb]
+L1:*STR _ R11, [Sp, #-4]!
+   *SUBS_ R4, R4, #4
+   *BGT _ L1
+   *MOV _ Pc, Link
+%end
+
+%endoffile

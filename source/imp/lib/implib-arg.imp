@@ -1,0 +1,71 @@
+
+    %constant %integer BYTESIZE = 1
+    %constant %integer WORDSIZE = 4
+
+    ! This returns the pointer to the array of pointers to the command line parameters
+    %external %integer %name %function %spec getarguments
+
+    %external %integer %function getargcount
+        %integer %name arr
+        %integer count
+
+        arr == getarguments
+
+        count = 0
+        ! Find the count of environment variables
+        ! We treat an address as a 4-byte unsigned value
+        ! In this case we are only concerned about zero v non-zero values
+        %while integer( addr( arr ) + WORDSIZE*count ) # 0 %cycle
+            count = count + 1
+        %repeat
+
+        %result = count
+    %end
+
+    %external %string(255) %function getarg( %integer index )
+        %integer i,len
+        %byte %name b,src
+        %string(255) s
+
+        length(s) = 0
+
+        %if (0 <= index < getargcount) %start
+            ! get the pointer (aka "name") to the C-style char array
+            b == byteinteger( integer( addr(getarguments) + WORDSIZE*index ) )
+
+            ! I ass-u-me that a C string has a length
+            ! in the range 0..MAXINT - 1, where MAXINT is 2^31
+            ! and each "char" is stored in a byte
+            !
+            ! Also, I should use len as a 32-bit UNSIGNED integer
+            ! and defend against negative values!!
+            len = 0
+            %while byteinteger( addr( b ) + len ) # 0 %cycle
+                len = len + BYTESIZE
+
+                ! Defend against negative lengths
+                %if (len = -1) %start
+                    len = 0
+                    %exit
+                %finish
+            %repeat
+
+            ! Now obtain the actual C string
+            ! Beware! IMP is restricted to 255 characters at most
+            !   An IMP string has a byte prefix indicating string length
+            !   So length = 0..255
+            ! C strings can be any length, terminated by 0 byte
+            %for i = 1,1,len %cycle
+                src == byteinteger( addr( b ) + BYTESIZE*(i - 1) )
+
+                ! yes to both conditions met so append the current char
+                length(s) = length(s) + 1
+                charno( s, length(s) ) = src
+            %repeat
+
+        %finish
+
+        %result = s
+    %end
+
+%endoffile

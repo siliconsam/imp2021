@@ -1,0 +1,181 @@
+%endoflist
+    ! simple (no operand) ones first
+    %constinteger NOP	= 0
+    %constinteger CWD   = 1
+    %constinteger RET   = 2
+    %constinteger SAHF  = 3
+    %constinteger LEAVE = 4
+
+    ! simple unary math functions
+    %constinteger DEC = 5
+    %constinteger INC = 6
+    %constinteger NEG = 7
+    %constinteger NOT = 8
+
+    ! simple unary moves
+    %constinteger POP  = 9
+    %constinteger PUSH = 10
+
+    ! two operand moves
+    %constinteger LEA  = 11
+    %constinteger MOV  = 12
+    %constinteger XCHG = 13
+
+    ! simple two operand math functions
+    %constinteger ADC = 14
+    %constinteger ADD = 15
+    %constinteger AND = 16
+    %constinteger CMP = 17
+    %constinteger OR  = 18
+    %constinteger SUB = 19
+    %constinteger XOR = 20
+    ! slightly more complicated two operand math
+    %constinteger SHL  = 21
+    %constinteger SHR  = 22
+    %constinteger IDIV = 23
+    %constinteger IMUL = 24
+
+    ! calls and jumps
+    %constinteger CALL = 25
+    %constinteger JE   = 26
+    %constinteger JNE  = 27
+    %constinteger JG   = 28
+    %constinteger JGE  = 29
+    %constinteger JL   = 30
+    %constinteger JLE  = 31
+    %constinteger JA   = 32
+    %constinteger JAE  = 33
+    %constinteger JB   = 34
+    %constinteger JBE  = 35
+    %constinteger JMP  = 36
+
+%const %string(5) %array opname(NOP:JMP) =
+    "NOP", "CWD", "RET", "SAHF", "LEAVE",
+    "DEC", "INC", "NEG", "NOT",
+    "POP", "PUSH",
+    "LEA", "MOV", "XCHG",
+    "ADC", "ADD", "AND", "CMP", "OR", "SUB", "XOR",
+    "SHL", "SHR", "IDIV", "IMUL",
+    "CALL", "JE", "JNE",
+    "JG", "JGE", "JL", "JLE",
+    "JA", "JAE", "JB", "JBE", "JMP"
+
+!AAA ignore
+!AAD ignore
+!AAM ignore
+!AAS ignore
+!ARPL    operating system but ignore
+!
+!BOUND   Used to check array index is within limits
+!BOUND = opcode = 62 params r32,m32&32
+! Generates Interrupt 5 on failure
+!
+!CBW/CWDE Convert Byte to Word/Word to Doubleword
+!Opcode = 98 CBW = sign extend AL into AX
+!            CWDE = sign extend AX into EAX
+!Useful for %short %integer?
+!
+!CLC Clear Carry Flag
+!CLI operating system Clear Interrupt Flag (ignore)
+!CMC Complement Carry Flag
+!
+!CLD Clear Direction flag (if used string operations will increment the index registers (ESI and EDI)
+!STD Set direction flag (if set then decrement the index registers (ESI and EDI)
+!CMPSB/CMPSW/CMPSD (B)yte (W)ord (D)oubleword  compare string operands 
+!Opcode A6 byte compare
+!Opcode A7 word/doubleword compare
+!CMPSB compare byte pointed to by ESI with byte pointed to by EDI 
+!Direction of subtraction is [ESI] - [EDI]
+!ESI source
+!EDI destination
+!Only the flags are updated
+!CMPS can be preceded by REPE/REPNE for block comparison
+!REPE (repeat while equal) REPNE (repeat while not equal)
+!address size attribute 16-bit count is CX
+!address size attribute 32-bit count is ECX
+!After implied loop is completed test ZF and note CX/ECX value
+!
+!DIV unsigned divide
+!
+!ENTER
+!ESC
+!
+!HLT
+!
+!IN  input from device port (ignore)
+!INSB/INSW/INSD input byte/word/dword from port (ignore)
+!INT/INTO call to interrupt procedure (ignore)
+!IRET return from interrupt operating system (ignore)
+!
+!JCXZ jump short if CX=0
+!JECXZ jump short if ECX=0
+!
+!JUMP based on flags
+!CF,ZF,SF,OF,PF
+!CF carry flag,
+!ZF zero flag
+!SF sign flag
+!OF overflow flag
+!PF parity flag
+!>,>=,<,<=,not? (0,carry,equal,greater than,overflow,parity,sign,parity even,parity odd)
+!byte/word/dword displacement
+!compare signed/unsigned
+!
+!LAHF load flags int AH  SF ZF XX AF XX PF XX CF
+!XX are don't care
+!
+!LDS/LES/LSS/LFS/LGS load full pointer (ignore?)
+!
+!LODSB/LODSW/LODSD Load (byte/word/dword) pointed by ESI into AL/AX/EAX
+!ESI auto incremented (1/2/4) or (-1/-2/-4) depending on direction flag DF. DF= 0 then inc, DF=1 then dec
+!LODS can be preceded by REP
+!LODS typically used within LOOP Data inside (AL/AX/EAX) might be processed
+!
+!LOOP/LOOPE/LOOPZ/LOOPNZ count in CX/ECX decrement, jump signed byte displacement if count <>0, count <> 0 and (ZF=1), (ZF=0)
+!(flags NOT updated)
+!
+!MOVS/MOVSB/MOVSW/MOVSD  move (byte,word,dword) [ESI] to [EDI]
+!ESI,EDI (+1,+2,+4) or (-1,-2,-4) depending on value of direction flag DF=0 => +, DF=1 => -
+!MOVS can be preceded by REP (count in CX/ECX depending on data size)
+!count = count - 1 , repeat MOVS until count = 0
+!
+!OUT/OUTSB/OUTSW ignore
+!
+!POPA/POPAD pop stack and store in set of general registers (ESP excluded)
+!POPF/POPFD O/S ignore? pop top of stack into FLAGS/EFLAGS
+!PUSHA/PUSHD push onto stack set of general registers
+!PUSHF/PUSHFD O/S ignore? push FLAGS/EFLAGS onto top of stack 
+!
+!RETF
+!RETN
+!
+!SALC
+!SBB
+!SCASB/SCASW/SCASD
+!Compare (byte/word/dword) in AL/AX/EAX with (byte/word/dword) in EDI (AL/AX/EAX -[EDI]) flags are updated by comparison
+!and EDI is incremented/decremented (1/2/4) depending on direction flag DF (DF=0 +, DF=1 -)
+!Can be preceded by REPE/REPNE for block search where count in CX/ECX
+!
+!STC set carry flag CF
+!STD set direction flag DF
+!STI set interrupt flag IF (O/S usage) ignore 
+!
+!STOSB/STOSW/STOSD store data store AL/AX/EAX in [EDI], EDI +/- (1/2/4)
+!EDI +/- depends on direction flag
+!Can be preceded by REP for block fill with count in CX/ECX
+!
+!TEST only updates flags after doing an AND operation on (byte/word/dword) data
+!     1) AL/AX/EAX v immediate byte/word/dword
+!     2) r/m8,r/m16,r/m32 v immediate byte/word/dword
+!     3) r/m8,r/m16,r/m32 v r8,r16,r32
+!     Flags result OF=0,CF=0,SF,ZF,PF
+!
+!WAIT O/S usage + floating point co-processor (ignore)
+!
+!XLAT table lookup
+!    16 bit address: AL = [BX + Zeroextend(AL)]
+!    32 bit address: AL = [EBX + Zeroextend(AL)]
+!   Need to preload BX/EBX (and AL)
+!
+%list
+%endoffile

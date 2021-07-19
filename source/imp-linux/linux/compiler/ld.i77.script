@@ -1,0 +1,6 @@
+SECTIONS
+  {
+  . = ALIGN(32);
+  ITRAP : { *(ITRAP$B) *(ITRAP$D) *(ITRAP$F) }
+}
+INSERT BEFORE .data

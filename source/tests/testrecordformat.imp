@@ -1,0 +1,24 @@
+%begin
+  %const %integer stringsize = 12
+
+  ! variant/union format requires () brackets around the field list
+  %recordformat fm ((%bytearray char(0:stringsize) %or %string(stringsize) blurb))
+
+  %record (fm) bill
+  %integer loop
+  
+  bill_blurb = "hello"
+
+  printstring( itos(bill_char(0),0)); newline
+  %for loop = 1,1,length(bill_blurb) %cycle
+     printsymbol(bill_char(loop))
+  %repeat
+  printsymbol(nl)
+
+  %for loop = 0,1,length(bill_blurb) %cycle
+     printstring( itos(bill_char(loop),0))
+     %if loop < length(bill_blurb) %then space
+  %repeat
+  printsymbol(nl)
+
+%endofprogram

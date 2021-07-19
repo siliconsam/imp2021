@@ -1,0 +1,17 @@
+{----------------------------------------------------------------------------}
+    !
+    ! NEW/DISPOSE routines used to acquire/free heap variables
+    ! NEW/DISPOSE routines based on C library malloc/free routines
+    !
+    ! declare heap access routines
+    !
+    %external %routine Dispose ( %name Template )
+        %external %routine %spec impfree %alias "_free" ( %integer templateaddr )
+
+        %integer Where = Addr( Template )
+
+        impfree( Where )
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile
