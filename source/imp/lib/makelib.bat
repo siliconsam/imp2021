@@ -34,7 +34,6 @@
 @call :%driver% imprtl-main
 @call :%driver% imprtl-event
 @call :%driver% imprtl-io
-@call :%driver% imprtl-prim
 @call :%driver% imprtl-trap
 @call :%driver% impcore-adef
 @call :%driver% impcore-aref
@@ -84,7 +83,6 @@
 @lib /nologo /out:libimp.lib libimp.lib imprtl-main.obj
 @lib /nologo /out:libimp.lib libimp.lib imprtl-event.obj
 @lib /nologo /out:libimp.lib libimp.lib imprtl-io.obj
-@lib /nologo /out:libimp.lib libimp.lib imprtl-prim.obj
 @lib /nologo /out:libimp.lib libimp.lib imprtl-trap.obj
 @lib /nologo /out:libimp.lib libimp.lib impcore-adef.obj
 @lib /nologo /out:libimp.lib libimp.lib impcore-aref.obj

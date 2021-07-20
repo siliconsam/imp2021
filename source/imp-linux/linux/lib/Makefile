@@ -12,7 +12,6 @@ INCDIR = ${BASEDIR}/include
 OBJS=imprtl-event.o \
      imprtl-io.o \
      imprtl-main.o \
-     imprtl-prim.o \
      imprtl-trap.o \
      impcore-adef.o \
      impcore-aref.o \
