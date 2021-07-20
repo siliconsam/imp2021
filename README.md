@@ -47,9 +47,9 @@ have been unpacked to a folder <IMP_INSTALL_HOME>
 
 Post-Installation/Pre-Bootstap
 1)  Amend the batch script <IMP_INSTALL_HOME>\release\bin\setenv.bat
-    - to use the correct version of Microsoft Visual Studio
-    - also amend setenv.bat (in the release and source\scripts folders) to access the Free Pascal compiler (currently 3.2.0)
-    - more adventurous souls can try to use other linkers and libraries. However, you are on your own!
+	- to use the correct version of Free Pascal (currently 3.2.2)
+	- also amend setenv.bat (in the release and source\scripts folders) to access the Free Pascal compiler (currently 3.2.0)
+	- more adventurous souls can try to use other linkers and libraries. However, you are on your own!
 2)  Also amend the template batch script <IMP_INSTALL_HOME>\source\imp\scripts\setenv.bat (as above)
 
 **** It is assumed that the initial bootstrap/build will be done on a Windows machine
@@ -59,11 +59,12 @@ To run the compiler (assuming that the pre-requisites of Visual Studio and Free 
 2)  cd to <IMP_INSTALL_HOME>\release\bin
 3)  run setenv.bat    (Did you amend the setenv script to ensure suitable linker, libraries and are available?)
 4)  To run the compiler - execute imp32 against your imp77 source code
-    (omit the file extension, as the script assumes an extension of .i or .imp)
 
+	(omit the file extension, as the script assumes an extension of .i or .imp)
         If you want to link multiple object files, use imp32link.bat (omit the .obj extension)
         This script assumes that the first object file is the "program" and is written in IMP77
-        It can link sub-modules written in non-IMP source, BUT the first module MUST be from an IMP source file.
+        It can link sub-modules written in non-IMP source.
+	BUT the first module MUST be from an IMP source file.
 
 To build the Windows IMP compiler
 1)  get a Visual Studio x86 DOS prompt
@@ -75,7 +76,7 @@ To build the Windows IMP compiler
 		(this builds the compiler and some pascal utility programs in the specified build directory)
 		(-msvc          option needed for the Microsoft C compiler)
 		(-Fc -Fs -Fi    options ensure the intermediate .icd,.lst,.ibj,.cod files are retained after compilation)
-						These files are useful in "debugging" any error in the IMP source
+		(		These files are useful in "debugging" any error in the IMP source(
 6)  Did you look to see if there were any errors in the build?
 
 I have found that the Norton anti-virus software does NOT like the pass3.exe of the compiler suite. (Source of pass3.exe is included)
@@ -101,10 +102,10 @@ To test the compiler (ass-u-mes that the build compiler steps have been complete
 
 Currently the IMP compiler suite is targeted at the Intel 32bit 80386 instruction set and output in either COFF or ELF object file formats.
 (Compiler suite (running as a 32-bit program) has been tested against 64-bit versions of:-
-    * Windows 10
-    * Windows 8.1
-    * Centos7 Linux (64-bit)
-      Linux shell scripts now included
+
+	- Windows 10
+	- Windows 8.1
+	- Centos7 Linux (64-bit) (Linux shell scripts now included)
 
 To cross-build the Linux IMP compiler on a Windows machine.
 1)  get a DOS prompt
@@ -146,12 +147,14 @@ Possible extensions (not in any particular order of implementation):
 
 		(e.g. Pascal, Java - assuming objects are implemented)
 		This requires a new grammar file for input to takeon.imp
-		A re-write/extension of pass1.imp (and probable alterations to the iCode instruction set + pass2)
+		A re-write/extension of pass1.imp
+		(and probable alterations to the iCode instruction set + pass2)
 
 16) Target the compiler suite at another instruction set
 	
 		(e.g. ARM, Java bytecode) - I fancy using a BURG style code-generator!
-		This requires a re-write of pass2.imp (and probably pass3 - since pass3 includes some code generation)
+		This requires a re-write of pass2.imp
+		(and probably pass3 - since pass3 includes some code generation)
 
 17) Create a proper iCode assembler in IMP
 	
@@ -170,5 +173,6 @@ Possible extensions (not in any particular order of implementation):
 
 Enjoy!
 
-Andy B Davis
-John Derek McMullin
+	Andy B Davis
+
+	John Derek McMullin
