@@ -12,7 +12,8 @@ INCDIR = ${BASEDIR}/include
 # Library explicitly located, rather than searched by linker, so
 # that we can bootstrap the compiler before we've installed the
 # library
-IMPLIB = ../lib/libimp77.a -lm
+# Also use the possibly "tweaked" local loader script
+IMPLIB = ../lib/libimp77.a -lm -T ld.i77.script
 
 all: pass1 pass2 pass3
 
