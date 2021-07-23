@@ -13,24 +13,26 @@ INCDIR = ${BASEDIR}/include
 # that we can bootstrap the compiler before we've installed the
 # library
 # Also use the possibly "tweaked" local loader script
-IMPLIB = ../lib/libimp77.a -lm -T ld.i77.script
+IMPLIB = ../lib/libimp77.a
+LIBOPT = -lm -T ld.i77.script
 
 all: pass1 pass2 pass3
 
 # We need to build pass1,pass2 from their .o files (created by the cross build script make.bat)
 # Also build pass3 completely from source
-bootstrap: pass3 $(IMPLIB)
+bootstrap: pass3 $(IMPLIB) ld.i77.script
 # Linux version of takeon gets upset with DOS line-endings
 > dos2unix i77.grammar
 # Also, just in case tweak the ld.i77.script
 > dos2unix ld.i77.script
-> $(CC) -o pass1 pass1.o $(IMPLIB)
-> $(CC) -o pass2 pass2.o $(IMPLIB)
-> $(CC) -o takeon takeon.o $(IMPLIB)
+> $(CC) -o pass1 pass1.o $(IMPLIB) $(LIBOPT)
+> $(CC) -o pass2 pass2.o $(IMPLIB) $(LIBOPT)
+> $(CC) -o takeon takeon.o $(IMPLIB) $(LIBOPT)
 > install -t $(BINDIR) pass1
 > install -t $(BINDIR) pass2
 > install -t $(BINDIR) pass3elf
 > install -t $(BINDIR) takeon
+# Also, install the compiler drivers and loader script
 > install -t $(BINDIR) imp77
 > install -t $(BINDIR) imp77link
 > install -t $(BINDIR) ld.i77.script
@@ -41,6 +43,7 @@ install: pass1 pass2 pass3
 > install -t $(BINDIR) pass2
 > install -t $(BINDIR) pass3elf
 > install -t $(BINDIR) takeon
+# Also, always install the compiler drivers and loader script
 > install -t $(BINDIR) imp77
 > install -t $(BINDIR) imp77link
 > install -t $(BINDIR) ld.i77.script
@@ -60,10 +63,10 @@ superclean: clean
 > rm -f *.lst
 
 pass1: pass1.o $(IMPLIB)
-> $(CC) -o pass1 pass1.o $(IMPLIB)
+> $(CC) -o pass1 pass1.o $(IMPLIB) $(LIBOPT)
 
 pass2: pass2.o $(IMPLIB)
-> $(CC) -o pass2 pass2.o $(IMPLIB)
+> $(CC) -o pass2 pass2.o $(IMPLIB) $(LIBOPT)
 
 pass3: pass3elf
 
@@ -77,7 +80,7 @@ i77.tables.imp: takeon i77.grammar $(IMPLIB)
 > takeon i77.grammar=i77.tables.imp,i77.par.debug,i77.lex.debug
 
 takeon: takeon.o $(IMPLIB)
-> $(CC) -o takeon takeon.o $(IMPLIB)
+> $(CC) -o takeon takeon.o $(IMPLIB) $(LIBOPT)
 
 %.o: %.c
 > $(CC) -c $(CCFLAGS) $<
