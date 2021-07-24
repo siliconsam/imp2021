@@ -466,8 +466,8 @@ uses
 const
   eax=1;
   ecx=2;
-  ebx=3;
-  edx=4;
+  edx=3;
+  ebx=4;
   esi=5;
   edi=6;
   esp=7;
