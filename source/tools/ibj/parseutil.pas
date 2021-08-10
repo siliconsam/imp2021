@@ -36,11 +36,11 @@ const
   cPassCoffWrite    = 2; // pass used to write data to a COFF file
 
   // cPassAssemble is a standalone pass
-  cPassAssemble     = 3; // pass used to conver ibj file to a human-readble form
+  cPassAssemble     = 3; // pass used to convert a .ibj file to a human-readable form
 
   // cPassCompactRead, cPassCompactWrite work together, Read then Write
-  cPassCompactRead  = 4; // pass used to create a data structure used to compact an ibj file
-  cPassCompactWrite = 5; // pass used to write the compacted ibj data structure to a new ibj file
+  cPassCompactRead  = 4; // pass used to create a data structure used to compact a .ibj file
+  cPassCompactWrite = 5; // pass used to write the compacted ibj data structure to a new .ibj file
 
   function parseIBJFile( infilename, outfilename : string; passId : integer; handle : longint; debug : boolean ): boolean;
 
@@ -87,14 +87,14 @@ implementation
 
     // pass specific variables
     // cPassCoffCreate variables
-    nameId : integer;
+    nameId         : integer;
     externalNameId : integer;
-    itemPtr : integer;
+    itemPtr        : integer;
 
     // cPassCoffWrite variables
     i       : integer;
-    swtp      : integer;
-    jcondop   : array [0..9] of byte = ($74, $75, $7F, $7D, $7C, $7E, $77, $73, $72, $76);
+    swtp    : integer;
+    jcondop : array [0..9] of byte = ($74, $75, $7F, $7D, $7C, $7E, $77, $73, $72, $76);
 
     // cPassCompactWrite variables
     objData         : string;
@@ -175,12 +175,12 @@ cPassCompactRead:
         // are used to:
         // 1) compress (as much as possible) cases where an OBJ record follows an OBJ record
         // 2) compact the SpecId range by removing any REQEXT which is not referenced
-        //    Butt we use nameId to be semantically equivalent to specId
+        //    But we use nameId to be semantically equivalent to specId
         //    so, wherever cPassCoffCreate,cPassCoffWrite calls newSpecId,setSpecUsed,getSpecUsed
-        //    then cPassCompactRead,cPassCompactWrite call newName,setNameUsed, getNameUsed instead
+        //    then cPassCompactRead,cPassCompactWrite calls newName,setNameUsed, getNameUsed instead
         //    between cPassCompactRead and cPassCompactWrite we compact and renumber the nameId values
         //    depending on whether nameId is used (i.e. specId is used)
-        // 3) compacting LINE records by eliminating any LINE which is immediately befora a LINE record
+        // 3) compacting LINE records by eliminating any LINE which is immediately before a LINE record
         //
         // There may be cases where LINE or OBJ records "surround" a REQEXT record which is being removed
         // If this occurs then re-run the compacter program on the newly compacted IBJ file to further
@@ -1165,6 +1165,7 @@ cPassCoffWrite:
               ptr := findlabel( labelNo );
 
               writew32( cSWTABSECTION, getLabelAddress(ptr) );
+
               // we must also plant a relocation record to make this a code address
               writew32( cSWTABRELSECTION, swtp );            // offset in section of word to relocate
               writew32( cSWTABRELSECTION, getSymbol( cCODESECTION ) ); // symbol for section
@@ -1414,7 +1415,7 @@ IF_ABSEXT:
           // external name relative offset code word
           // external name absolute offset code word (data external)
           checkSize( WORDSIZE );
-          // The IMP77 compiler PASS2 program generates an ABSEXT record
+          // The IMP77 compiler PASS2 program currently generates an ABSEXT record
           // where the actual offset is added to the specId
           offsetPlusId := readword( copy( theData, 1, 4 ) );
           specId := readword( copy( theData, 5, 4 ) ) ;
