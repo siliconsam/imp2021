@@ -694,13 +694,13 @@ at:     newline
 
     ! tags corresponding to linker directives...
     %const %integer %array reltag(0:6) =
-    0,			;! no relocation
-	IF DATA,    ;! dataseg offset code word
-	IF CONST,   ;! const seg offset code word
-	IF BSS,		;! BSS relative code word
-	IF DISPLAY,	;! display seg offset code word
-	IF ABSEXT, 	;! external name absolute offset code word
-	IF SWT		;! switch table offset code word
+    0,			{ no relocation }
+	IF DATA,    { dataseg offset code word }
+	IF CONST,   { const seg offset code word }
+	IF BSS,		{ BSS relative code word }
+	IF DISPLAY,	{ display seg offset code word }
+	IF ABSEXT, 	{ external name absolute offset code word }
+	IF SWT		{ switch table offset code word }
 
     ! plant code for a relocated (DATA/BSS/DISPLAY/EXTERNAL) code word
     %routine norelocateoffset( %integer offset )
@@ -839,7 +839,7 @@ at:     newline
 	16_90, 16_99, 16_C3, 16_9E, 16_C9,
 	16_FF, 16_FF, 16_F7, 16_F7,
 	16_8F, 16_FF,
-	16_8B, 16_89, 16_87,		;! LEA is fudged as if it were m <- r, to allow the flip
+	16_8B, 16_89, 16_87,		{ LEA is fudged as if it were m <- r, to allow the flip }
 	16_11, 16_01, 16_21, 16_39, 16_09, 16_29, 16_31,
 	16_D1, 16_D1, 16_F7, 16_F7,
 	16_E8, 16_74, 16_75,
@@ -848,15 +848,15 @@ at:     newline
 
     ! 8 bit equivalent opcodes
     %const %byte %integer %array op8value(NOP:JMP) =
-	16_90, 16_99, 16_C3, 16_9E, 16_C9,	;! not 8 bit, included for completeness
+	16_90, 16_99, 16_C3, 16_9E, 16_C9,      { not 8 bit, included for completeness }
 	16_FE, 16_FE, 16_F6, 16_F6,
-	16_8F, 16_FF,				            ;! not 8 bit, included for completeness
-	16_8B, 16_88, 16_86,		            ;! LEA is not applicable for 8 bit
+	16_8F, 16_FF,                           { not 8 bit, included for completeness }
+	16_8B, 16_88, 16_86,                    { LEA is not applicable for 8 bit }
 	16_10, 16_00, 16_20, 16_38, 16_08, 16_28, 16_30,
 	16_D0, 16_D0, 16_F6, 16_F6,
 	16_E8, 16_74, 16_75,
     16_7F, 16_7D, 16_7C, 16_7E,
-    16_77, 16_73, 16_72, 16_76, 16_EB	;! not 8 bit, included for completeness
+    16_77, 16_73, 16_72, 16_76, 16_EB       { not 8 bit, included for completeness }
 
     ! An opcode with no operands (eg RET)
     %routine dumpsimple(%integer opn)
@@ -2059,13 +2059,13 @@ break:
 
         i = 0
         %while i < cotp-7 %cycle
-            %if contable(i)   = byteinteger(addr(double)) %and
-                contable(i+1) = byteinteger(addr(double)+1) %and
-                contable(i+2) = byteinteger(addr(double)+2) %and
-                contable(i+3) = byteinteger(addr(double)+3) %and
-                contable(i+4) = byteinteger(addr(double)+4) %and
-                contable(i+5) = byteinteger(addr(double)+5) %and
-                contable(i+6) = byteinteger(addr(double)+6) %and
+            %if contable(i)   = byteinteger(addr(double))   %and %c
+                contable(i+1) = byteinteger(addr(double)+1) %and %c
+                contable(i+2) = byteinteger(addr(double)+2) %and %c
+                contable(i+3) = byteinteger(addr(double)+3) %and %c
+                contable(i+4) = byteinteger(addr(double)+4) %and %c
+                contable(i+5) = byteinteger(addr(double)+5) %and %c
+                contable(i+6) = byteinteger(addr(double)+6) %and %c
                 contable(i+7) = byteinteger(addr(double)+7) %then %result = i + cotoffset
             i = i + 4
         %repeat
@@ -3064,9 +3064,9 @@ SIGN:
 
         %constbyteintegerarray fmap(0:15) =
                  0, v in s,    a in s, pgm label, recordformat,         0,        switch,       0,
-        !     void, simple,      name,     label, recordformat,         ?,        switch, routine,
+        {     void, simple,      name,     label, recordformat,         ?,        switch, routine, }
             v in r, v in s,    v in r,    v in s,       a in s,    v in s,        a in s,       0
-        ! function,    map, predicate,     array,    arrayname, namearray, namearrayname,       ?
+        { function,    map, predicate,     array,    arrayname, namearray, namearrayname,       ?  }
 
         !                                                           >> STACK VAR <<
         ! Push a descriptor on the stack corresponding to Var "var no"
@@ -3356,10 +3356,10 @@ SIGN:
         %routine  amap(%record(stackfm)%name  v)
             %integer f
             %constintegerarray  addr map(0:15) =
-            !    0,        1,  2,  3,       4,   5,               6,                   7,
+            {    0,        1,  2,  3,       4,   5,               6,                   7, }
                 -1,       -2, -3, -4, AV in S,  -5,          V in S,           AV in REC,
 
-            !    8,        9, 10, 11,      12,  13,              14,                  15
+            {    8,        9, 10, 11,      12,  13,              14,                  15  }
                 -6, V in REC, -7, -8,      -9, -10, {PGM LABEL} -11, {record format} -12
 
             ! ABD - should be code here to deal with ADDR(pgm label)
@@ -3389,7 +3389,7 @@ SIGN:
         %routine  vmap(%record(stackfm)%name  v)
             %integer  f, t
             %constintegerarray  var map(0:8) =
-            !      0,      1,  2,  3,      4,      5,  6,        7,        8
+            {      0,      1,  2,  3,      4,      5,  6,        7,        8 }
               V in S, V in S, -1, -2, A in S, V in S, -3, A in REC, V in REC
 
             %if (v_form = A in S) %or (v_form = A in REC) %start
@@ -3798,7 +3798,7 @@ oper(ADDX):
 oper(SUBx):
             ! First look for fred = fred + <whatever>
             ! We can only safely do this for bytes if we're jamming or ignoring overflow
-            %if (assign pending # 0) %and
+            %if (assign pending # 0) %and %c
                 ((lhs_type = integer) %or ((control & check capacity) = 0) %or (Pending = 'j')) %then %start
                 readsymbol(Pending)  ; ! we will do the assignment ourselves
                 address(lhs)      ; ! make LHS accessible
@@ -3990,7 +3990,7 @@ oper(REMx):
 oper(LSHx):
 oper(RSHx):
 shift it:
-            %if (assign pending # 0) %and
+            %if (assign pending # 0) %and %c
                 ((op = RSHx) %or (lhs_type = integer) %or (control & check capacity = 0) %or (Pending = 'j')) %then %start
                 readsymbol(Pending);   ! we will do the assignment ourselves
                 address(lhs);				! make LHS accessible
@@ -5746,15 +5746,15 @@ done:
             ! This list maps opId to internal opX
             %constant %integer %array opGenericId(NOP:JMP) =
                   -1,   -1,    -1,     -1,     -1,     -1,     -1,   NEGx,
-            !    NOP,  CWD,   RET,   SAHF,  LEAVE,    DEC,    INC,    NEG,
+            {    NOP,  CWD,   RET,   SAHF,  LEAVE,    DEC,    INC,    NEG, }
                  NOTx,     POP,    PUSH,      -1,      -1,      -1,      -1,    ADDx,
-            !    NOT,  POP,  PUSH,    LEA,    MOV,   XCHG,    ADC,    ADD,
+            {    NOT,  POP,  PUSH,    LEA,    MOV,   XCHG,    ADC,    ADD, }
                 ANDx,   -1,   ORx,   SUBx,   XORx,   LSHx,   RSHx,   DIVx,
-            !    AND,  CMP,    OR,    SUB,    XOR,    SHL,    SHR,   IDIV,
+            {    AND,  CMP,    OR,    SUB,    XOR,    SHL,    SHR,   IDIV, }
                 MULx,   -1,    -1,     -1,     -1,     -1,     -1,     -1,
-            !   IMUL, CALL,    JE,    JNE,     JG,    JGE,     JL,    JLE,
+            {   IMUL, CALL,    JE,    JNE,     JG,    JGE,     JL,    JLE, }
                   -1,   -1,    -1,     -1,     -1
-            !     JA,  JAE,    JB,    JBE,    JMP
+            {     JA,  JAE,    JB,    JBE,    JMP }
 
             ! This list maps opId to internal opX name
             %constant %string(5) %array opGenericName(NOP:JMP) =
