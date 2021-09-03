@@ -23,91 +23,25 @@
     %routine dumpText
         %integer i
         %integer nlflag
+        %integer value
+        %integer flag,o1,ss,o2,t,link
 
         max symbol length = 0
         %for i = 0, 1, 255 %cycle
-            %if text(i) <> "" %start
-                %if length(text(i)) > max symbol length %start
-                    max symbol length = length(text(i))
-                %finish
+            %if length(text(i)) > max symbol length %start
+                max symbol length = length(text(i))
             %finish
         %repeat
 
         nlflag = 1
         printstring("Start dumpText"); newline
         %for i = 0, 1, 255 %cycle
-            %if text(i) <> "" %start
-                nlflag = 1
-                printstring("text[".itos(i,3)."]== ")
-                spaces( max symbol length - length(text(i)));
-                printstring(text(i))
-                newline
+            nlflag = 1
+            printstring("text[".itos(i,3)."]== ")
+            spaces( max symbol length - length(text(i)));
+            printstring(text(i))
 
-            %finish %else %if nlflag = 1 %start
-                nlflag = 0
-                newline
-            %finish
-        %repeat
-        newline
-
-    %end
-
-    %routine dumpPhrase
-        %integer i
-        %integer nlflag
-		
-        nlflag = 1
-        printstring("Start dumpPhrase"); newline
-        %for i = 200, 1, 255 %cycle
-            %if text(i) <> "" %start
-                nlflag = 1
-                printstring("phrase[".itos(i,3)."] == ")
-                spaces( max symbol length - length(text(i)))
-                printstring(text(i))
-                printstring(" @ ".itos(phrase(i),0))
-                newline
-            %finish %else %if nlflag = 1 %start
-                nlflag = 0
-                newline
-            %finish
-        %repeat
-        newline
-
-    %end
-
-    %routine dumpAtomic
-        %integer i
-        %integer nlflag
-
-        nlflag = 1
-        printstring("Start dumpAtomic"); newline
-        %for i = 130, 1, 179 %cycle
-            %if atomic(i) <> 0 %start
-                %if text(atomic(i)) <> "" %start
-                    nlflag = 1
-                    printstring("atomic[".itos(i,3)."]=> ")
-                    spaces( max symbol length - length(text(i)))
-                    printstring(text(i))
-                    printstring(" == ".text(atomic(i)))
-                    newline
-                %finish
-            %finish %else %if nlflag = 1 %start
-                nlflag = 0
-                newline
-            %finish
-        %repeat
-        newline
-
-    %end
-
-    %routine dumpInitial
-        %integer i
-        %integer value
-        %integer flag,o1,ss,o2,t,link
-
-        printstring("Start dumpInitial"); newline
-        %for i = 0, 1, 119 %cycle
-            %if initial(i) <> 0 %start
+            %if (0 <= i <= 119) %start
                 value = initial(i)
 
                 flag = (value >> 15) & 1
@@ -117,18 +51,22 @@
                 t = (value >> 8) & 1
                 link = value & 255
 
-                printstring(text(i))
-                spaces( max symbol length - length(text(i)))
-                printstring("== ")
-
+                space;
                 %if (flag = 1) %then printstring("flag ") %else spaces(5)
                 %if (o1 = 1) %then printstring("o1 ") %else spaces(3)
                 printstring("ss=".itos(ss,0)." ")
                 printstring("o2=".itos(o2,0)." ")
                 %if (t = 1) %then printstring("t ") %else spaces(2)
-                printstring("link=<".itos(link,0)."> ")
-                newline
+                printstring("link=".itos(link,0))
+
+            %finish %else %if (130 <= i <= 179) %start
+                printstring(" == ");printstring(text(atomic(i)))
+            %finish %else %if (200 <= i <= 255) %start
+                printstring(" @ ".itos(phrase(i),0))
             %finish
+
+            newline
+
         %repeat
         newline
 
@@ -141,48 +79,22 @@
 
         printstring("Start dumpGram"); newline
         %for i = 0, 1, gmax1 %cycle
-            %if gram(i) <> 0 %start
-                value = gram(i)
+            value = gram(i)
 
-                more = (value >> 15) & 1
-                o1 = (value >> 14) & 1
-                order = (value >> 12) & 3
-                type = (value >> 8) & 15
-                class = value & 255
+            more = (value >> 15) & 1
+            o1 = (value >> 14) & 1
+            order = (value >> 12) & 3
+            type = (value >> 8) & 15
+            class = value & 255
 
-                printstring("gram[".itos(i,3)."]== ")
-                %if more = 1 %then printstring("more ") %else spaces(5)
-                %if o1 = 1 %then printstring("o1 ") %else spaces(3)
-                printstring("order=");printstring(itos(order,0));printstring(" ")
-                printstring("type=");printstring(itos(type,0));printstring(" ")
-                spaces( max symbol length - length(text(class)));printstring(text(class))
-                newline
-            %finish
-        %repeat
-        newline
-
-    %end
-
-    %routine dumpGLink
-        %integer i
-        %integer value
-        %integer class
-        %integer newlineflag
-
-        printstring("Start dumpGLink"); newline
-        newlineflag = 0
-        %for i = 0, 1, gmax1 %cycle
-            %if glink(i) > 0 %start
-                newlineflag = 1
-                value = gram(glink(i))
-
-                class = value & 255
-                printstring(text(class));printstring(" ")
-            %finish %else %if newlineflag = 1 %start
-                newlineflag = 0
-                newline
-            %finish
-
+            printstring("gram[".itos(i,3)."]== ")
+            %if more = 1 %then printstring("more ") %else spaces(5)
+            %if o1 = 1 %then printstring("o1 ") %else spaces(3)
+            printstring("order=");printstring(itos(order,0));printstring(" ")
+            printstring("type=");printstring(itos(type,0));printstring(" ")
+            spaces( max symbol length - length(text(class)));printstring(text(class))
+            space; printstring(itos(glink(i),4))
+            newline
         %repeat
         newline
 
@@ -200,15 +112,15 @@
             printstring("kdict[".itos(i,3)."] = ")
 
             %if value&16_8000 # 0 %start
-                printstring(" FLAG15 ")
+                printstring(" F ")
             %else
-                printstring("        ")
+                spaces(3)
             %finish
 
             %if value&16_4000 # 0 %start
-                printstring(" FLAG14 ")
+                printstring(" E ")
             %else
-                printstring("        ")
+                spaces(3)
             %finish
 			
             ch1 = value & 16_7f
@@ -228,11 +140,7 @@
     %end
 
     dumpText
-    dumpPhrase
-    dumpAtomic
-    dumpInitial
     dumpGram
-    dumpGLink
     dumpkdict
 
 %endofprogram
