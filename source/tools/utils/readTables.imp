@@ -3,11 +3,63 @@
     %constinteger max grammar  = 1720
     %constinteger max kdict    = 618
 
+    %include "inc.ascii"
+
     !*** start of generated tables ***
     %include "i77.tables.imp"
     !***  end  of generated tables ***
 
+  %constbyteintegerarray mappedsymbol(0:127) = %c
+    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+    ' ', ' ',  10, ' ',  12, ' ', ' ', ' ',
+    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+    ' ', '!', '"', '#', '$', '%', '&',  39,
+    '(', ')', '*', '+', ',', '-', '.', '/',
+    '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', ':', ';', '<', '=', '>', '?',
+    '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+    'X', 'Y', 'Z', '[', '\', ']', '^', '_',
+    '`', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+    'X', 'Y', 'Z', '{', '|', '}', '~', ' '
+
+    !!   0 = space
+    !!   1 = %
+    !!   2 = {
+    !!   3 = ff
+    !!   other values represent themselves
+
     %integer max symbol length
+    %recordformat dictionaryfm(%integer inst,p1,p2)
+    %record(dictionaryfm) %array dictionary(32:max kdict)
+
+    %string(2) %function mappedsymbolchar(%integer ch)
+        %string(2) s
+        %integer x
+
+        x = ch & 127
+        s = ""
+
+        %if (x = 10) %then %start
+            s = "LF"
+        %finish %else %if (x = 12) %then %start
+            s = "FF"
+        %finish %else %start
+            s = tostring(mappedsymbol(x))
+        %finish
+        %result = s
+    %end
+
+    %routine showchar( %integer c )
+        %integer x
+
+        x = c & 127
+        printstring( asciichar(x) )
+    %end
 
     %routine showsymbol( %shortinteger ch )
         %if ch >= 32 %start
@@ -38,7 +90,7 @@
         %for i = 0, 1, 255 %cycle
             nlflag = 1
             printstring("text[".itos(i,3)."]== ")
-            spaces( max symbol length - length(text(i)));
+            spaces( max symbol length - length(text(i)))
             printstring(text(i))
 
             %if (0 <= i <= 119) %start
@@ -69,16 +121,20 @@
 
         %repeat
         newline
-
     %end
 
     %routine dumpGram
-        %integer i
+        %const %integer countMax = 5
+        %integer i,j
         %integer value
         %integer more,o1,order,type,class
+        %integer previous,count
 
-        printstring("Start dumpGram"); newline
-        %for i = 0, 1, gmax1 %cycle
+        previous = 0
+        count = 0
+!        printstring("Start dumpGram"); newline
+        ! skip the 0'th entry
+        %for i = 1, 1, gmax1 %cycle
             value = gram(i)
 
             more = (value >> 15) & 1
@@ -87,60 +143,244 @@
             type = (value >> 8) & 15
             class = value & 255
 
-            printstring("gram[".itos(i,3)."]== ")
-            %if more = 1 %then printstring("more ") %else spaces(5)
-            %if o1 = 1 %then printstring("o1 ") %else spaces(3)
-            printstring("order=");printstring(itos(order,0));printstring(" ")
-            printstring("type=");printstring(itos(type,0));printstring(" ")
-            spaces( max symbol length - length(text(class)));printstring(text(class))
-            space; printstring(itos(glink(i),4))
-            newline
+            %for j = 200,1,255 %cycle
+                %if (phrase(j) = i) %and (length(text(j)) <> 0) %start
+                    printstring(text(j))            
+                    printstring(" => ")
+                    printstring(itos(i,0))
+                    newline
+                %finish
+            %repeat
+
+            %if (previous = 0) %start
+                printstring(itos(i,3)." ")
+                %if (more = 0) %start
+                    ! just this entry
+                    count = 0
+                %finish %else %start
+                    ! start of alternate sequence
+                    previous = 1
+                    count = 1
+                %finish
+            %finish %else %start
+                %if (more = 0) %start
+                    ! last entry in alternate sequence
+                    previous = 0
+                    count = countMax
+                %finish %else %start
+                    ! middle entry in alternate sequence
+                    %if (count = countMax) %then count = 1 %%else count = count + 1
+                %finish
+            %finish
+
+            ! print the symbol name
+            space
+            %if (class = 0) %start
+                printstring("*E")
+                %if (order = 1) %then printstring("+")
+            %finish %else %start
+                printstring(text(class))
+                %if (order > 0) %start
+                    ! indicate the order level
+                    %for j=1,1,order %cycle
+                        printstring("<")
+                    %repeat
+                %finish
+                %if (o1 = 1) %start
+                    ! indicate it is a terminal symbol
+                    printstring("""")
+                %finish
+                %if (type > 0) %start
+                    ! indicate the type
+                    printstring("[".itos(type,0)."]")
+                %finish
+            %finish
+            space; printstring(itos(glink(i),0))
+
+            %if (previous = 0) %or (count = countMax) %then newline
+            %if (more = 1) %then spaces(countMax)
         %repeat
         newline
+    %end
 
+    %routine dumpInitial
+        %integer i,j
+        %integer value,gvalue
+        %integer link
+        %integer more,o1,order,type,class
+
+        %for i=0,1,119 %cycle
+            value = initial(i)
+
+            link = value & 255
+
+            %if (link # 0) %start
+                gvalue = gram(link)
+
+                more = (gvalue >> 15) & 1
+                o1 = (gvalue >> 14) & 1
+                order = (gvalue >> 12) & 3
+                type = (gvalue >> 8) & 15
+                class = gvalue & 255
+
+                printstring( itos(i,3).":")
+
+                ! print the symbol name
+                space
+                %if (i = 0) %start
+                    printstring(text(i)."""")
+                %finish %else %start
+                    printstring(text(class))
+                %finish
+                %if (order > 0) %start
+                    ! indicate the order level
+                    %for j=1,1,order %cycle
+                        printstring("<")
+                    %repeat
+                %finish
+                %if (o1 = 1) %start
+                    ! indicate it is a terminal symbol
+                    printstring("""")
+                %finish
+                %if (type > 0) %start
+                    ! indicate the type
+                    printstring("[".itos(type,0)."]")
+                %finish
+                space; printstring(itos(link,0))
+                newline
+
+            %finish
+        %repeat
     %end
 
     %routine dumpkdict
-        %integer i
-        %integer value
-        %shortinteger ch1,ch2,flag
+        %integer i,j,temp
+        %string(4) s
+        %integer inst,p1,p2
 
-        printstring("Start dumpkdict"); newline
-        %for i = 32, 1,max kdict %cycle
-            value = kdict(i)
+        %for i=32,1,618 %cycle
+            dictionary(i)_inst = (kdict(i)>>14)&16_3
+            dictionary(i)_p1 = (kdict(i)>>7)&16_7f
+            dictionary(i)_p2 = (kdict(i)>>0)&16_7f
+        %repeat
 
-            printstring("kdict[".itos(i,3)."] = ")
+        printstring( "KDict Raw Data Table" ); newline
+        %for i=32,1,618 %cycle
 
-            %if value&16_8000 # 0 %start
-                printstring(" F ")
+             inst = dictionary(i)_inst
+             p1 = dictionary(i)_p1
+             p2 = dictionary(i)_p2
+
+!            dictionary(i)_inst = (kdict(i)>>14)&16_3
+!            dictionary(i)_p1 = (kdict(i)>>7)&16_7f
+!            dictionary(i)_p2 = (kdict(i)>>0)&16_7f
+
+            %if (32 <= i <= 127) %start
+                printstring( " kdict(".itos(i,3)."==".asciichar(i).")=>")
             %else
-                spaces(3)
+                printstring( " kdict(".itos(i,3)."     )=>")
             %finish
 
-            %if value&16_4000 # 0 %start
-                printstring(" E ")
-            %else
-                spaces(3)
+!            ! show kdict(i) as 16-bit integer
+!            printstring( itos(kdict(i),7))
+
+!            ! show kdict(i) as binary fields
+!            printstring(" | ")
+!            %for j = 15,-1,0 %cycle
+!                %if ((kdict(i) >> j) & 1 = 0) %then printstring("0") %else printstring("1")
+!                
+!                %if (j = 14) %then printstring(" ")
+!                %if (j = 7) %then printstring(" ")
+!            %repeat
+
+            ! show kdict(i) as decimal fields
+            printstring(" |")
+            printstring(" ".itos(inst,2))
+            printstring(" ".itos(p1,3))
+            printstring(" ".itos(p2,3))
+
+            ! show kdict(i) as mapped symbol fields
+            ! p1 field
+            printstring(" |")
+            %if (0 <= p1 <= 127) %start
+                spaces(3 - length(mappedsymbolchar(p1)))
+                printstring(mappedsymbolchar(p1))
+            %finish %else spaces(3)
+
+            ! p2 field
+            printstring(" |")
+            %if (0 <= p2 <= 127) %start
+                spaces(3 - length(mappedsymbolchar(p2)))
+                printstring(mappedsymbolchar(p2))
+            %finish %else spaces(3)
+
+            ! p1*p2 field
+            printstring(" | ")
+            temp = (p1 << 7) + p2
+            %if (temp # 0) %start
+                printstring( itos(temp,max symbol length - 1) )
+            %finish %else %start
+                spaces( max symbol length )
             %finish
-			
-            ch1 = value & 16_7f
-            ch2 = (value >> 7) & 16_7f
 
-            printstring(" ch2=")
-            showsymbol( ch2 )
+            printstring(" | ")
+            ! Decode "instruction"
+            %if (inst = 0) %start
+                %if (0 <= p1 < 32) %start
+                    temp = (p1 << 7) + p2
+                    %if (temp # 0) %start
+                        printstring( itos(temp,max symbol length - 1) )
+                    %finish %else %start
+                        spaces( max symbol length )
+                    %finish
+                %finish %else %if (32 <= p1 <= 127) %or (32 <= p2 <= 127) %start
+                    s = ""
+                    %if (32 <= p2 <= 127) %then s = s.mappedsymbolchar(p2)
+                    %if (32 <= p1 <= 127) %then s = s.mappedsymbolchar(p1)
+                    %if (length(s) > 0) %then s = """".s.""""
 
-            printstring(" ch1=")
-            showsymbol( ch1 )
+                    spaces(max symbol length - length(s))
+                    printstring(s)
 
+                %finish %else %start
+                    spaces( max symbol length )
+                %finish
+            %finish %else %if (inst = 1) %start
+                %if (p1 = 0) %start
+                    spaces( max symbol length - length(text(p2)))
+                    printstring(text(p2))
+                %finish %else %start
+                    spaces( max symbol length )
+                %finish
+            %finish %else %if (inst = 2) %start
+                %if (p1 # 0) %start
+                    spaces(max symbol length - length(mappedsymbolchar(p2)))
+                    printstring(mappedsymbolchar(p2))
+                %finish %else %start
+                    spaces( max symbol length )
+                %finish
+            %finish %else %if (inst = 3) %start
+                %if (p1 # 0) %start
+                    spaces( max symbol length )
+                %finish %else %start
+                    spaces( max symbol length )
+                %finish
+            %finish %else %start
+                spaces( max symbol length )
+            %finish
+
+            printstring(" |")
             newline
-
         %repeat
         newline
-
     %end
 
+    selectoutput(1)
     dumpText
+    selectoutput(2)
     dumpGram
+    dumpInitial
+    selectoutput(3)
     dumpkdict
 
 %endofprogram
