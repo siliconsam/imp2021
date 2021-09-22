@@ -1,7 +1,6 @@
 %begin
 
     %constinteger max grammar  = 1720
-    %constinteger max kdict    = 618
 
     %include "inc.ascii"
 
@@ -35,8 +34,23 @@
 
     %integer max symbol length
     %recordformat dictionaryfm(%integer inst,p1,p2)
-    %record(dictionaryfm) %array dictionary(32:max kdict)
+    %record(dictionaryfm) %array dictionary(0:max kdict)
 
+    %constintegerarray dstart(32:127) = %c
+    0  , 127, 0  , 132, 0  , 137, 139, 0  ,
+    141, 143, 145, 150, 155, 157, 165, 167,
+    0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
+    0  , 0  , 172, 174, 176, 187, 198, 0  ,
+    0  , 206, 225, 240, 269, 280, 320, 0  ,
+    0  , 348, 0  , 0  , 365, 400, 409, 426,
+    448, 0  , 468, 522, 571, 579, 0  , 589,
+    0  , 0  , 0  , 593, 595, 603, 605, 610,
+    0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
+    0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
+    0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
+    0  , 0  , 0  , 0  , 612, 0  , 614, 0
+
+    
     %string(2) %function mappedsymbolchar(%integer ch)
         %string(2) s
         %integer x
@@ -74,7 +88,6 @@
 
     %routine dumpText
         %integer i
-        %integer nlflag
         %integer value
         %integer flag,o1,ss,o2,t,link
 
@@ -85,38 +98,39 @@
             %finish
         %repeat
 
-        nlflag = 1
         printstring("Start dumpText"); newline
         %for i = 0, 1, 255 %cycle
-            nlflag = 1
-            printstring("text[".itos(i,3)."]== ")
-            spaces( max symbol length - length(text(i)))
-            printstring(text(i))
+            printstring("text[".itos(i,3)."]")
 
-            %if (0 <= i <= 119) %start
-                value = initial(i)
+            %if (length(text(i)) > 0) %start
+                printstring("== ")
+                spaces( max symbol length - length(text(i)))
+                printstring(text(i))
 
-                flag = (value >> 15) & 1
-                o1 = (value >> 14) & 1
-                ss = (value >> 12) & 3
-                o2 = (value >> 9) & 7
-                t = (value >> 8) & 1
-                link = value & 255
+                %if (0 <= i <= 119) %start
+                    value = initial(i)
 
-                space;
-                %if (flag = 1) %then printstring("flag ") %else spaces(5)
-                %if (o1 = 1) %then printstring("o1 ") %else spaces(3)
-                printstring("ss=".itos(ss,0)." ")
-                printstring("o2=".itos(o2,0)." ")
-                %if (t = 1) %then printstring("t ") %else spaces(2)
-                printstring("link=".itos(link,0))
+                    flag = (value >> 15) & 1
+                    o1 = (value >> 14) & 1
+                    ss = (value >> 12) & 3
+                    o2 = (value >> 9) & 7
+                    t = (value >> 8) & 1
+                    link = value & 255
 
-            %finish %else %if (130 <= i <= 179) %start
-                printstring(" == ");printstring(text(atomic(i)))
-            %finish %else %if (200 <= i <= 255) %start
-                printstring(" @ ".itos(phrase(i),0))
+                    space;
+                    %if (flag = 1) %then printstring("flag ") %else spaces(5)
+                    %if (o1 = 1) %then printstring("o1 ") %else spaces(3)
+                    printstring("ss=".itos(ss,0)." ")
+                    printstring("o2=".itos(o2,0)." ")
+                    %if (t = 1) %then printstring("t ") %else spaces(2)
+                    printstring("link=".itos(link,0))
+
+                %finish %else %if (130 <= i <= 179) %start
+                    printstring(" == ");printstring(text(atomic(i)))
+                %finish %else %if (200 <= i <= 255) %start
+                    printstring(" @ ".itos(phrase(i),0))
+                %finish
             %finish
-
             newline
 
         %repeat
@@ -255,25 +269,36 @@
 
     %routine dumpkdict
         %integer i,j,temp
-        %string(4) s
-        %integer inst,p1,p2
+        %string(255) s,x,y
+        %integer inst,p1,p2,np1,np2
+        %switch param1(0:3)
+        %switch param2(0:3)
+        %switch instruction(0:3)
 
-        %for i=32,1,618 %cycle
+        ! Initialise the unused non-printable entries
+        %for i=0,1,31 %cycle
+            dictionary(i)_inst = 0
+            dictionary(i)_p1 = 0
+            dictionary(i)_p2 = 0
+        %repeat
+
+        %for i=32,1,max kdict %cycle
             dictionary(i)_inst = (kdict(i)>>14)&16_3
             dictionary(i)_p1 = (kdict(i)>>7)&16_7f
             dictionary(i)_p2 = (kdict(i)>>0)&16_7f
         %repeat
 
         printstring( "KDict Raw Data Table" ); newline
-        %for i=32,1,618 %cycle
+        %for i=32,1,max kdict %cycle
 
-             inst = dictionary(i)_inst
-             p1 = dictionary(i)_p1
-             p2 = dictionary(i)_p2
+            inst = dictionary(i)_inst
+            p1 = dictionary(i)_p1
+            p2 = dictionary(i)_p2
 
-!            dictionary(i)_inst = (kdict(i)>>14)&16_3
-!            dictionary(i)_p1 = (kdict(i)>>7)&16_7f
-!            dictionary(i)_p2 = (kdict(i)>>0)&16_7f
+            %if (i < max kdict) %start
+                np1 = dictionary(i+1)_p1
+                np2 = dictionary(i+1)_p2
+            %finish
 
             %if (32 <= i <= 127) %start
                 printstring( " kdict(".itos(i,3)."==".asciichar(i).")=>")
@@ -281,8 +306,9 @@
                 printstring( " kdict(".itos(i,3)."     )=>")
             %finish
 
-!            ! show kdict(i) as 16-bit integer
-!            printstring( itos(kdict(i),7))
+            ! show kdict(i) as 16-bit integer
+            printstring(" |")
+            printstring( itos(kdict(i),max symbol length - 1))
 
 !            ! show kdict(i) as binary fields
 !            printstring(" | ")
@@ -299,76 +325,144 @@
             printstring(" ".itos(p1,3))
             printstring(" ".itos(p2,3))
 
-            ! show kdict(i) as mapped symbol fields
-            ! p1 field
-            printstring(" |")
-            %if (0 <= p1 <= 127) %start
-                spaces(3 - length(mappedsymbolchar(p1)))
-                printstring(mappedsymbolchar(p1))
-            %finish %else spaces(3)
-
-            ! p2 field
-            printstring(" |")
-            %if (0 <= p2 <= 127) %start
-                spaces(3 - length(mappedsymbolchar(p2)))
-                printstring(mappedsymbolchar(p2))
-            %finish %else spaces(3)
-
-            ! p1*p2 field
+            ! Decode full instruction
             printstring(" | ")
-            temp = (p1 << 7) + p2
-            %if (temp # 0) %start
-                printstring( itos(temp,max symbol length - 1) )
+
+            %if (i < 127) %start
+                printstring(itos(inst,max symbol length - 1))
+                space
+
+                printstring(itos(p2,max symbol length - 1))
+                space
+                printstring(itos(p1,max symbol length - 1))
+
+!                %if (dstart(i) <> 0) %start
+                %if ((kdict(i)>>2) <> 0) %start
+                    printstring(" | ")
+                    printstring(itos(dstart(i),max symbol length - 1))
+
+                    ! show kdict(i) as binary
+                    printstring(" | ")
+                    printstring(itos((kdict(i)>>2),max symbol length - 1))
+
+                    printstring(" | ")
+                    x = ""
+                    %for j = 0,1,15 %cycle
+                        %if ((kdict(i) >> j) & 1 = 0) %then x="0".x %else x="1".x
+                    %repeat
+                    printstring(x)
+
+                    printstring(" | ")
+                    x = ""
+                    %for j = 0,1,13 %cycle
+                        %if ((kdict(i) >> (j + 2)) & 1 = 0) %then x="0".x %else x="1".x
+                    %repeat
+                    printstring(x)
+
+                    ! show dstart(i) as binary
+                    printstring(" | ")
+                    y = ""
+                    %for j = 13,-1,0 %cycle
+                        %if ((dstart(i) >> j) & 1 = 0) %then y=y."0" %else y=y."1"
+                    %repeat
+                    printstring(y)
+
+                    %if (x=y) %then printstring(" | match! ")
+                %finish %else %start
+                    printstring(" | ")
+!                    spaces( max symbol length)
+                    x = ""
+                    %for j = 0,1,15 %cycle
+                        %if ((kdict(i) >> j) & 1 = 0) %then x="0".x %else x="1".x
+                    %repeat
+                    printstring(x)
+                %finish
+
             %finish %else %start
-                spaces( max symbol length )
-            %finish
 
-            printstring(" | ")
-            ! Decode "instruction"
-            %if (inst = 0) %start
-                %if (0 <= p1 < 32) %start
-                    temp = (p1 << 7) + p2
-                    %if (temp # 0) %start
-                        printstring( itos(temp,max symbol length - 1) )
-                    %finish %else %start
-                        spaces( max symbol length )
-                    %finish
-                %finish %else %if (32 <= p1 <= 127) %or (32 <= p2 <= 127) %start
+                -> instruction(inst)
+
+instruction(0):
+                %if ((dictionary(i - 1)_inst = 1) %or (dictionary(i - 1)_inst = 3)) %start
+                     spaces(2+ 3*max symbol length)
+                %finish %else %start
+                    printstring(itos(inst,max symbol length - 1))
+                    space
                     s = ""
                     %if (32 <= p2 <= 127) %then s = s.mappedsymbolchar(p2)
                     %if (32 <= p1 <= 127) %then s = s.mappedsymbolchar(p1)
                     %if (length(s) > 0) %then s = """".s.""""
 
-                    spaces(max symbol length - length(s))
+                    spaces(1+ 2*max symbol length - length(s))
                     printstring(s)
+                %finish
 
-                %finish %else %start
-                    spaces( max symbol length )
-                %finish
-            %finish %else %if (inst = 1) %start
+                printstring(" | ")
+                spaces( max symbol length)
+
+                -> end decodeinstruction
+
+instruction(1):
+                printstring(itos(inst,max symbol length - 1))
+                space
+
                 %if (p1 = 0) %start
-                    spaces( max symbol length - length(text(p2)))
-                    printstring(text(p2))
+                    s = ":".text(p2)
+                    spaces( 1 + 2*max symbol length - length(s))
+                    printstring(s)
                 %finish %else %start
-                    spaces( max symbol length )
+                    spaces( 1 + 2*max symbol length )
                 %finish
-            %finish %else %if (inst = 2) %start
-                %if (p1 # 0) %start
-                    spaces(max symbol length - length(mappedsymbolchar(p2)))
-                    printstring(mappedsymbolchar(p2))
+
+                printstring(" | ")
+                %if (np1 = 0) %and (np2 = 0) %start
+                    spaces( max symbol length)
                 %finish %else %start
-                    spaces( max symbol length )
+                    printstring(itos(np1*127+np2,max symbol length - 1))
                 %finish
-            %finish %else %if (inst = 3) %start
-                %if (p1 # 0) %start
-                    spaces( max symbol length )
+
+                -> end decodeinstruction
+
+instruction(2):
+                printstring(itos(inst,max symbol length - 1))
+                space
+
+                printstring(itos(p1,max symbol length - 1))
+
+                %if (p2 # 10) %then s = """".mappedsymbolchar(p2)."""" %else s = "$"
+                spaces( 1 + max symbol length - length(s))
+                printstring(s)
+
+                printstring(" | ")
+                spaces( max symbol length)
+
+                -> end decodeinstruction
+
+instruction(3):
+                printstring(itos(inst,max symbol length - 1))
+                space
+
+                s = ":".text(p2)
+                spaces(max symbol length - length(s))
+                printstring(s)
+
+                s = text(p1)
+                spaces(1 + max symbol length - length(s))
+                printstring(s)
+
+                printstring(" | ")
+                %if (np1 = 0) %and (np2 = 0) %start
+                    spaces( max symbol length)
                 %finish %else %start
-                    spaces( max symbol length )
+                    printstring(itos(np1*127+np2,max symbol length - 1))
                 %finish
-            %finish %else %start
-                spaces( max symbol length )
+
+                -> end decodeinstruction
+
+end decodeinstruction:
             %finish
 
+            ! end the entry
             printstring(" |")
             newline
         %repeat
