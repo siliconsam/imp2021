@@ -741,8 +741,9 @@ l10:    select output(dlist);  newlines(2)
     newline;
     printstring("0(max grammar-gmax1)")
     newlines(2)
-    printstring("%constshortintegerarray kdict(32:");  hwrite(kmax,0)
-    printstring(") = %c")
+
+    printstring("%constshortinteger max kdict = ");  hwrite(kmax,0); newline
+    printstring("%constshortintegerarray kdict(32:max kdict) = %c");
     %cycle i = 32,1,kmax
         newline %if i&7 = 0
         hwrite(keydict(i),7)
