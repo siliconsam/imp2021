@@ -5,7 +5,7 @@
 
     %begin
         %integer i
-        %integer %array table(1:top)
+        %short %integer %array table(1:top)
 
         %for i=1,1,top %cycle
             table(i) = 2*i
