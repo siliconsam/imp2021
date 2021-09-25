@@ -8,49 +8,50 @@
     %include "i77.tables.imp"
     !***  end  of generated tables ***
 
-  %constbyteintegerarray mappedsymbol(0:127) = %c
-    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-    ' ', ' ',  10, ' ',  12, ' ', ' ', ' ',
-    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-    ' ', '!', '"', '#', '$', '%', '&',  39,
-    '(', ')', '*', '+', ',', '-', '.', '/',
-    '0', '1', '2', '3', '4', '5', '6', '7',
-    '8', '9', ':', ';', '<', '=', '>', '?',
-    '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-    'X', 'Y', 'Z', '[', '\', ']', '^', '_',
-    '`', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-    'X', 'Y', 'Z', '{', '|', '}', '~', ' '
+    { grammar related constants }
+    %constinteger manifest = 120, figurative = 130
+    %constinteger actions  = 180, phrasal    = 200
 
-    !!   0 = space
-    !!   1 = %
-    !!   2 = {
-    !!   3 = ff
-    !!   other values represent themselves
+  %constbyteintegerarray printable(0:127) = %c
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ',  10, ' ',  12, ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', '!', '"', '#', '$', '%', '&',  39,
+        '(', ')', '*', '+', ',', '-', '.', '/',
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', ':', ';', '<', '=', '>', '?',
+        '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+        'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+        'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+        'X', 'Y', 'Z', '[', '\', ']', '^', '_',
+        '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+        'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+        'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+        'x', 'y', 'z', '{', 124, '}', '~', ' '
+
+    %constbyteintegerarray mappedsymbol(0:127) = %c
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ',  10, ' ',  12, ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', '!', '"', '#', '$', '%', '&',  39,
+        '(', ')', '*', '+', ',', '-', '.', '/',
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', ':', ';', '<', '=', '>', '?',
+        '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+        'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+        'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+        'X', 'Y', 'Z', '[', '\', ']', '^', '_',
+        '`', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+        'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+        'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+        'X', 'Y', 'Z', '{', 124, '}', '~', ' '
 
     %integer max symbol length
     %recordformat dictionaryfm(%integer inst,p1,p2)
     %record(dictionaryfm) %array dictionary(0:max kdict)
 
-    %constintegerarray dstart(32:127) = %c
-    0  , 127, 0  , 132, 0  , 137, 139, 0  ,
-    141, 143, 145, 150, 155, 157, 165, 167,
-    0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
-    0  , 0  , 172, 174, 176, 187, 198, 0  ,
-    0  , 206, 225, 240, 269, 280, 320, 0  ,
-    0  , 348, 0  , 0  , 365, 400, 409, 426,
-    448, 0  , 468, 522, 571, 579, 0  , 589,
-    0  , 0  , 0  , 593, 595, 603, 605, 610,
-    0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
-    0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
-    0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
-    0  , 0  , 0  , 0  , 612, 0  , 614, 0
-
-    
     %string(2) %function mappedsymbolchar(%integer ch)
         %string(2) s
         %integer x
@@ -76,7 +77,7 @@
     %end
 
     %routine showsymbol( %shortinteger ch )
-        %if ch >= 32 %start
+        %if (32 <= ch <= 126) %start
             printstring("'")
             printsymbol(ch)
             printstring("'")
@@ -146,7 +147,8 @@
 
         previous = 0
         count = 0
-!        printstring("Start dumpGram"); newline
+        newlines(2)
+
         ! skip the 0'th entry
         %for i = 1, 1, gmax1 %cycle
             value = gram(i)
@@ -267,8 +269,17 @@
         %repeat
     %end
 
+    !! For kdict entries, kdict(32:126)
+    !! kdict(n) & 3 has the semantic
+    !!   0 = space
+    !!   1 = %
+    !!   2 = {
+    !!   3 = ff
+    !!   other values represent themselves
+
     %routine dumpkdict
         %integer i,j,temp
+        %integer previous start
         %string(255) s,x,y
         %integer inst,p1,p2,np1,np2
         %switch param1(0:3)
@@ -288,8 +299,16 @@
             dictionary(i)_p2 = (kdict(i)>>0)&16_7f
         %repeat
 
+        previous start = 0
+
         printstring( "KDict Raw Data Table" ); newline
         %for i=32,1,max kdict %cycle
+
+            %if (i = 127) %start
+                space
+                printstring("=") %for j = 1,1,10*max symbol length -2
+                newline
+            %finish
 
             inst = dictionary(i)_inst
             p1 = dictionary(i)_p1
@@ -300,82 +319,81 @@
                 np2 = dictionary(i+1)_p2
             %finish
 
+            printstring( " kdict(".itos(i,3))
             %if (32 <= i <= 127) %start
-                printstring( " kdict(".itos(i,3)."==".asciichar(i).")=>")
+                printstring( "==".asciichar(i))
             %else
-                printstring( " kdict(".itos(i,3)."     )=>")
+                printstring( "     ")
             %finish
+            printstring( ")=")
 
             ! show kdict(i) as 16-bit integer
-            printstring(" |")
-            printstring( itos(kdict(i),max symbol length - 1))
+            printstring("|")
+            printstring( itos(kdict(i),6))
 
 !            ! show kdict(i) as binary fields
 !            printstring(" | ")
+!            s = ""
 !            %for j = 15,-1,0 %cycle
-!                %if ((kdict(i) >> j) & 1 = 0) %then printstring("0") %else printstring("1")
-!                
-!                %if (j = 14) %then printstring(" ")
-!                %if (j = 7) %then printstring(" ")
+!                %if ((kdict(i) >> j) & 1 = 0) %then s = s."0" %else s = s."1"
+!                %if (i < 127) %start
+!                    %if (j = 14) %then s = s." "
+!                    %if (j = 2) %then s = s." "
+!                %finish %else %start
+!                    %if (j = 14) %then s = s." "
+!                    %if (j = 7) %then s = s." "
+!                %finish
 !            %repeat
+!            printstring(s)
 
             ! show kdict(i) as decimal fields
             printstring(" |")
-            printstring(" ".itos(inst,2))
-            printstring(" ".itos(p1,3))
-            printstring(" ".itos(p2,3))
+            %if (i < 127) %start
+                printstring(" ".itos(kdict(i) >> 14,2))
+                printstring(" ".itos(kdict(i) >> 2,3))
+                printstring(" ".itos(kdict(i) & 3,3))
+            %finish %else %start
+                printstring(" ".itos(inst,2))
+                printstring(" ".itos(p1,3))
+                printstring(" ".itos(p2,3))
+            %finish
 
             ! Decode full instruction
             printstring(" | ")
+            %if (31 < i < 127) %start
 
-            %if (i < 127) %start
-                printstring(itos(inst,max symbol length - 1))
-                space
+                ! kdict(N) & 3 has semantics of
+                ! let:0  dig:1  term:2  other:3 
 
-                printstring(itos(p2,max symbol length - 1))
-                space
-                printstring(itos(p1,max symbol length - 1))
+                ! show kdict(i) as fields
+                printstring(itos((kdict(i) &3),2))
+                printstring(itos((kdict(i)>>2),max symbol length - 1))
+                s = ""
+                %if (32 <= i <= 127) %then s = s.asciichar(i)
+                spaces(1+ max symbol length - 3)
+                printstring(s)
 
-!                %if (dstart(i) <> 0) %start
-                %if ((kdict(i)>>2) <> 0) %start
-                    printstring(" | ")
-                    printstring(itos(dstart(i),max symbol length - 1))
+                printstring(" | ")
+                printstring(itos(((kdict(i)>>2)<<2) + (kdict(i) &3),5))
 
-                    ! show kdict(i) as binary
-                    printstring(" | ")
-                    printstring(itos((kdict(i)>>2),max symbol length - 1))
-
-                    printstring(" | ")
-                    x = ""
-                    %for j = 0,1,15 %cycle
-                        %if ((kdict(i) >> j) & 1 = 0) %then x="0".x %else x="1".x
-                    %repeat
-                    printstring(x)
+                %if ((kdict(i) >> 2) > 126) %start
 
                     printstring(" | ")
-                    x = ""
-                    %for j = 0,1,13 %cycle
-                        %if ((kdict(i) >> (j + 2)) & 1 = 0) %then x="0".x %else x="1".x
-                    %repeat
-                    printstring(x)
+!                    s = asciichar(i)
+!                    s = s." -> ".itos((kdict(i) >> 2),3)
+                    s="S"
+                    printstring(s)
 
-                    ! show dstart(i) as binary
-                    printstring(" | ")
-                    y = ""
-                    %for j = 13,-1,0 %cycle
-                        %if ((dstart(i) >> j) & 1 = 0) %then y=y."0" %else y=y."1"
-                    %repeat
-                    printstring(y)
+                    %if (previous start > (kdict(i) >> 2)) %start
+!                        printstring(" | ")
+!                        printstring(" Takeon induced ERROR! Lex definition start out of order")
+                        s="?"
+                        printstring(s)
 
-                    %if (x=y) %then printstring(" | match! ")
-                %finish %else %start
-                    printstring(" | ")
-!                    spaces( max symbol length)
-                    x = ""
-                    %for j = 0,1,15 %cycle
-                        %if ((kdict(i) >> j) & 1 = 0) %then x="0".x %else x="1".x
-                    %repeat
-                    printstring(x)
+                    %finish %else %start
+                        previous start = (kdict(i) >> 2)
+                    %finish
+                    
                 %finish
 
             %finish %else %start
@@ -384,10 +402,9 @@
 
 instruction(0):
                 %if ((dictionary(i - 1)_inst = 1) %or (dictionary(i - 1)_inst = 3)) %start
-                     spaces(2+ 3*max symbol length)
+                     spaces(2+ 2*max symbol length+2)
                 %finish %else %start
-                    printstring(itos(inst,max symbol length - 1))
-                    space
+                    printstring(itos(inst,2))
                     s = ""
                     %if (32 <= p2 <= 127) %then s = s.mappedsymbolchar(p2)
                     %if (32 <= p1 <= 127) %then s = s.mappedsymbolchar(p1)
@@ -398,34 +415,40 @@ instruction(0):
                 %finish
 
                 printstring(" | ")
-                spaces( max symbol length)
+                spaces( 6 )
 
                 -> end decodeinstruction
 
 instruction(1):
-                printstring(itos(inst,max symbol length - 1))
-                space
+                printstring(itos(inst,2))
 
-                %if (p1 = 0) %start
+!                %if (p1 = 0) %start
+!                    s = ":".text(p2)
+!                    spaces( 1 + 2*max symbol length - length(s))
+!                    printstring(s)
+!                %finish %else %start
+!                    spaces( 1 + 2*max symbol length )
+!                %finish
+
+                %if (p1 \= 0) %start
+                    spaces( 1 + 2*max symbol length )
+                %finish %else %start
                     s = ":".text(p2)
                     spaces( 1 + 2*max symbol length - length(s))
                     printstring(s)
-                %finish %else %start
-                    spaces( 1 + 2*max symbol length )
                 %finish
 
                 printstring(" | ")
                 %if (np1 = 0) %and (np2 = 0) %start
-                    spaces( max symbol length)
+                    spaces( 6 )
                 %finish %else %start
-                    printstring(itos(np1*127+np2,max symbol length - 1))
+                    printstring(itos(np1*127+np2,5))
                 %finish
 
                 -> end decodeinstruction
 
 instruction(2):
-                printstring(itos(inst,max symbol length - 1))
-                space
+                printstring(itos(inst,2))
 
                 printstring(itos(p1,max symbol length - 1))
 
@@ -434,13 +457,12 @@ instruction(2):
                 printstring(s)
 
                 printstring(" | ")
-                spaces( max symbol length)
+                spaces( 6 )
 
                 -> end decodeinstruction
 
 instruction(3):
-                printstring(itos(inst,max symbol length - 1))
-                space
+                printstring(itos(inst,2))
 
                 s = ":".text(p2)
                 spaces(max symbol length - length(s))
@@ -452,9 +474,9 @@ instruction(3):
 
                 printstring(" | ")
                 %if (np1 = 0) %and (np2 = 0) %start
-                    spaces( max symbol length)
+                    spaces( 6 )
                 %finish %else %start
-                    printstring(itos(np1*127+np2,max symbol length - 1))
+                    printstring(itos(np1*127+np2,5))
                 %finish
 
                 -> end decodeinstruction
