@@ -631,7 +631,9 @@ l10:    select output(dlist);  newlines(2)
             j = j-1 %if i = ';'
             keydict(i) = j
         %repeat
-        keydict('~') = keydict('^')
+! WTF! Following assignment blocks the use of ~ eg ~=
+! So, assignment commented out.
+!        keydict('~') = keydict('^')
         newlines(2)
         select output(errorstream)
     %end
