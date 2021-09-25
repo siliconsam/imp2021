@@ -292,7 +292,8 @@
    713,   719,   719,   719,   719,   719,   719,     0,
 0(max grammar-gmax1)
 
-%constshortintegerarray kdict(32:618) = %c
+%constshortinteger max kdict = 618
+%constshortintegerarray kdict(32:max kdict) = %c
       0,    511,    131,    531,    131,    551,    559,    131,
     567,    575,    583,    603,    623,    631,    663,    671,
     129,    129,    129,    129,    129,    129,    129,    129,
