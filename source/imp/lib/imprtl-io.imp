@@ -695,7 +695,10 @@ debugnewline
         ! Not sure what the official IMP behaviour is for output on a closed file.
         ! We choose to silently ignore it...
         ! check file open before writing?
-        %if (out_streams( out_current stream )_handle # 0) %then put char( out_streams( out_current stream )_handle, c)
+        %if (out_streams( out_current stream )_handle # 0) %start
+            put char( out_streams( out_current stream )_handle, c)
+            %if (c = nl) %then flush output 
+        %finish
     %end
 
     %external %routine print real( %long %real d )
