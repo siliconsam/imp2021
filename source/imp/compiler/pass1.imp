@@ -1535,7 +1535,7 @@ act(193):   gg = 0 %and ->a5 %unless sym = '=' %or sym = '<'; ! cdummy
 act(181):   atom1 = amap(decl&15);                     ! dummy
             ->more
 
-act(182):   class = escdec;  g = glink(g)              ! escape
+act(182):   class = escdec;  g = glink(g)!escape;
             decl = 0;  otype = 0;  ->esc;              ! decl
 
 act(199):   ;                                          ! compile
