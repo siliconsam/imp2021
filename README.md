@@ -6,7 +6,7 @@ The imp77 versions have been extended by JD McMullin to:-
 1) allow a limited set of embedded machine code
 2) replace most of the run-time library code implemented in C by an equivalent IMP version.
 
-The remaining run-time C code, is in prim-rtl-file.c (which provides an iterface from IMP to the C file I/O routines).
+The remaining run-time C code, is in prim-rtl-file.c (which provides an interface from IMP to the C file I/O routines).
 
 The other remaining C code is for the 2 versions of pass3 of the compiler (pass3coff.c and pass3elf.c).
 One version generates PE-COFF output, the other ELF output.
@@ -45,7 +45,7 @@ The following describes the build process for the Windows version of the IMP com
 The following hints ass-u-me that the compiler sources and binaries (and a limited documentation set)
 have been unpacked to a folder <IMP_INSTALL_HOME>
 
-Post-Installation/Pre-Bootstap
+Post-Installation/Pre-Bootstrap
 1)  Amend the batch script <IMP_INSTALL_HOME>\release\bin\setenv.bat
 	- to use the correct version of Free Pascal (currently 3.2.2)
 	- also amend setenv.bat (in the release and source\scripts folders) to access the Free Pascal compiler (currently 3.2.0)
@@ -114,11 +114,14 @@ To cross-build the Linux IMP compiler on a Windows machine.
 		(Did you amend the setenv script to ensure suitable compilers, linker, libraries are available?)
 4)  cd to the source folder
 5)  run makelinux <linux_build_dir>
-		(this builds a bootstap version of the compiler+run-time libraries in the specified build directory)
+		(this builds a bootstrap version of the compiler+run-time libraries in the specified build directory)
 6)  Did you look to see if there were any errors in the build?
 7)  If no errors were found then copy the <linux_build_dir> to a Linux machine.
 8)  The build steps to bootstrap the IMP compiler are displayed on completion of the makelinux DOS script
-9)  Follow those bootstap insructions on a terminal window on the Linux machine.
+9)  Follow those bootstrap instructions on a terminal window on the Linux machine.
+
+When using the takeon program on Linux, ensure that the i77.grammar has Linux line endings (i.e. LF and not CR-LF)
+Use the Linux/UNIX utility dos2unix to change the Windows text files (CR-LF line endings) to Linux/UNIX LF line ending.
 
 Possible extensions (not in any particular order of implementation):
 
