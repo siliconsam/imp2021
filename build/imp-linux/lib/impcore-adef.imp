@@ -1,0 +1,46 @@
+
+    %include "inc.386.registers"
+
+{------------------------------------------------------------------------------}
+    ! Given a dope vector calculate the offset (in bytes) of the
+    ! highest element, and also the offset from A(0,...,0) of
+    ! the first element - the size of the store to allocate is
+    ! therefore the difference.  We return the two 32 bit answers
+    ! with one result => "high" answer is in DX, "low" answer
+    ! is in AX.  Thus DX contains the top, AX the A(0) offset
+    ! The way we achieve this is compiler dependent, so we declare
+    ! this as VOID and then do the return in-line
+    %external %routine impadef ( %integer %name dvp )
+        %integer dim, sz
+        %integer lb, ub, row
+        %integer i, base, limit
+
+        dim = dvp
+        sz = integer( addr(dvp) + 4*(2*dim + 1) )
+        ! initialise the base "address" and limit "address"
+        base = 0
+        limit = 0
+
+        %for i=0,1,dim - 1 %cycle
+
+            ! General case iterates backwards toward first dimension
+            lb = integer( addr(dvp) + 4*(2*dim - 2*i - 1));  ! at i=0, point to the rightmost lower bound
+            ub = integer( addr(dvp) + 4*(2*dim - 2*i)    );  ! at i=0, point to the rightmost upper bound
+
+            %signal 5, 3, 0 %unless lb <= ub; ! we declare array bounds so that lb <= ub
+            row   = (ub - lb) + 1;               ! Number of objects in a row
+            base  = base * row + lb
+            limit = limit * row + ub
+        %repeat
+
+        base = base * sz
+        limit = (limit + 1) * sz
+
+        *mov_ edx,limit
+        *mov_ eax,base
+
+        %return
+    %end
+
+{------------------------------------------------------------------------------}
+%endoffile

@@ -1,0 +1,132 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  
+   2      %include "inc.386.registers"
+ &  1  %endoflist
+ & 10  %endoffile
+   3  
+   4      %constant %integer max panic = 20
+   5  
+   6      %recordformat impframe( (%record(impframe) %name xebp %or %integer ximp), %integer xret )
+   7  
+   8      %external %routine %spec terminate io 
+   9      %external %routine %spec save event( %integer event, sub, extra )
+   10      %external %routine %spec messageFormatA( %integer message id )
+   11      %external %routine %spec messageFormatB( %integer address )
+   12      %external %routine %spec dumpalltrapinfo
+   13      %external %predicate %spec handler found ( %integer event, address )
+   14      %external %predicate %spec initial entry found ( %integer address )
+   15      %external %integer %function %spec handler entry address( %integer address )
+   16  
+   17  {------------------------------------------------------------------------------}
+   18      %routine impexit( %integer status )
+   19          terminateio
+   20          exit( status )
+   21      %end
+   22  
+   23  {------------------------------------------------------------------------------}
+   24      %external %routine impstop
+   25          impexit(1)
+   26      %end
+   27  
+   28  {------------------------------------------------------------------------------}
+   29      %external %routine impsignal ( %integer event,extra,sub )
+   30          %integer status
+   31          %record(impframe) %name mybp,chainbp
+   32          %integer panic
+   33  
+   34          ! JDM: This code will dump out the IMP trap tables
+   35          ! Uncomment when debugging the run-time code
+   36          ! Do NOT delete from this source code
+   37          %if (debugmode = dbgtrap) %then dumpalltrapinfo
+   38  
+   39          ! Remember the event data and form the event message
+   40          save event( event, sub, extra )
+   41  
+   42          ! try to find our own base pointer...
+   43          ! We have to use embedded machine code to read the Frame Pointer/Base Pointer
+   44          *mov_ mybp,ebp
+   45  
+   46          ! make a copy of the current frame
+   47          chainbp == mybp
+   48  
+   49          ! Now chainbp_xret is a code address in the IMP program.
+   50          ! We trace back the stack until we find a valid trap block
+   51          ! or we've been nested too deeply (i.e. panic cout)
+   52          ! or we reach the IMP program entry point
+   53          panic = 0
+   54          %cycle
+   55              ! Can we find a handler to catch the event?
+   56              ! JDM: We must match the event trapbits
+   57              ! and the address inside the "defence" zone
+   58              %if handler found ( event, chainbp_xret ) %start
+   59  
+   60                  ! Yes, so overwrite the Frame Pointer and return address
+   61                  mybp_xebp == chainbp_xebp                         { set my return BP to the trappers BP }
+   62                  mybp_xret = handler entry address( chainbp_xret ) { and my return location is the trap }
+   63  
+   64                  %return                    { kazzam! }
+   65              %finish
+   66  
+   67              %exit %if initial entry found ( chainbp_xret )
+   68  
+   69              chainbp == chainbp_xebp  { previous stack frame }
+   70              panic = panic + 1
+   71  
+   72              ! Set up various loop exit tests
+   73              %exit %if (panic > 20)       ;! We've been looking too many times
+   74              %exit %if (chainbp_xret = 0) ;! We've gone too far down the chain
+   75          %repeat
+   76  
+   77          ! If we get here, we didn't find a willing catcher,
+   78          ! so instead we'll print a diagnostic stack dump and then exit
+   79          %if (event # 0) %start { Don't report a normal %stop }
+   80  
+   81              messageFormatA( 1 )
+   82  
+   83              ! We've already initialised our stack traceback to look for
+   84              ! trap blocks, so now we re-run the trace with some printout
+   85              panic = 0
+   86  
+   87              messageFormatA( 2 )
+   88  
+   89              ! loop back through the stack
+   90              %cycle
+   91                  messageFormatB( mybp_xret )
+   92  
+   93                  ! have we gone too far, and found the enty point's trap handler?
+   94                  %exit %if initial entry found ( mybp_xret )
+   95  
+   96                  mybp == mybp_xebp  { previous stack frame }
+   97                  panic = panic + 1;
+   98  
+   99                  %if (panic > 20) %or (mybp_xret = 0) %start
+  100  
+  101                      messageFormatA( 4 )
+  102  
+  103                      %exit
+  104                  %finish
+  105              %repeat
+  106  
+  107              messageFormatA( 5 )
+  108              messageFormatA( 3 )
+  109  
+  110              status = 1
+  111          %finish %else %start
+  112              status = sub
+  113  
+  114              %if (extra = 0) %start
+  115                  ! %signal 0,0,n  == %stop with exit status == n
+  116                  %if ((DEBUGMODE & dbgcore) # 0) %then messageFormatA( 6 )
+  117              %finish %else %start
+  118                  messageFormatA( 3 )
+  119              %finish
+  120          %finish
+  121  
+  122          impexit( status )
+  123      %end
+  124  
+  125  {------------------------------------------------------------------------------}
+  126  %endoffile
+
+   71 Statements compiled

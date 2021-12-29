@@ -1,0 +1,107 @@
+%begin
+
+    %string(24) s24 = "123"
+    %string(32) s32 = "56789ABCD"
+    %string(4) s4 = "123"
+    %string(8) s8 = "6789AB"
+    %integer w,x,y,z
+
+    %routine runtest( %string(24) s24, %string(32) s32, %string(4) s4, %string(8) s8 )
+        %string(16) s,a,b,c
+
+        newline
+        w = sizeof(s24); y = sizeof(s32)
+
+        printstring( "Initial                  : A "); spaces( w - length(s24)); printstring( " B "); newline
+        printstring( "  String Size            : ".itos(w,0)); spaces( w - length(itos(w,0))); printstring( itos(y,0) ); newline
+        printstring( "  Max String Length      : ".itos(w-1,0)); spaces( w - length(itos(w-1,0))); printstring( itos(y-1,0) ); newline
+        printstring( "  Current String Length  : ".itos(length(s24),0)); spaces( w - length(itos(length(s24),0))); printstring( itos(length(s32),0) ); newline
+        printstring( "                         : ".s24); spaces( sizeof(s24) - length(s24)); printstring( s32); newline
+
+        s24 = s24.s32
+        printstring( " strcat a = a.b          : "); newline
+        printstring( "                         : ".s24); spaces( sizeof(s24) - length(s24)); printstring( s32); newline
+
+        s32 = s24
+        printstring( " strcpy b = a            : "); newline
+        printstring( "                         : ".s24); spaces( sizeof(s24) - length(s24)); printstring( s32); newline
+
+        printstring( "Comparing                : ".s24);  spaces( w - length(s24)); printstring( s32); newline
+        %if (s24 = s32) %then printstring( "Comparing a = b is TRUE") %and newline
+        %if (s24 # s32) %then printstring( "Comparing a # b is TRUE") %and newline
+        %if (s24 > s32) %then printstring( "Comparing a > b is TRUE") %and newline
+        %if (s24 < s32) %then printstring( "Comparing a < b is TRUE") %and newline
+        newlines(2)
+
+        printstring( "Initial                  : A "); spaces( sizeof(s4) - length(s4)); printstring( " B "); newline
+        printstring( "                         : ".s4); spaces( sizeof(s4) - length(s4)); printstring( s8); newline
+        s4 <- s8
+        printstring( "After strjam a <- b      : ".s4); spaces( sizeof(s4) - length(s4)); printstring( s8); newline
+
+        s8 <- s8.s4
+        printstring( "After strjcat b <- b + a : ".s4); spaces( sizeof(s4) - length(s4)); printstring( s8); newline
+
+        printstring( "Comparing                : ".s4);  spaces( sizeof(s4) - length(s4)); printstring( s8); newline
+        %if (s4 = s8) %then printstring( "Comparing a = b is TRUE") %and newline
+        %if (s4 # s8) %then printstring( "Comparing a # b is TRUE") %and newline
+        %if (s4 > s8) %then printstring( "Comparing a > b is TRUE") %and newline
+        %if (s4 < s8) %then printstring( "Comparing a < b is TRUE") %and newline
+        newlines(2)
+
+        printstring("*************************************************");newlines(2)
+        s = "61239AB"
+        b = "123"
+        a = "";c = ""
+        s -> a.(b).c
+        printstring("TESTSTRING(1): String resolution '".s."' -> A.(".b.").C gives '".a."(".b.")".c."'");newlines(2)
+
+        s = "/"
+        b = "/"
+        a = "";c = ""
+        s -> a.(b).c
+        printstring("TESTSTRING(2): String resolution '".s."' -> A.(".b.").C gives '".a."(".b.")".c."'");newlines(2)
+
+        s = "abc/"
+        b = "/"
+        a = "";c = ""
+        s -> a.(b).c
+        printstring("TESTSTRING(3): String resolution '".s."' -> A.(".b.").C gives '".a."(".b.")".c."'");newlines(2)
+
+        s = "zzz.lis"
+        b = "xxxxxxxx"
+        a = "";c = ""
+        s -> a.(b).c
+        printstring("TESTSTRING(4): String resolution '".s."' -> A.(".b.").C gives '".a."(".b.")".c."'");newlines(2)
+
+        s = "/zzz.lis"
+        b = "/"
+        a = "";c = ""
+        s -> a.(b).c
+        printstring("TESTSTRING(5): String resolution '".s."' -> A.(".b.").C gives '".a."(".b.")".c."'");newlines(2)
+
+        s = "zzz.lis"
+        b = ","
+        a = "";c = ""
+        s -> a.(b).c
+        printstring("TESTSTRING(6): String resolution '".s."' -> A.(".b.").C gives '".a."(".b.")".c."'");newlines(2)
+
+        s = "zzz.lis"
+        b = ","
+        a = "";c = ""
+        s -> (b).c
+        printstring("TESTSTRING(7): String resolution '".s."' -> (".b.").C gives '(".b.")".c."'");newlines(2)
+
+    %end
+
+!    selectinput(0)
+!    selectoutput(0)
+    set prompt( "jdm >" )
+    printstring( "TESTSTRING: Current Input stream=".itos(input stream,0) ); newline
+    printstring( "TESTSTRING: New Input stream=".itos(input stream,0) ); newline
+    printstring( "Load a value for s24");newline
+    read(s24)
+
+    runtest( s24,s32,s4,s8)
+    close output
+
+%endofprogram

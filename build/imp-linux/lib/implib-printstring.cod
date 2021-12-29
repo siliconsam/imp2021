@@ -1,0 +1,48 @@
+{----------------------------------------------------------------------------}
+    %external %routine printstring( %string(255) s)
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %integer l, i
+
+        l = length(s)
+ 0004 31 C0                           XOR EAX,EAX
+ 0006 8A 45 08                        MOV AL,[EBP+ 8]
+ 0009 89 45 F8                        MOV [EBP-8],EAX
+
+        %for i = 1, 1, l %cycle
+ 000C 8B 45 F8                        MOV EAX,[EBP-8]
+ 000F 89 45 F0                        MOV [EBP-16],EAX
+ 0012 C7 45 F4 00 00 00 00            MOV WORD [EBP-12], 0
+ 0019                      L 1001  EQU $
+ 0019 8B 45 F4                        MOV EAX,[EBP-12]
+ 001C 3B 45 F0                        CMP EAX,[EBP-16]
+ 001F 74 00                           JE L 1002
+ 0021 40                              INC EAX
+ 0022 89 45 F4                        MOV [EBP-12],EAX
+            printsymbol(charno(s, i))
+ 0025 8D 45 08                        LEA EAX,[EBP+ 8]
+ 0028 03 45 F4                        ADD EAX,[EBP-12]
+ 002B 8A 00                           MOV AL,[EAX]
+ 002D 25 FF 00 00 00                  AND EAX, 255
+ 0032 50                              PUSH EAX
+ 0033 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 0036 83 C4 04                        ADD ESP, 4
+        %repeat
+ 0039 EB 00                           JMP L 1001
+ 003B                      L 1002  EQU $
+    %end
+ 003B C9                              LEAVE
+ 003C C3                              RET
+
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

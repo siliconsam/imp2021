@@ -1,0 +1,150 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {----------------------------------------------------------------------------}
+   2      ! General Imp READ routine
+   3      ! Copyright 2002 NB Information Limited
+   4      ! Enhanced JD McMullin 2021
+   5  
+   6      ! Types extracted from general names
+   7      ! Curious naming strategy because we don't want to clobber
+   8      ! the built-in functions and maps like "integer" or "int"
+   9      %constinteger  intgr  = 1
+   10      %constinteger  float  = 2
+   11      %constinteger  strng  = 3
+   12      %constinteger  byte   = 6
+   13      %constinteger  double = 8
+   14  
+   15      ! Limits
+   16      %constinteger  MaxInt = ((-1)>>1)
+   17      %constinteger  MaxByte = 255
+   18      %constlongreal MaxFloat = 3.3@38
+   19  
+   20      %external %routine Read( %name ptr)
+   21          %string(255)  s
+   22          %integer ch
+   23          %integer sign, digit, len, adr, type, base, found
+   24          %longreal  r, exp, frac
+   25          ! following variables used when copying %string s into %name ptr
+   26          %byte %name dst,src
+   27          %integer i
+   28  
+   29          len = size of(ptr)
+   30          adr = addr(ptr)
+   31          type = type of(ptr)
+   32  
+   33          %unless intgr <= type <= strng %or type = byte %or type = double %start
+   34              %signal 5,5,type
+   35          %finish
+   36  
+   37          ! skip white space
+   38          skip symbol %while next symbol = ' ' %or next symbol = 8 %or next symbol = NL %or next symbol = 13
+   39  
+   40          %if type = strng %start
+   41              length(s) = 0
+   42              %cycle
+   43                  ch = next symbol
+   44                  %exit %if ch = ' ' %or ch = NL %or ch = 8
+   45                  length(s) = length(s) + 1
+   46                  charno(s,length(s)) = ch
+   47                  skip symbol
+   48              %repeat
+   49  
+   50              %signal 6,1 %if length(s) > len
+   51  
+   52              ! Now to put the string just "read", into the variable specified
+   53              %for i = 0,1,length(s) %cycle
+   54                  dst == byteinteger( adr + i )
+   55                  src == byteinteger( addr(s) + i )
+   56                  dst = src
+   57              %repeat
+   58  
+   59              %return
+   60          %finish
+   61  
+   62          ! The rest (int/real/byte/lreal) all expect a number
+   63          ! We collect it in a longreal so that we can correctly read
+   64          ! an integer into a real that is bigger than MaxInt
+   65          base = 10
+   66          sign = 0
+   67  
+   68          readsymbol(sign) %if next symbol = '-' %or next symbol = '+'
+   69  
+   70          %cycle
+   71              r = 0
+   72              found = 0
+   73  
+   74              %cycle
+   75                  ch = next symbol
+   76                  %if '0' <= ch <= '9' %start
+   77                      digit = ch - '0'
+   78                  %else %if 'A' <= ch & 95 <= 'Z'
+   79                      digit = ch & 95 - 'A' + 10
+   80                  %finish %else %exit
+   81                  %exit %if digit >= Base
+   82                  found = 1
+   83                  skip symbol
+   84                  r = r * Base + digit
+   85              %repeat
+   86  
+   87              %exit %if ch # '_' %or r = 0
+   88  
+   89              base = int(r)
+   90              skipsymbol
+   91          %repeat
+   92  
+   93          ! here we've got an integer in R - if that's what we want, exit now
+   94          %if type = intgr %or type = byte %start
+   95  
+   96              %signal 3,1,ch %if found = 0; ! no digits?  Then report the char we found
+   97  
+   98              %if type = intgr %start
+   99                  %if r > MaxInt %then %signal 1,1
+  100                  %if sign = '-' %then r = -r
+  101                  integer(adr) = int(r)
+  102              %else
+  103                  %if r > MaxByte %or sign = '-' %then %signal 1,1
+  104                  byte integer(adr) = int(r)
+  105              %finish
+  106              %return
+  107          %finish
+  108  
+  109          ! If we're still here, we are collecting a floating point number
+  110          %if ch = '.' %start
+  111              skip symbol
+  112              frac = 0
+  113              exp = 10
+  114  
+  115              %cycle
+  116                  ch = next symbol
+  117                  %exit %unless '0' <= ch <= '9'
+  118                  frac = frac + (ch - '0')/exp
+  119                  exp = exp*10
+  120                  found = 1
+  121                  skip symbol
+  122              %repeat
+  123  
+  124              r = r + frac
+  125          %finish
+  126  
+  127          ! We should really worry about @Exponent at this point...
+  128          ! ... add that to the to-do list!
+  129  
+  130          %signal 3,1,ch %if found = 0
+  131  
+  132          %if type = float %and r > MaxFloat %then %signal 1,2
+  133  
+  134          %if sign = '-' %start
+  135              r = -r
+  136          %finish
+  137  
+  138          %if type = float %start
+  139              real(adr) = r
+  140          %else
+  141              long real(adr) = r
+  142          %finish
+  143      %end
+  144  
+  145  {----------------------------------------------------------------------------}
+  146  %endoffile
+
+   99 Statements compiled

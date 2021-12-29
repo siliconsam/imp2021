@@ -1,0 +1,184 @@
+
+    %include "inc.386.registers"
+
+{------------------------------------------------------------------------------}
+    ! Array Reference function.
+
+    ! Array indices are pushed left to right so we get them right to left.
+    ! The last thing pushed (our first C parameter) is a pointer to the Dope Vector.
+    ! Dope vectors are integer arrays of form :DIM:LB1:UB1:LB2:UB2:etc:LBn:UBn:ObjectSize:
+    ! We need to fiddle with addresses because this function has a variable parameter count.
+    ! This parameter count depends on the number of dimensions in the array
+    ! The parameters are stacked for use by a C routine (but this is IMP!)
+    ! However, this is an IMP routine so need to access in reverse order
+    ! Even worse, there are a variable number of index values (One index value for each array index)
+    ! We pretend there are no stacked parameters in the function declaration
+    ! Fortunately the "last" IMP parameter (the dope vector) (but 1st C parameter) indicates
+    ! the expected parameter count.
+    ! We actually access parameters via the "ebp" register (=Base/Frame pointer)
+    ! Remember [ebp]   = framep
+    !          [ebp+4] = return address
+    !          [ebp+8] = 1st C parameter = dope vector address
+    !          [ebp+12] = last array index = dim'th index value
+    !          [ebp+8+dim*4] = 1st array index = 1st index value (assuming 4 byte = 1 integer)
+    ! The function result is the offset that needs to be added to the
+    ! notional A(0,0,0) address to get the variable in the array
+    !
+    ! C declaration
+    ! extern int imparef(int *dvp, int idim, ...,int i1 )
+    !
+    ! IMP declaration (C parameter order reversed to give IMP order)
+    ! %external %integer %function imparef(%integer i1 { .. idim} , %integer %name dvp )
+    !
+    ! Arrgggh! Even worse, this function has a variable number of parameters (illegal IMP)
+    ! Hence, the above mentioned contortions to deal with a variable count of parameters
+    ! Fortunately, the "last" parameter stacked (the dopevector address) gives a clue as to
+    ! the actual count of parameters.
+    ! Luckily, the IMP compiler "pops" the set of parameters on return from this routine call
+    ! Thus we can "pretend" this routine is declared with no parameters, however we need to
+    ! use a bit of embedded machine code to access the real parameters via the frame pointer
+
+    %external %integer %function imparef
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+
+        %integer framep
+        %integer %name dvp
+        %integer dim, sz
+        %integer lb, ub
+        %integer index
+        %integer row, result
+        %integer i
+        %constant %integer wordsize = 4;        ! wordsize in bytes of integer/address
+        %constant %integer param1 = 2*wordsize; ! frame pointer offset (in bytes) of "last" parameter on stack
+                                                ! e.g. dopevector address
+        %constant %integer param2 = 3*wordsize; ! frame pointer offset (in bytes) of "last" array index
+
+        ! Get the Base/Frame Pointer
+        *mov_ framep,ebp
+ 0004 89 6D F8                        MOV [EBP-8],EBP
+
+        ! IMP does NOT allow routines with a variable number of parameters
+        ! but we need 
+        ! parameter        1) dope vector address
+        ! parameter 2..dim+1) array index values (dim = array dimensionality)
+
+        ! Now get various data items from the dope vector
+        ! The "last" parameter stacked is the pointer to dope vector
+        ! Get the dope vector address ("last" C parameter/"first" IMP parameter)
+        dvp == integer( integer( framep + param1 ) )
+ 0007 8B 45 F8                        MOV EAX,[EBP-8]
+ 000A 05 08 00 00 00                  ADD EAX, 8
+ 000F 8B 00                           MOV EAX,[EAX]
+ 0011 89 45 F4                        MOV [EBP-12],EAX
+        ! Now get the array dimensionality from the dope vector
+        dim = dvp
+ 0014 8B 75 F4                        MOV ESI,[EBP-12]
+ 0017 8B 06                           MOV EAX,[ESI]
+ 0019 89 45 F0                        MOV [EBP-16],EAX
+        ! Now get the size of each array element
+        sz = integer( addr(dvp) + wordsize*(2*dim + 1) )
+ 001C 8B 45 F0                        MOV EAX,[EBP-16]
+ 001F D1 E0                           SHL EAX, 1
+ 0021 40                              INC EAX
+ 0022 C1 E0 02                        SHL EAX, 2
+ 0025 03 45 F4                        ADD EAX,[EBP-12]
+ 0028 8B 00                           MOV EAX,[EAX]
+ 002A 89 45 EC                        MOV [EBP-20],EAX
+
+        ! For a general number of dimensions, 1 or more, we do this the hard way...
+        result = 0;        ! result so far
+ 002D C7 45 D8 00 00 00 00            MOV WORD [EBP-40], 0
+        %for i=0,1,dim - 1 %cycle
+ 0034 8B 45 F0                        MOV EAX,[EBP-16]
+ 0037 48                              DEC EAX
+ 0038 89 45 D0                        MOV [EBP-48],EAX
+ 003B C7 45 D4 FF FF FF FF            MOV WORD [EBP-44],-1
+ 0042                      L 1001  EQU $
+ 0042 8B 45 D4                        MOV EAX,[EBP-44]
+ 0045 3B 45 D0                        CMP EAX,[EBP-48]
+ 0048 74 00                           JE L 1002
+ 004A 40                              INC EAX
+ 004B 89 45 D4                        MOV [EBP-44],EAX
+
+            ! General case iterates backwards toward first dimension
+            lb = integer( addr(dvp) + wordsize*(2*(dim - i) - 1));  ! at i=0, point to the rightmost lower bound
+ 004E 8B 45 F0                        MOV EAX,[EBP-16]
+ 0051 2B 45 D4                        SUB EAX,[EBP-44]
+ 0054 D1 E0                           SHL EAX, 1
+ 0056 48                              DEC EAX
+ 0057 C1 E0 02                        SHL EAX, 2
+ 005A 03 45 F4                        ADD EAX,[EBP-12]
+ 005D 8B 00                           MOV EAX,[EAX]
+ 005F 89 45 E8                        MOV [EBP-24],EAX
+            ub = integer( addr(dvp) + wordsize*(2*(dim - i)    ));  ! at i=0, point to the rightmost upper bound
+ 0062 8B 45 F0                        MOV EAX,[EBP-16]
+ 0065 2B 45 D4                        SUB EAX,[EBP-44]
+ 0068 D1 E0                           SHL EAX, 1
+ 006A C1 E0 02                        SHL EAX, 2
+ 006D 03 45 F4                        ADD EAX,[EBP-12]
+ 0070 8B 00                           MOV EAX,[EAX]
+ 0072 89 45 E4                        MOV [EBP-28],EAX
+
+            ! Get the index: at i=0, point to the rightmost array index
+            index = integer( framep + param2 + wordsize*i )
+ 0075 8B 45 F8                        MOV EAX,[EBP-8]
+ 0078 05 0C 00 00 00                  ADD EAX, 12
+ 007D 8B 4D D4                        MOV ECX,[EBP-44]
+ 0080 C1 E1 02                        SHL ECX, 2
+ 0083 01 C1                           ADD ECX,EAX
+ 0085 8B 09                           MOV ECX,[ECX]
+ 0087 89 4D E0                        MOV [EBP-32],ECX
+
+            ! Check the index
+            %signal 6, 2, index %unless (lb <= index) %and (index <= ub); ! check to see if index in range lb:ub
+ 008A 8B 45 E8                        MOV EAX,[EBP-24]
+ 008D 3B 45 E0                        CMP EAX,[EBP-32]
+ 0090 7F 00                           JG L 1003
+ 0092 8B 45 E0                        MOV EAX,[EBP-32]
+ 0095 3B 45 E4                        CMP EAX,[EBP-28]
+ 0098 7E 00                           JLE L 1004
+ 009A                      L 1003  EQU $
+ 009A B8 06 00 00 00                  MOV EAX, 6
+ 009F 50                              PUSH EAX
+ 00A0 8B 45 E0                        MOV EAX,[EBP-32]
+ 00A3 50                              PUSH EAX
+ 00A4 B8 02 00 00 00                  MOV EAX, 2
+ 00A9 50                              PUSH EAX
+ 00AA E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
+ 00AD 83 C4 0C                        ADD ESP, 12
+ 00B0                      L 1004  EQU $
+
+            row   = (ub - lb) + 1;         ! Number of objects in a row
+ 00B0 8B 45 E4                        MOV EAX,[EBP-28]
+ 00B3 2B 45 E8                        SUB EAX,[EBP-24]
+ 00B6 40                              INC EAX
+ 00B7 89 45 DC                        MOV [EBP-36],EAX
+            result = (result * row) + index; ! accumulate this index
+ 00BA 8B 45 D8                        MOV EAX,[EBP-40]
+ 00BD F7 6D DC                        IMUL WORD [EBP-36]
+ 00C0 03 45 E0                        ADD EAX,[EBP-32]
+ 00C3 89 45 D8                        MOV [EBP-40],EAX
+        %repeat
+ 00C6 EB 00                           JMP L 1001
+ 00C8                      L 1002  EQU $
+
+        %result = result * sz; ! multiply by element size
+ 00C8 8B 45 D8                        MOV EAX,[EBP-40]
+ 00CB F7 6D EC                        IMUL WORD [EBP-20]
+ 00CE C9                              LEAVE
+ 00CF C3                              RET
+    %end
+
+{------------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

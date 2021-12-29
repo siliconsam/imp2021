@@ -1,0 +1,37 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {------------------------------------------------------------------------------}
+   2      ! strcmp returns a number comparable to the state of the
+   3      ! strings (-1 = less than, 0 = equal, 1 = more than)
+   4      %external %integer %function impstrcmp ( %byte %name l,r )
+   5          %integer lcount, rcount, index
+   6          %byte lx,rx
+   7  
+   8          lcount = l; ! pick up the counts
+   9          rcount = r;
+   10  
+   11          index = 1
+   12          %while (lcount > 0) %and (rcount > 0) %cycle
+   13              lx = byteinteger( addr( l ) + index ); ! get the address
+   14              rx = byteinteger( addr( r ) + index ); ! get the address
+   15  
+   16              %result =  1 %if (lx > rx)
+   17              %result = -1 %if (rx > lx)
+   18  
+   19              index = index + 1
+   20              lcount = lcount - 1
+   21              rcount = rcount - 1
+   22          %repeat
+   23  
+   24          ! here we ran out of characters on one or both sides
+   25          %result =  1 %if (lcount > 0)
+   26          %result = -1 %if (rcount > 0)
+   27  
+   28          ! if here, the strings are identical
+   29          %result = 0
+   30      %end
+   31  
+   32  {------------------------------------------------------------------------------}
+   33  %endoffile
+
+   20 Statements compiled

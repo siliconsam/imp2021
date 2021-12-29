@@ -1,0 +1,191 @@
+{----------------------------------------------------------------------------}
+    ! Write an integer on the current output stream, to
+    ! occupy PLACES character spaces on the page.
+    ! Nominally based on PrintString(I to S(n, places))
+    ! This version doesn't use strings though, and is
+    ! therefore smaller and quicker.  It builds the
+    ! characters "backwards" in an array
+    %external %routine Write(%integer n, places)
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %string(32) ch;      ! Enough room for a 32 bit integer, plus sign
+        %integer new, digit, sign, i
+
+        length(ch) = 0
+ 0004 C6 45 DB 00                     MOV BYTE [EBP-37], 0
+        ! First collect the digits
+        %if n = 0 %start
+ 0008 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 000B 3D 00 00 00 00                  CMP EAX, 0
+ 0010 75 00                           JNE L 1001
+            length(ch) = length(ch) + 1
+ 0012 FE 45 DB                        INC BYTE [EBP-37]
+            charno(ch,length(ch)) = '0'
+ 0015 8D 45 DB                        LEA EAX,[EBP-37]
+ 0018 31 C9                           XOR ECX,ECX
+ 001A 8A 4D DB                        MOV CL,[EBP-37]
+ 001D 01 C8                           ADD EAX,ECX
+ 001F C6 00 30                        MOV BYTE [EAX], 48
+            sign = 0
+ 0022 C7 45 CC 00 00 00 00            MOV WORD [EBP-52], 0
+        %else
+ 0029 EB 00                           JMP L 1002
+ 002B                      L 1001  EQU $
+            sign = 1
+ 002B C7 45 CC 01 00 00 00            MOV WORD [EBP-52], 1
+            ! we make everything negative to avoid the -ve MaxInt wrap problem
+            %if n > 0 %start
+ 0032 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 0035 3D 00 00 00 00                  CMP EAX, 0
+ 003A 7E 00                           JLE L 1003
+                sign = 0
+ 003C C7 45 CC 00 00 00 00            MOV WORD [EBP-52], 0
+                n = -n
+ 0043 F7 5D 0C                        NEG WORD [EBP+ 12]
+            %finish
+ 0046                      L 1003  EQU $
+
+            %while n # 0 %cycle
+ 0046                      L 1004  EQU $
+ 0046 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 0049 3D 00 00 00 00                  CMP EAX, 0
+ 004E 74 00                           JE L 1005
+                new = n // 10
+ 0050 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 0053 99                              CWD
+ 0054 F7 3D 00 00 00 00               IDIV WORD [COT+0000]
+ 005A 89 45 D4                        MOV [EBP-44],EAX
+                digit = (new * 10) - n
+ 005D 8B 45 D4                        MOV EAX,[EBP-44]
+ 0060 F7 2D 00 00 00 00               IMUL WORD [COT+0000]
+ 0066 2B 45 0C                        SUB EAX,[EBP+ 12]
+ 0069 89 45 D0                        MOV [EBP-48],EAX
+                length(ch) = length(ch) + 1
+ 006C FE 45 DB                        INC BYTE [EBP-37]
+                charno(ch,length(ch)) = digit+'0'
+ 006F 8D 45 DB                        LEA EAX,[EBP-37]
+ 0072 31 C9                           XOR ECX,ECX
+ 0074 8A 4D DB                        MOV CL,[EBP-37]
+ 0077 01 C8                           ADD EAX,ECX
+ 0079 8B 4D D0                        MOV ECX,[EBP-48]
+ 007C 83 C1 30                        ADD ECX, 48
+ 007F 88 08                           MOV [EAX],CL
+                n = new
+ 0081 8B 45 D4                        MOV EAX,[EBP-44]
+ 0084 89 45 0C                        MOV [EBP+ 12],EAX
+            %repeat
+ 0087 EB 00                           JMP L 1004
+ 0089                      L 1005  EQU $
+        %finish
+ 0089                      L 1002  EQU $
+
+        ! Now deal with the sign, taking into account the slightly
+        ! idiosyncratic behaviour on positive numbers
+        %if sign # 0 %start
+ 0089 8B 45 CC                        MOV EAX,[EBP-52]
+ 008C 3D 00 00 00 00                  CMP EAX, 0
+ 0091 74 00                           JE L 1006
+            length(ch) = length(ch) + 1
+ 0093 FE 45 DB                        INC BYTE [EBP-37]
+            charno(ch,length(ch)) = '-'
+ 0096 8D 45 DB                        LEA EAX,[EBP-37]
+ 0099 31 C9                           XOR ECX,ECX
+ 009B 8A 4D DB                        MOV CL,[EBP-37]
+ 009E 01 C8                           ADD EAX,ECX
+ 00A0 C6 00 2D                        MOV BYTE [EAX], 45
+        %else
+ 00A3 EB 00                           JMP L 1007
+ 00A5                      L 1006  EQU $
+            %if places > 0 %start
+ 00A5 8B 45 08                        MOV EAX,[EBP+ 8]
+ 00A8 3D 00 00 00 00                  CMP EAX, 0
+ 00AD 7E 00                           JLE L 1008
+                length(ch) = length(ch) + 1
+ 00AF FE 45 DB                        INC BYTE [EBP-37]
+                charno(ch,length(ch)) = ' '
+ 00B2 8D 45 DB                        LEA EAX,[EBP-37]
+ 00B5 31 C9                           XOR ECX,ECX
+ 00B7 8A 4D DB                        MOV CL,[EBP-37]
+ 00BA 01 C8                           ADD EAX,ECX
+ 00BC C6 00 20                        MOV BYTE [EAX], 32
+            %finish
+ 00BF                      L 1008  EQU $
+        %finish
+ 00BF                      L 1007  EQU $
+
+        ! Now we adjust Places, also slightly mysteriously
+        %if places <= 0 %then places = -places %else places = places + 1
+ 00BF 8B 45 08                        MOV EAX,[EBP+ 8]
+ 00C2 3D 00 00 00 00                  CMP EAX, 0
+ 00C7 7F 00                           JG L 1009
+ 00C9 F7 5D 08                        NEG WORD [EBP+ 8]
+ 00CC EB 00                           JMP L 1010
+ 00CE                      L 1009  EQU $
+ 00CE FF 45 08                        INC WORD [EBP+ 8]
+ 00D1                      L 1010  EQU $
+
+        ! The array at CH now contains the characters (backwards)
+        ! and the character count is in NEXT
+
+        %while places > length(ch) %cycle
+ 00D1                      L 1011  EQU $
+ 00D1 8B 45 08                        MOV EAX,[EBP+ 8]
+ 00D4 31 C9                           XOR ECX,ECX
+ 00D6 8A 4D DB                        MOV CL,[EBP-37]
+ 00D9 39 C8                           CMP EAX,ECX
+ 00DB 7E 00                           JLE L 1012
+            length(ch) = length(ch) + 1
+ 00DD FE 45 DB                        INC BYTE [EBP-37]
+            charno(ch,length(ch)) = ' '
+ 00E0 8D 45 DB                        LEA EAX,[EBP-37]
+ 00E3 31 C9                           XOR ECX,ECX
+ 00E5 8A 4D DB                        MOV CL,[EBP-37]
+ 00E8 01 C8                           ADD EAX,ECX
+ 00EA C6 00 20                        MOV BYTE [EAX], 32
+            places = places - 1
+ 00ED FF 4D 08                        DEC WORD [EBP+ 8]
+        %repeat
+ 00F0 EB 00                           JMP L 1011
+ 00F2                      L 1012  EQU $
+
+        %for i=length(ch),-1,1 %cycle
+ 00F2 31 C0                           XOR EAX,EAX
+ 00F4 8A 45 DB                        MOV AL,[EBP-37]
+ 00F7 40                              INC EAX
+ 00F8 89 45 C8                        MOV [EBP-56],EAX
+ 00FB                      L 1013  EQU $
+ 00FB 8B 45 C8                        MOV EAX,[EBP-56]
+ 00FE 3D 01 00 00 00                  CMP EAX, 1
+ 0103 74 00                           JE L 1014
+ 0105 48                              DEC EAX
+ 0106 89 45 C8                        MOV [EBP-56],EAX
+            print symbol( charno(ch,i))
+ 0109 8D 45 DB                        LEA EAX,[EBP-37]
+ 010C 03 45 C8                        ADD EAX,[EBP-56]
+ 010F 8A 00                           MOV AL,[EAX]
+ 0111 25 FF 00 00 00                  AND EAX, 255
+ 0116 50                              PUSH EAX
+ 0117 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 011A 83 C4 04                        ADD ESP, 4
+        %repeat
+ 011D EB 00                           JMP L 1013
+ 011F                      L 1014  EQU $
+
+    %end
+ 011F C9                              LEAVE
+ 0120 C3                              RET
+
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+ 0000 0A 00                           db 0A,00 ; ..
+ 0002 00 00                           db 00,00 ; ..
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

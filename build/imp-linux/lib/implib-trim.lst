@@ -1,0 +1,18 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {----------------------------------------------------------------------------}
+   2      %external %string(255) %function trim(%string(255) s, %integer max)
+   3  
+   4          ! Do some defensive error checking first
+   5          %signal 6, 2, max %if max < 0
+   6  
+   7          ! tweak our parameter and return it
+   8          %if length(s) > max %then length(s) = max
+   9  
+   10          %result = s
+   11      %end
+   12  
+   13  {----------------------------------------------------------------------------}
+   14  %endoffile
+
+   6 Statements compiled

@@ -1,0 +1,25 @@
+
+%include "inc.386.registers"
+
+constant %integer pass2 = 2<<14
+%constant %integer flags = 16_7
+
+%diagnose pass2 + flags;
+
+%own %short number = -105
+%external %short sum
+
+%external %routine mcode001
+    *MOV _ eax,number
+    *ADD _ eax,#118
+    *MOV _ sum,eax
+    *MOV _ eax,#0
+    
+    %return
+%end
+
+%external %integer %function get sum
+    %result = sum
+%end
+
+%endoffile

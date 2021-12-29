@@ -1,0 +1,3105 @@
+
+    %include "inc.386.registers"
+
+    %recordformat impevent( %integer event,sub,extra, %string(255) message )
+
+    %own %record(impevent) lastevent
+
+    %external %string(14) %function %spec handler name( %integer address )
+
+{------------------------------------------------------------------------------}
+    %external %integer %function get event
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %result = lastevent_event
+ 0004 A1 00 00 00 00                  MOV EAX,[DATA+0000]
+ 0009 C9                              LEAVE
+ 000A C3                              RET
+    %end
+
+    %external %integer %function get eventsub
+ 000B                      L 1001  EQU $
+ 000B C8 00 00 01                     ENTER 0000, 1
+        %result = lastevent_sub
+ 000F A1 04 00 00 00                  MOV EAX,[DATA+0004]
+ 0014 C9                              LEAVE
+ 0015 C3                              RET
+    %end
+
+    %external %integer %function get eventinfo
+ 0016                      L 1002  EQU $
+ 0016 C8 00 00 01                     ENTER 0000, 1
+        %result = lastevent_extra
+ 001A A1 08 00 00 00                  MOV EAX,[DATA+0008]
+ 001F C9                              LEAVE
+ 0020 C3                              RET
+    %end
+
+    %external %routine get eventmessage( %string(*) %name message )
+ 0021                      L 1003  EQU $
+ 0021 C8 00 00 01                     ENTER 0000, 1
+        message = lastevent_message
+ 0025 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0028 50                              PUSH EAX
+ 0029 B9 0C 00 00 00                  MOV ECX,DATA+ 12
+ 002E 51                              PUSH ECX
+ 002F 6A 00                           PUSH  0
+ 0031 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0034 83 C4 0C                        ADD ESP, 12
+    %end
+ 0037 C9                              LEAVE
+ 0038 C3                              RET
+
+    %external %routine save event( %integer event, sub, extra )
+ 0039                      L 1004  EQU $
+ 0039 C8 00 00 01                     ENTER 0000, 1
+        %switch esw(0:max event - 1)
+        %string(16) e,s,x
+        %string(255) msg,eventmsg
+
+        e = itos(event,0)
+ 003D FF 75 10                        PUSH WORD [EBP+ 16]
+ 0040 6A 00                           PUSH  0
+ 0042 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 0048 50                              PUSH EAX
+ 0049 E8 3E 00                        CALL 'ITOS' (EXTERN  62)
+ 004C 83 C4 0C                        ADD ESP, 12
+ 004F 8D 45 EB                        LEA EAX,[EBP-21]
+ 0052 50                              PUSH EAX
+ 0053 8D 8D C8 FC FF FF               LEA ECX,[EBP-824]
+ 0059 51                              PUSH ECX
+ 005A 6A 10                           PUSH  16
+ 005C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 005F 83 C4 0C                        ADD ESP, 12
+        s = itos(sub,0)
+ 0062 FF 75 0C                        PUSH WORD [EBP+ 12]
+ 0065 6A 00                           PUSH  0
+ 0067 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 006D 50                              PUSH EAX
+ 006E E8 3E 00                        CALL 'ITOS' (EXTERN  62)
+ 0071 83 C4 0C                        ADD ESP, 12
+ 0074 8D 45 DA                        LEA EAX,[EBP-38]
+ 0077 50                              PUSH EAX
+ 0078 8D 8D C8 FC FF FF               LEA ECX,[EBP-824]
+ 007E 51                              PUSH ECX
+ 007F 6A 10                           PUSH  16
+ 0081 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0084 83 C4 0C                        ADD ESP, 12
+        x = itos(extra,0)
+ 0087 FF 75 08                        PUSH WORD [EBP+ 8]
+ 008A 6A 00                           PUSH  0
+ 008C 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 0092 50                              PUSH EAX
+ 0093 E8 3E 00                        CALL 'ITOS' (EXTERN  62)
+ 0096 83 C4 0C                        ADD ESP, 12
+ 0099 8D 45 C9                        LEA EAX,[EBP-55]
+ 009C 50                              PUSH EAX
+ 009D 8D 8D C8 FC FF FF               LEA ECX,[EBP-824]
+ 00A3 51                              PUSH ECX
+ 00A4 6A 10                           PUSH  16
+ 00A6 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 00A9 83 C4 0C                        ADD ESP, 12
+
+        eventmsg = "(".e.",".s.",".x.")"
+ 00AC 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 00B2 50                              PUSH EAX
+ 00B3 B8 10 00 00 00                  MOV EAX,COT+ 16
+ 00B8 50                              PUSH EAX
+ 00B9 68 FF 00 00 00                  PUSH  255
+ 00BE E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 00C1 83 C4 0C                        ADD ESP, 12
+ 00C4 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 00CA 50                              PUSH EAX
+ 00CB 8D 45 EB                        LEA EAX,[EBP-21]
+ 00CE 50                              PUSH EAX
+ 00CF 68 FF 00 00 00                  PUSH  255
+ 00D4 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 00D7 83 C4 0C                        ADD ESP, 12
+ 00DA 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 00E0 50                              PUSH EAX
+ 00E1 B8 12 00 00 00                  MOV EAX,COT+ 18
+ 00E6 50                              PUSH EAX
+ 00E7 68 FF 00 00 00                  PUSH  255
+ 00EC E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 00EF 83 C4 0C                        ADD ESP, 12
+ 00F2 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 00F8 50                              PUSH EAX
+ 00F9 8D 45 DA                        LEA EAX,[EBP-38]
+ 00FC 50                              PUSH EAX
+ 00FD 68 FF 00 00 00                  PUSH  255
+ 0102 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0105 83 C4 0C                        ADD ESP, 12
+ 0108 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 010E 50                              PUSH EAX
+ 010F B8 14 00 00 00                  MOV EAX,COT+ 20
+ 0114 50                              PUSH EAX
+ 0115 68 FF 00 00 00                  PUSH  255
+ 011A E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 011D 83 C4 0C                        ADD ESP, 12
+ 0120 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 0126 50                              PUSH EAX
+ 0127 8D 45 C9                        LEA EAX,[EBP-55]
+ 012A 50                              PUSH EAX
+ 012B 68 FF 00 00 00                  PUSH  255
+ 0130 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0133 83 C4 0C                        ADD ESP, 12
+ 0136 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 013C 50                              PUSH EAX
+ 013D B8 16 00 00 00                  MOV EAX,COT+ 22
+ 0142 50                              PUSH EAX
+ 0143 68 FF 00 00 00                  PUSH  255
+ 0148 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 014B 83 C4 0C                        ADD ESP, 12
+ 014E 8D 85 C9 FD FF FF               LEA EAX,[EBP-567]
+ 0154 50                              PUSH EAX
+ 0155 8D 8D C8 FC FF FF               LEA ECX,[EBP-824]
+ 015B 51                              PUSH ECX
+ 015C 68 FF 00 00 00                  PUSH  255
+ 0161 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0164 83 C4 0C                        ADD ESP, 12
+
+        ! For the main ones we generate, try to be helpful...
+        -> esw(event) %if (0 < event) %and (event < max event)
+ 0167 8B 45 10                        MOV EAX,[EBP+ 16]
+ 016A 3D 00 00 00 00                  CMP EAX, 0
+ 016F 7E 00                           JLE L 1005
+ 0171 8B 45 10                        MOV EAX,[EBP+ 16]
+ 0174 3D 10 00 00 00                  CMP EAX, 16
+ 0179 7D 00                           JGE L 1005
+ 017B 8B 45 10                        MOV EAX,[EBP+ 16]
+ 017E C1 E0 02                        SHL EAX, 2
+ 0181 89 C6                           MOV ESI,EAX
+ 0183 FF A6 00 00 00 00               JMP WORD [ESI+SWTAB]
+ 0189                      L 1005  EQU $
+        -> esw(max event - 1)
+ 0189 BF 3C 00 00 00                  MOV EDI, 60
+ 018E FF A7 00 00 00 00               JMP WORD [EDI+SWTAB]
+    esw(0):
+ 0194                      L 1006  EQU $
+        %begin
+ 0194 E8 00 00                        CALL '' (INTERNAL L 1007 )
+ 0197 EB 00                           JMP L 1008
+ 0199                      L 1007  EQU $
+ 0199 C8 00 00 02                     ENTER 0000, 2
+           ! sub value has full integer range
+           %if (sub < 0) %then msg = "Abandon program, sauve qui puet!"
+ 019D 8B 5D FC                        MOV EBX,[EBP-4]
+ 01A0 8B 43 0C                        MOV EAX,[EBX+ 12]
+ 01A3 3D 00 00 00 00                  CMP EAX, 0
+ 01A8 7D 00                           JGE L 1009
+ 01AA 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 01B0 50                              PUSH EAX
+ 01B1 B9 18 00 00 00                  MOV ECX,COT+ 24
+ 01B6 51                              PUSH ECX
+ 01B7 68 FF 00 00 00                  PUSH  255
+ 01BC E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 01BF 83 C4 0C                        ADD ESP, 12
+ 01C2                      L 1009  EQU $
+           %if (sub = 0) %then msg = "%stop"
+ 01C2 8B 75 FC                        MOV ESI,[EBP-4]
+ 01C5 8B 46 0C                        MOV EAX,[ESI+ 12]
+ 01C8 3D 00 00 00 00                  CMP EAX, 0
+ 01CD 75 00                           JNE L 1010
+ 01CF 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 01D5 50                              PUSH EAX
+ 01D6 B9 39 00 00 00                  MOV ECX,COT+ 57
+ 01DB 51                              PUSH ECX
+ 01DC 68 FF 00 00 00                  PUSH  255
+ 01E1 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 01E4 83 C4 0C                        ADD ESP, 12
+ 01E7                      L 1010  EQU $
+           %if (sub > 0) %then msg = "User generated error. ".s
+ 01E7 8B 7D FC                        MOV EDI,[EBP-4]
+ 01EA 8B 47 0C                        MOV EAX,[EDI+ 12]
+ 01ED 3D 00 00 00 00                  CMP EAX, 0
+ 01F2 7E 00                           JLE L 1011
+ 01F4 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 01FA 50                              PUSH EAX
+ 01FB B8 3F 00 00 00                  MOV EAX,COT+ 63
+ 0200 50                              PUSH EAX
+ 0201 68 FF 00 00 00                  PUSH  255
+ 0206 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0209 83 C4 0C                        ADD ESP, 12
+ 020C 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0212 50                              PUSH EAX
+ 0213 8B 5D FC                        MOV EBX,[EBP-4]
+ 0216 8D 43 DA                        LEA EAX,[EBX-38]
+ 0219 50                              PUSH EAX
+ 021A 68 FF 00 00 00                  PUSH  255
+ 021F E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0222 83 C4 0C                        ADD ESP, 12
+ 0225 8B 75 FC                        MOV ESI,[EBP-4]
+ 0228 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 022E 50                              PUSH EAX
+ 022F 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0235 51                              PUSH ECX
+ 0236 68 FF 00 00 00                  PUSH  255
+ 023B E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 023E 83 C4 0C                        ADD ESP, 12
+ 0241                      L 1011  EQU $
+        %end
+ 0241 C9                              LEAVE
+ 0242 C3                              RET
+ 0243                      L 1008  EQU $
+        -> esac
+ 0243 EB 00                           JMP L 1012
+    esw(1):
+ 0245                      L 1013  EQU $
+        %begin
+ 0245 E8 00 00                        CALL '' (INTERNAL L 1014 )
+ 0248 EB 00                           JMP L 1015
+ 024A                      L 1014  EQU $
+ 024A C8 00 00 02                     ENTER 0000, 2
+           %switch ssw(0:15)
+           -> ssw(sub&16_f)
+ 024E 8B 7D FC                        MOV EDI,[EBP-4]
+ 0251 8B 47 0C                        MOV EAX,[EDI+ 12]
+ 0254 25 0F 00 00 00                  AND EAX, 15
+ 0259 C1 E0 02                        SHL EAX, 2
+ 025C 89 C3                           MOV EBX,EAX
+ 025E FF A3 40 00 00 00               JMP WORD [EBX+SWTAB+ 64]
+        ssw(1): msg = "Integer overflow"  ; -> es
+ 0264                      L 1016  EQU $
+ 0264 8B 75 FC                        MOV ESI,[EBP-4]
+ 0267 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 026D 50                              PUSH EAX
+ 026E B9 56 00 00 00                  MOV ECX,COT+ 86
+ 0273 51                              PUSH ECX
+ 0274 68 FF 00 00 00                  PUSH  255
+ 0279 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 027C 83 C4 0C                        ADD ESP, 12
+ 027F EB 00                           JMP L 1017
+        ssw(2): msg = "Real overflow"     ; -> es
+ 0281                      L 1018  EQU $
+ 0281 8B 7D FC                        MOV EDI,[EBP-4]
+ 0284 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 028A 50                              PUSH EAX
+ 028B B9 67 00 00 00                  MOV ECX,COT+ 103
+ 0290 51                              PUSH ECX
+ 0291 68 FF 00 00 00                  PUSH  255
+ 0296 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0299 83 C4 0C                        ADD ESP, 12
+ 029C EB 00                           JMP L 1017
+        ssw(3): msg = "String overflow"   ; -> es
+ 029E                      L 1019  EQU $
+ 029E 8B 5D FC                        MOV EBX,[EBP-4]
+ 02A1 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 02A7 50                              PUSH EAX
+ 02A8 B9 75 00 00 00                  MOV ECX,COT+ 117
+ 02AD 51                              PUSH ECX
+ 02AE 68 FF 00 00 00                  PUSH  255
+ 02B3 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 02B6 83 C4 0C                        ADD ESP, 12
+ 02B9 EB 00                           JMP L 1017
+        ssw(4): msg = "Division by zero"  ; -> es
+ 02BB                      L 1020  EQU $
+ 02BB 8B 75 FC                        MOV ESI,[EBP-4]
+ 02BE 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 02C4 50                              PUSH EAX
+ 02C5 B9 85 00 00 00                  MOV ECX,COT+ 133
+ 02CA 51                              PUSH ECX
+ 02CB 68 FF 00 00 00                  PUSH  255
+ 02D0 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 02D3 83 C4 0C                        ADD ESP, 12
+ 02D6 EB 00                           JMP L 1017
+        ssw(5): msg = "Truncation"        ; -> es
+ 02D8                      L 1021  EQU $
+ 02D8 8B 7D FC                        MOV EDI,[EBP-4]
+ 02DB 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 02E1 50                              PUSH EAX
+ 02E2 B9 96 00 00 00                  MOV ECX,COT+ 150
+ 02E7 51                              PUSH ECX
+ 02E8 68 FF 00 00 00                  PUSH  255
+ 02ED E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 02F0 83 C4 0C                        ADD ESP, 12
+ 02F3 EB 00                           JMP L 1017
+        ssw(*): msg = "Overflow ".eventmsg; -> es
+ 02F5                      L 1022  EQU $
+ 02F5                      L 1023  EQU $
+ 02F5                      L 1024  EQU $
+ 02F5                      L 1025  EQU $
+ 02F5                      L 1026  EQU $
+ 02F5                      L 1027  EQU $
+ 02F5                      L 1028  EQU $
+ 02F5                      L 1029  EQU $
+ 02F5                      L 1030  EQU $
+ 02F5                      L 1031  EQU $
+ 02F5                      L 1032  EQU $
+ 02F5 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 02FB 50                              PUSH EAX
+ 02FC B8 A1 00 00 00                  MOV EAX,COT+ 161
+ 0301 50                              PUSH EAX
+ 0302 68 FF 00 00 00                  PUSH  255
+ 0307 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 030A 83 C4 0C                        ADD ESP, 12
+ 030D 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0313 50                              PUSH EAX
+ 0314 8B 5D FC                        MOV EBX,[EBP-4]
+ 0317 8D 83 C9 FD FF FF               LEA EAX,[EBX-567]
+ 031D 50                              PUSH EAX
+ 031E 68 FF 00 00 00                  PUSH  255
+ 0323 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0326 83 C4 0C                        ADD ESP, 12
+ 0329 8B 75 FC                        MOV ESI,[EBP-4]
+ 032C 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 0332 50                              PUSH EAX
+ 0333 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0339 51                              PUSH ECX
+ 033A 68 FF 00 00 00                  PUSH  255
+ 033F E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0342 83 C4 0C                        ADD ESP, 12
+ 0345 EB 00                           JMP L 1017
+        es:
+ 0347                      L 1017  EQU $
+        %end
+ 0347 C9                              LEAVE
+ 0348 C3                              RET
+ 0349                      L 1015  EQU $
+        -> esac
+ 0349 EB 00                           JMP L 1012
+    esw(2):
+ 034B                      L 1033  EQU $
+        %begin
+ 034B E8 00 00                        CALL '' (INTERNAL L 1034 )
+ 034E EB 00                           JMP L 1035
+ 0350                      L 1034  EQU $
+ 0350 C8 00 00 02                     ENTER 0000, 2
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+ 0354 8B 7D FC                        MOV EDI,[EBP-4]
+ 0357 8B 47 0C                        MOV EAX,[EDI+ 12]
+ 035A 25 0F 00 00 00                  AND EAX, 15
+ 035F C1 E0 02                        SHL EAX, 2
+ 0362 89 C3                           MOV EBX,EAX
+ 0364 FF A3 80 00 00 00               JMP WORD [EBX+SWTAB+ 128]
+        ssw(1): msg = "Not enough store"         ; -> es
+ 036A                      L 1036  EQU $
+ 036A 8B 75 FC                        MOV ESI,[EBP-4]
+ 036D 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 0373 50                              PUSH EAX
+ 0374 B9 AB 00 00 00                  MOV ECX,COT+ 171
+ 0379 51                              PUSH ECX
+ 037A 68 FF 00 00 00                  PUSH  255
+ 037F E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0382 83 C4 0C                        ADD ESP, 12
+ 0385 EB 00                           JMP L 1037
+        ssw(2): msg = "Output exceeded"          ; -> es
+ 0387                      L 1038  EQU $
+ 0387 8B 7D FC                        MOV EDI,[EBP-4]
+ 038A 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 0390 50                              PUSH EAX
+ 0391 B9 BC 00 00 00                  MOV ECX,COT+ 188
+ 0396 51                              PUSH ECX
+ 0397 68 FF 00 00 00                  PUSH  255
+ 039C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 039F 83 C4 0C                        ADD ESP, 12
+ 03A2 EB 00                           JMP L 1037
+        ssw(3): msg = "Time exceeded"            ; -> es
+ 03A4                      L 1039  EQU $
+ 03A4 8B 5D FC                        MOV EBX,[EBP-4]
+ 03A7 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 03AD 50                              PUSH EAX
+ 03AE B9 CC 00 00 00                  MOV ECX,COT+ 204
+ 03B3 51                              PUSH ECX
+ 03B4 68 FF 00 00 00                  PUSH  255
+ 03B9 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 03BC 83 C4 0C                        ADD ESP, 12
+ 03BF EB 00                           JMP L 1037
+        ssw(*): msg = "Excess Resource ".eventmsg; -> es
+ 03C1                      L 1040  EQU $
+ 03C1                      L 1041  EQU $
+ 03C1                      L 1042  EQU $
+ 03C1                      L 1043  EQU $
+ 03C1                      L 1044  EQU $
+ 03C1                      L 1045  EQU $
+ 03C1                      L 1046  EQU $
+ 03C1                      L 1047  EQU $
+ 03C1                      L 1048  EQU $
+ 03C1                      L 1049  EQU $
+ 03C1                      L 1050  EQU $
+ 03C1                      L 1051  EQU $
+ 03C1                      L 1052  EQU $
+ 03C1 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 03C7 50                              PUSH EAX
+ 03C8 B8 DA 00 00 00                  MOV EAX,COT+ 218
+ 03CD 50                              PUSH EAX
+ 03CE 68 FF 00 00 00                  PUSH  255
+ 03D3 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 03D6 83 C4 0C                        ADD ESP, 12
+ 03D9 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 03DF 50                              PUSH EAX
+ 03E0 8B 75 FC                        MOV ESI,[EBP-4]
+ 03E3 8D 86 C9 FD FF FF               LEA EAX,[ESI-567]
+ 03E9 50                              PUSH EAX
+ 03EA 68 FF 00 00 00                  PUSH  255
+ 03EF E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 03F2 83 C4 0C                        ADD ESP, 12
+ 03F5 8B 7D FC                        MOV EDI,[EBP-4]
+ 03F8 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 03FE 50                              PUSH EAX
+ 03FF 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0405 51                              PUSH ECX
+ 0406 68 FF 00 00 00                  PUSH  255
+ 040B E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 040E 83 C4 0C                        ADD ESP, 12
+ 0411 EB 00                           JMP L 1037
+        es:
+ 0413                      L 1037  EQU $
+        %end
+ 0413 C9                              LEAVE
+ 0414 C3                              RET
+ 0415                      L 1035  EQU $
+        -> esac
+ 0415 EB 00                           JMP L 1012
+    esw(3):
+ 0417                      L 1053  EQU $
+        %begin
+ 0417 E8 00 00                        CALL '' (INTERNAL L 1054 )
+ 041A EB 00                           JMP L 1055
+ 041C                      L 1054  EQU $
+ 041C C8 00 00 02                     ENTER 0000, 2
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+ 0420 8B 5D FC                        MOV EBX,[EBP-4]
+ 0423 8B 43 0C                        MOV EAX,[EBX+ 12]
+ 0426 25 0F 00 00 00                  AND EAX, 15
+ 042B C1 E0 02                        SHL EAX, 2
+ 042E 89 C6                           MOV ESI,EAX
+ 0430 FF A6 C0 00 00 00               JMP WORD [ESI+SWTAB+ 192]
+        ssw(1): msg = "Data error - Symbol '".tostring(extra&16_ff)."' (".x.")"; -> es
+ 0436                      L 1056  EQU $
+ 0436 8B 7D FC                        MOV EDI,[EBP-4]
+ 0439 8B 47 08                        MOV EAX,[EDI+ 8]
+ 043C 25 FF 00 00 00                  AND EAX, 255
+ 0441 C7 45 F4 01 00 00 00            MOV WORD [EBP-12], 1
+ 0448 88 45 F5                        MOV [EBP-11],AL
+ 044B 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
+ 0451 50                              PUSH EAX
+ 0452 B8 EB 00 00 00                  MOV EAX,COT+ 235
+ 0457 50                              PUSH EAX
+ 0458 68 FF 00 00 00                  PUSH  255
+ 045D E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0460 83 C4 0C                        ADD ESP, 12
+ 0463 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
+ 0469 50                              PUSH EAX
+ 046A 8D 45 F4                        LEA EAX,[EBP-12]
+ 046D 50                              PUSH EAX
+ 046E 68 FF 00 00 00                  PUSH  255
+ 0473 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0476 83 C4 0C                        ADD ESP, 12
+ 0479 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
+ 047F 50                              PUSH EAX
+ 0480 B8 01 01 00 00                  MOV EAX,COT+ 257
+ 0485 50                              PUSH EAX
+ 0486 68 FF 00 00 00                  PUSH  255
+ 048B E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 048E 83 C4 0C                        ADD ESP, 12
+ 0491 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
+ 0497 50                              PUSH EAX
+ 0498 8B 5D FC                        MOV EBX,[EBP-4]
+ 049B 8D 43 C9                        LEA EAX,[EBX-55]
+ 049E 50                              PUSH EAX
+ 049F 68 FF 00 00 00                  PUSH  255
+ 04A4 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 04A7 83 C4 0C                        ADD ESP, 12
+ 04AA 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
+ 04B0 50                              PUSH EAX
+ 04B1 B8 05 01 00 00                  MOV EAX,COT+ 261
+ 04B6 50                              PUSH EAX
+ 04B7 68 FF 00 00 00                  PUSH  255
+ 04BC E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 04BF 83 C4 0C                        ADD ESP, 12
+ 04C2 8B 75 FC                        MOV ESI,[EBP-4]
+ 04C5 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 04CB 50                              PUSH EAX
+ 04CC 8D 8D F4 FE FF FF               LEA ECX,[EBP-268]
+ 04D2 51                              PUSH ECX
+ 04D3 68 FF 00 00 00                  PUSH  255
+ 04D8 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 04DB 83 C4 0C                        ADD ESP, 12
+ 04DE EB 00                           JMP L 1057
+        ssw(*): msg = "Data error ".eventmsg                                   ; -> es
+ 04E0                      L 1058  EQU $
+ 04E0                      L 1059  EQU $
+ 04E0                      L 1060  EQU $
+ 04E0                      L 1061  EQU $
+ 04E0                      L 1062  EQU $
+ 04E0                      L 1063  EQU $
+ 04E0                      L 1064  EQU $
+ 04E0                      L 1065  EQU $
+ 04E0                      L 1066  EQU $
+ 04E0                      L 1067  EQU $
+ 04E0                      L 1068  EQU $
+ 04E0                      L 1069  EQU $
+ 04E0                      L 1070  EQU $
+ 04E0                      L 1071  EQU $
+ 04E0                      L 1072  EQU $
+ 04E0 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
+ 04E6 50                              PUSH EAX
+ 04E7 B8 07 01 00 00                  MOV EAX,COT+ 263
+ 04EC 50                              PUSH EAX
+ 04ED 68 FF 00 00 00                  PUSH  255
+ 04F2 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 04F5 83 C4 0C                        ADD ESP, 12
+ 04F8 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
+ 04FE 50                              PUSH EAX
+ 04FF 8B 7D FC                        MOV EDI,[EBP-4]
+ 0502 8D 87 C9 FD FF FF               LEA EAX,[EDI-567]
+ 0508 50                              PUSH EAX
+ 0509 68 FF 00 00 00                  PUSH  255
+ 050E E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0511 83 C4 0C                        ADD ESP, 12
+ 0514 8B 5D FC                        MOV EBX,[EBP-4]
+ 0517 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 051D 50                              PUSH EAX
+ 051E 8D 8D F4 FE FF FF               LEA ECX,[EBP-268]
+ 0524 51                              PUSH ECX
+ 0525 68 FF 00 00 00                  PUSH  255
+ 052A E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 052D 83 C4 0C                        ADD ESP, 12
+ 0530 EB 00                           JMP L 1057
+        es:
+ 0532                      L 1057  EQU $
+        %end
+ 0532 C9                              LEAVE
+ 0533 C3                              RET
+ 0534                      L 1055  EQU $
+        -> esac
+ 0534 EB 00                           JMP L 1012
+    esw(4):
+ 0536                      L 1073  EQU $
+        %begin
+ 0536 E8 00 00                        CALL '' (INTERNAL L 1074 )
+ 0539 EB 00                           JMP L 1075
+ 053B                      L 1074  EQU $
+ 053B C8 00 00 02                     ENTER 0000, 2
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+ 053F 8B 75 FC                        MOV ESI,[EBP-4]
+ 0542 8B 46 0C                        MOV EAX,[ESI+ 12]
+ 0545 25 0F 00 00 00                  AND EAX, 15
+ 054A C1 E0 02                        SHL EAX, 2
+ 054D 89 C7                           MOV EDI,EAX
+ 054F FF A7 00 01 00 00               JMP WORD [EDI+SWTAB+ 256]
+        ssw(1): msg = "Symbol in data"        ; -> es
+ 0555                      L 1076  EQU $
+ 0555 8B 5D FC                        MOV EBX,[EBP-4]
+ 0558 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 055E 50                              PUSH EAX
+ 055F B9 13 01 00 00                  MOV ECX,COT+ 275
+ 0564 51                              PUSH ECX
+ 0565 68 FF 00 00 00                  PUSH  255
+ 056A E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 056D 83 C4 0C                        ADD ESP, 12
+ 0570 EB 00                           JMP L 1077
+        ssw(*): msg = "Invalid data ".eventmsg; -> es
+ 0572                      L 1078  EQU $
+ 0572                      L 1079  EQU $
+ 0572                      L 1080  EQU $
+ 0572                      L 1081  EQU $
+ 0572                      L 1082  EQU $
+ 0572                      L 1083  EQU $
+ 0572                      L 1084  EQU $
+ 0572                      L 1085  EQU $
+ 0572                      L 1086  EQU $
+ 0572                      L 1087  EQU $
+ 0572                      L 1088  EQU $
+ 0572                      L 1089  EQU $
+ 0572                      L 1090  EQU $
+ 0572                      L 1091  EQU $
+ 0572                      L 1092  EQU $
+ 0572 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0578 50                              PUSH EAX
+ 0579 B8 22 01 00 00                  MOV EAX,COT+ 290
+ 057E 50                              PUSH EAX
+ 057F 68 FF 00 00 00                  PUSH  255
+ 0584 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0587 83 C4 0C                        ADD ESP, 12
+ 058A 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0590 50                              PUSH EAX
+ 0591 8B 75 FC                        MOV ESI,[EBP-4]
+ 0594 8D 86 C9 FD FF FF               LEA EAX,[ESI-567]
+ 059A 50                              PUSH EAX
+ 059B 68 FF 00 00 00                  PUSH  255
+ 05A0 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 05A3 83 C4 0C                        ADD ESP, 12
+ 05A6 8B 7D FC                        MOV EDI,[EBP-4]
+ 05A9 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 05AF 50                              PUSH EAX
+ 05B0 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 05B6 51                              PUSH ECX
+ 05B7 68 FF 00 00 00                  PUSH  255
+ 05BC E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 05BF 83 C4 0C                        ADD ESP, 12
+ 05C2 EB 00                           JMP L 1077
+        es:
+ 05C4                      L 1077  EQU $
+        %end
+ 05C4 C9                              LEAVE
+ 05C5 C3                              RET
+ 05C6                      L 1075  EQU $
+        -> esac
+ 05C6 EB 00                           JMP L 1012
+    esw(5):
+ 05C8                      L 1093  EQU $
+        %begin
+ 05C8 E8 00 00                        CALL '' (INTERNAL L 1094 )
+ 05CB EB 00                           JMP L 1095
+ 05CD                      L 1094  EQU $
+ 05CD C8 00 00 02                     ENTER 0000, 2
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+ 05D1 8B 5D FC                        MOV EBX,[EBP-4]
+ 05D4 8B 43 0C                        MOV EAX,[EBX+ 12]
+ 05D7 25 0F 00 00 00                  AND EAX, 15
+ 05DC C1 E0 02                        SHL EAX, 2
+ 05DF 89 C6                           MOV ESI,EAX
+ 05E1 FF A6 40 01 00 00               JMP WORD [ESI+SWTAB+ 320]
+        ssw(1): msg = "Illegal FOR loop"                                           ; -> es
+ 05E7                      L 1096  EQU $
+ 05E7 8B 7D FC                        MOV EDI,[EBP-4]
+ 05EA 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 05F0 50                              PUSH EAX
+ 05F1 B9 30 01 00 00                  MOV ECX,COT+ 304
+ 05F6 51                              PUSH ECX
+ 05F7 68 FF 00 00 00                  PUSH  255
+ 05FC E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 05FF 83 C4 0C                        ADD ESP, 12
+ 0602 EB 00                           JMP L 1097
+        ssw(2): msg = "Illegal exponent - Exponent = ".x                           ; -> es 
+ 0604                      L 1098  EQU $
+ 0604 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 060A 50                              PUSH EAX
+ 060B B8 41 01 00 00                  MOV EAX,COT+ 321
+ 0610 50                              PUSH EAX
+ 0611 68 FF 00 00 00                  PUSH  255
+ 0616 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0619 83 C4 0C                        ADD ESP, 12
+ 061C 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0622 50                              PUSH EAX
+ 0623 8B 5D FC                        MOV EBX,[EBP-4]
+ 0626 8D 43 C9                        LEA EAX,[EBX-55]
+ 0629 50                              PUSH EAX
+ 062A 68 FF 00 00 00                  PUSH  255
+ 062F E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0632 83 C4 0C                        ADD ESP, 12
+ 0635 8B 75 FC                        MOV ESI,[EBP-4]
+ 0638 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 063E 50                              PUSH EAX
+ 063F 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0645 51                              PUSH ECX
+ 0646 68 FF 00 00 00                  PUSH  255
+ 064B E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 064E 83 C4 0C                        ADD ESP, 12
+ 0651 EB 00                           JMP L 1097
+        ssw(3): msg = "Array inside-out"                                           ; -> es
+ 0653                      L 1099  EQU $
+ 0653 8B 7D FC                        MOV EDI,[EBP-4]
+ 0656 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 065C 50                              PUSH EAX
+ 065D B9 60 01 00 00                  MOV ECX,COT+ 352
+ 0662 51                              PUSH ECX
+ 0663 68 FF 00 00 00                  PUSH  255
+ 0668 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 066B 83 C4 0C                        ADD ESP, 12
+ 066E EB 00                           JMP L 1097
+        ssw(4): msg = "String inside-out"                                          ; -> es
+ 0670                      L 1100  EQU $
+ 0670 8B 5D FC                        MOV EBX,[EBP-4]
+ 0673 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 0679 50                              PUSH EAX
+ 067A B9 71 01 00 00                  MOV ECX,COT+ 369
+ 067F 51                              PUSH ECX
+ 0680 68 FF 00 00 00                  PUSH  255
+ 0685 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0688 83 C4 0C                        ADD ESP, 12
+ 068B EB 00                           JMP L 1097
+        ssw(5): msg = "Illegal exponent '".x."'"                                   ; -> es
+ 068D                      L 1101  EQU $
+ 068D 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0693 50                              PUSH EAX
+ 0694 B8 83 01 00 00                  MOV EAX,COT+ 387
+ 0699 50                              PUSH EAX
+ 069A 68 FF 00 00 00                  PUSH  255
+ 069F E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 06A2 83 C4 0C                        ADD ESP, 12
+ 06A5 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 06AB 50                              PUSH EAX
+ 06AC 8B 75 FC                        MOV ESI,[EBP-4]
+ 06AF 8D 46 C9                        LEA EAX,[ESI-55]
+ 06B2 50                              PUSH EAX
+ 06B3 68 FF 00 00 00                  PUSH  255
+ 06B8 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 06BB 83 C4 0C                        ADD ESP, 12
+ 06BE 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 06C4 50                              PUSH EAX
+ 06C5 B8 96 01 00 00                  MOV EAX,COT+ 406
+ 06CA 50                              PUSH EAX
+ 06CB 68 FF 00 00 00                  PUSH  255
+ 06D0 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 06D3 83 C4 0C                        ADD ESP, 12
+ 06D6 8B 7D FC                        MOV EDI,[EBP-4]
+ 06D9 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 06DF 50                              PUSH EAX
+ 06E0 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 06E6 51                              PUSH ECX
+ 06E7 68 FF 00 00 00                  PUSH  255
+ 06EC E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 06EF 83 C4 0C                        ADD ESP, 12
+ 06F2 EB 00                           JMP L 1097
+        ssw(*): msg = "Invalid argument - '".e." Sub-class = ".s.", Value = ".x."'"; -> es
+ 06F4                      L 1102  EQU $
+ 06F4                      L 1103  EQU $
+ 06F4                      L 1104  EQU $
+ 06F4                      L 1105  EQU $
+ 06F4                      L 1106  EQU $
+ 06F4                      L 1107  EQU $
+ 06F4                      L 1108  EQU $
+ 06F4                      L 1109  EQU $
+ 06F4                      L 1110  EQU $
+ 06F4                      L 1111  EQU $
+ 06F4                      L 1112  EQU $
+ 06F4 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 06FA 50                              PUSH EAX
+ 06FB B8 98 01 00 00                  MOV EAX,COT+ 408
+ 0700 50                              PUSH EAX
+ 0701 68 FF 00 00 00                  PUSH  255
+ 0706 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0709 83 C4 0C                        ADD ESP, 12
+ 070C 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0712 50                              PUSH EAX
+ 0713 8B 5D FC                        MOV EBX,[EBP-4]
+ 0716 8D 43 EB                        LEA EAX,[EBX-21]
+ 0719 50                              PUSH EAX
+ 071A 68 FF 00 00 00                  PUSH  255
+ 071F E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0722 83 C4 0C                        ADD ESP, 12
+ 0725 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 072B 50                              PUSH EAX
+ 072C B8 AD 01 00 00                  MOV EAX,COT+ 429
+ 0731 50                              PUSH EAX
+ 0732 68 FF 00 00 00                  PUSH  255
+ 0737 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 073A 83 C4 0C                        ADD ESP, 12
+ 073D 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0743 50                              PUSH EAX
+ 0744 8B 75 FC                        MOV ESI,[EBP-4]
+ 0747 8D 46 DA                        LEA EAX,[ESI-38]
+ 074A 50                              PUSH EAX
+ 074B 68 FF 00 00 00                  PUSH  255
+ 0750 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0753 83 C4 0C                        ADD ESP, 12
+ 0756 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 075C 50                              PUSH EAX
+ 075D B8 BB 01 00 00                  MOV EAX,COT+ 443
+ 0762 50                              PUSH EAX
+ 0763 68 FF 00 00 00                  PUSH  255
+ 0768 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 076B 83 C4 0C                        ADD ESP, 12
+ 076E 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0774 50                              PUSH EAX
+ 0775 8B 7D FC                        MOV EDI,[EBP-4]
+ 0778 8D 47 C9                        LEA EAX,[EDI-55]
+ 077B 50                              PUSH EAX
+ 077C 68 FF 00 00 00                  PUSH  255
+ 0781 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0784 83 C4 0C                        ADD ESP, 12
+ 0787 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 078D 50                              PUSH EAX
+ 078E B8 C6 01 00 00                  MOV EAX,COT+ 454
+ 0793 50                              PUSH EAX
+ 0794 68 FF 00 00 00                  PUSH  255
+ 0799 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 079C 83 C4 0C                        ADD ESP, 12
+ 079F 8B 5D FC                        MOV EBX,[EBP-4]
+ 07A2 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 07A8 50                              PUSH EAX
+ 07A9 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 07AF 51                              PUSH ECX
+ 07B0 68 FF 00 00 00                  PUSH  255
+ 07B5 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 07B8 83 C4 0C                        ADD ESP, 12
+ 07BB EB 00                           JMP L 1097
+        es:
+ 07BD                      L 1097  EQU $
+        %end
+ 07BD C9                              LEAVE
+ 07BE C3                              RET
+ 07BF                      L 1095  EQU $
+        -> esac
+ 07BF EB 00                           JMP L 1012
+    esw(6):
+ 07C1                      L 1113  EQU $
+        %begin
+ 07C1 E8 00 00                        CALL '' (INTERNAL L 1114 )
+ 07C4 EB 00                           JMP L 1115
+ 07C6                      L 1114  EQU $
+ 07C6 C8 00 00 02                     ENTER 0000, 2
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+ 07CA 8B 75 FC                        MOV ESI,[EBP-4]
+ 07CD 8B 46 0C                        MOV EAX,[ESI+ 12]
+ 07D0 25 0F 00 00 00                  AND EAX, 15
+ 07D5 C1 E0 02                        SHL EAX, 2
+ 07D8 89 C7                           MOV EDI,EAX
+ 07DA FF A7 80 01 00 00               JMP WORD [EDI+SWTAB+ 384]
+        ssw(1): msg = "Capacity exceeded"
+ 07E0                      L 1116  EQU $
+ 07E0 8B 5D FC                        MOV EBX,[EBP-4]
+ 07E3 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 07E9 50                              PUSH EAX
+ 07EA B9 C8 01 00 00                  MOV ECX,COT+ 456
+ 07EF 51                              PUSH ECX
+ 07F0 68 FF 00 00 00                  PUSH  255
+ 07F5 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 07F8 83 C4 0C                        ADD ESP, 12
+                %if (extra = 1) %then msg = msg." (String copy overflow)"
+ 07FB 8B 75 FC                        MOV ESI,[EBP-4]
+ 07FE 8B 46 08                        MOV EAX,[ESI+ 8]
+ 0801 3D 01 00 00 00                  CMP EAX, 1
+ 0806 75 00                           JNE L 1117
+ 0808 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 080E 50                              PUSH EAX
+ 080F B9 DA 01 00 00                  MOV ECX,COT+ 474
+ 0814 51                              PUSH ECX
+ 0815 68 FF 00 00 00                  PUSH  255
+ 081A E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 081D 83 C4 0C                        ADD ESP, 12
+ 0820                      L 1117  EQU $
+                %if (extra = 2) %then msg = msg." (String append overflow)"
+ 0820 8B 7D FC                        MOV EDI,[EBP-4]
+ 0823 8B 47 08                        MOV EAX,[EDI+ 8]
+ 0826 3D 02 00 00 00                  CMP EAX, 2
+ 082B 75 00                           JNE L 1118
+ 082D 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 0833 50                              PUSH EAX
+ 0834 B9 F2 01 00 00                  MOV ECX,COT+ 498
+ 0839 51                              PUSH ECX
+ 083A 68 FF 00 00 00                  PUSH  255
+ 083F E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0842 83 C4 0C                        ADD ESP, 12
+ 0845                      L 1118  EQU $
+                msg=msg."."                                                          ; -> es
+ 0845 8B 5D FC                        MOV EBX,[EBP-4]
+ 0848 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 084E 50                              PUSH EAX
+ 084F B9 0C 02 00 00                  MOV ECX,COT+ 524
+ 0854 51                              PUSH ECX
+ 0855 68 FF 00 00 00                  PUSH  255
+ 085A E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 085D 83 C4 0C                        ADD ESP, 12
+ 0860 EB 00                           JMP L 1119
+        ssw(2): msg = "Array bound fault - Index = ".x                               ; -> es
+ 0862                      L 1120  EQU $
+ 0862 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0868 50                              PUSH EAX
+ 0869 B8 0E 02 00 00                  MOV EAX,COT+ 526
+ 086E 50                              PUSH EAX
+ 086F 68 FF 00 00 00                  PUSH  255
+ 0874 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0877 83 C4 0C                        ADD ESP, 12
+ 087A 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0880 50                              PUSH EAX
+ 0881 8B 75 FC                        MOV ESI,[EBP-4]
+ 0884 8D 46 C9                        LEA EAX,[ESI-55]
+ 0887 50                              PUSH EAX
+ 0888 68 FF 00 00 00                  PUSH  255
+ 088D E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0890 83 C4 0C                        ADD ESP, 12
+ 0893 8B 7D FC                        MOV EDI,[EBP-4]
+ 0896 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 089C 50                              PUSH EAX
+ 089D 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 08A3 51                              PUSH ECX
+ 08A4 68 FF 00 00 00                  PUSH  255
+ 08A9 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 08AC 83 C4 0C                        ADD ESP, 12
+ 08AF EB 00                           JMP L 1119
+        ssw(3): msg = "Switch bound fault = ".x                                      ; -> es
+ 08B1                      L 1121  EQU $
+ 08B1 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 08B7 50                              PUSH EAX
+ 08B8 B8 2B 02 00 00                  MOV EAX,COT+ 555
+ 08BD 50                              PUSH EAX
+ 08BE 68 FF 00 00 00                  PUSH  255
+ 08C3 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 08C6 83 C4 0C                        ADD ESP, 12
+ 08C9 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 08CF 50                              PUSH EAX
+ 08D0 8B 5D FC                        MOV EBX,[EBP-4]
+ 08D3 8D 43 C9                        LEA EAX,[EBX-55]
+ 08D6 50                              PUSH EAX
+ 08D7 68 FF 00 00 00                  PUSH  255
+ 08DC E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 08DF 83 C4 0C                        ADD ESP, 12
+ 08E2 8B 75 FC                        MOV ESI,[EBP-4]
+ 08E5 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 08EB 50                              PUSH EAX
+ 08EC 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 08F2 51                              PUSH ECX
+ 08F3 68 FF 00 00 00                  PUSH  255
+ 08F8 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 08FB 83 C4 0C                        ADD ESP, 12
+ 08FE EB 00                           JMP L 1119
+        ssw(4): msg = "Illegal event signal"                                         ; -> es
+ 0900                      L 1122  EQU $
+ 0900 8B 7D FC                        MOV EDI,[EBP-4]
+ 0903 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 0909 50                              PUSH EAX
+ 090A B9 41 02 00 00                  MOV ECX,COT+ 577
+ 090F 51                              PUSH ECX
+ 0910 68 FF 00 00 00                  PUSH  255
+ 0915 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0918 83 C4 0C                        ADD ESP, 12
+ 091B EB 00                           JMP L 1119
+        ssw(5): msg = "CHARNO out of range '".x."'"                                  ; -> es
+ 091D                      L 1123  EQU $
+ 091D 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0923 50                              PUSH EAX
+ 0924 B8 56 02 00 00                  MOV EAX,COT+ 598
+ 0929 50                              PUSH EAX
+ 092A 68 FF 00 00 00                  PUSH  255
+ 092F E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0932 83 C4 0C                        ADD ESP, 12
+ 0935 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 093B 50                              PUSH EAX
+ 093C 8B 5D FC                        MOV EBX,[EBP-4]
+ 093F 8D 43 C9                        LEA EAX,[EBX-55]
+ 0942 50                              PUSH EAX
+ 0943 68 FF 00 00 00                  PUSH  255
+ 0948 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 094B 83 C4 0C                        ADD ESP, 12
+ 094E 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0954 50                              PUSH EAX
+ 0955 B8 6C 02 00 00                  MOV EAX,COT+ 620
+ 095A 50                              PUSH EAX
+ 095B 68 FF 00 00 00                  PUSH  255
+ 0960 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0963 83 C4 0C                        ADD ESP, 12
+ 0966 8B 75 FC                        MOV ESI,[EBP-4]
+ 0969 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 096F 50                              PUSH EAX
+ 0970 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0976 51                              PUSH ECX
+ 0977 68 FF 00 00 00                  PUSH  255
+ 097C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 097F 83 C4 0C                        ADD ESP, 12
+ 0982 EB 00                           JMP L 1119
+        ssw(6): msg = "TOSTRING out of range '".x."'"                                ; -> es
+ 0984                      L 1124  EQU $
+ 0984 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 098A 50                              PUSH EAX
+ 098B B8 6E 02 00 00                  MOV EAX,COT+ 622
+ 0990 50                              PUSH EAX
+ 0991 68 FF 00 00 00                  PUSH  255
+ 0996 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0999 83 C4 0C                        ADD ESP, 12
+ 099C 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 09A2 50                              PUSH EAX
+ 09A3 8B 7D FC                        MOV EDI,[EBP-4]
+ 09A6 8D 47 C9                        LEA EAX,[EDI-55]
+ 09A9 50                              PUSH EAX
+ 09AA 68 FF 00 00 00                  PUSH  255
+ 09AF E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 09B2 83 C4 0C                        ADD ESP, 12
+ 09B5 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 09BB 50                              PUSH EAX
+ 09BC B8 86 02 00 00                  MOV EAX,COT+ 646
+ 09C1 50                              PUSH EAX
+ 09C2 68 FF 00 00 00                  PUSH  255
+ 09C7 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 09CA 83 C4 0C                        ADD ESP, 12
+ 09CD 8B 5D FC                        MOV EBX,[EBP-4]
+ 09D0 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 09D6 50                              PUSH EAX
+ 09D7 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 09DD 51                              PUSH ECX
+ 09DE 68 FF 00 00 00                  PUSH  255
+ 09E3 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 09E6 83 C4 0C                        ADD ESP, 12
+ 09E9 EB 00                           JMP L 1119
+        ssw(7): msg = "Illegal shift '".x."'"                                        ; -> es
+ 09EB                      L 1125  EQU $
+ 09EB 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 09F1 50                              PUSH EAX
+ 09F2 B8 88 02 00 00                  MOV EAX,COT+ 648
+ 09F7 50                              PUSH EAX
+ 09F8 68 FF 00 00 00                  PUSH  255
+ 09FD E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0A00 83 C4 0C                        ADD ESP, 12
+ 0A03 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0A09 50                              PUSH EAX
+ 0A0A 8B 75 FC                        MOV ESI,[EBP-4]
+ 0A0D 8D 46 C9                        LEA EAX,[ESI-55]
+ 0A10 50                              PUSH EAX
+ 0A11 68 FF 00 00 00                  PUSH  255
+ 0A16 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0A19 83 C4 0C                        ADD ESP, 12
+ 0A1C 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0A22 50                              PUSH EAX
+ 0A23 B8 98 02 00 00                  MOV EAX,COT+ 664
+ 0A28 50                              PUSH EAX
+ 0A29 68 FF 00 00 00                  PUSH  255
+ 0A2E E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0A31 83 C4 0C                        ADD ESP, 12
+ 0A34 8B 7D FC                        MOV EDI,[EBP-4]
+ 0A37 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 0A3D 50                              PUSH EAX
+ 0A3E 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0A44 51                              PUSH ECX
+ 0A45 68 FF 00 00 00                  PUSH  255
+ 0A4A E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0A4D 83 C4 0C                        ADD ESP, 12
+ 0A50 EB 00                           JMP L 1119
+        ssw(*): msg = "Out of range fault - (".e." Sub-class = ".s.", Value = ".x.")"; -> es
+ 0A52                      L 1126  EQU $
+ 0A52                      L 1127  EQU $
+ 0A52                      L 1128  EQU $
+ 0A52                      L 1129  EQU $
+ 0A52                      L 1130  EQU $
+ 0A52                      L 1131  EQU $
+ 0A52                      L 1132  EQU $
+ 0A52                      L 1133  EQU $
+ 0A52                      L 1134  EQU $
+ 0A52 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0A58 50                              PUSH EAX
+ 0A59 B8 9A 02 00 00                  MOV EAX,COT+ 666
+ 0A5E 50                              PUSH EAX
+ 0A5F 68 FF 00 00 00                  PUSH  255
+ 0A64 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0A67 83 C4 0C                        ADD ESP, 12
+ 0A6A 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0A70 50                              PUSH EAX
+ 0A71 8B 5D FC                        MOV EBX,[EBP-4]
+ 0A74 8D 43 EB                        LEA EAX,[EBX-21]
+ 0A77 50                              PUSH EAX
+ 0A78 68 FF 00 00 00                  PUSH  255
+ 0A7D E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0A80 83 C4 0C                        ADD ESP, 12
+ 0A83 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0A89 50                              PUSH EAX
+ 0A8A B8 B1 02 00 00                  MOV EAX,COT+ 689
+ 0A8F 50                              PUSH EAX
+ 0A90 68 FF 00 00 00                  PUSH  255
+ 0A95 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0A98 83 C4 0C                        ADD ESP, 12
+ 0A9B 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0AA1 50                              PUSH EAX
+ 0AA2 8B 75 FC                        MOV ESI,[EBP-4]
+ 0AA5 8D 46 DA                        LEA EAX,[ESI-38]
+ 0AA8 50                              PUSH EAX
+ 0AA9 68 FF 00 00 00                  PUSH  255
+ 0AAE E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0AB1 83 C4 0C                        ADD ESP, 12
+ 0AB4 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0ABA 50                              PUSH EAX
+ 0ABB B8 BF 02 00 00                  MOV EAX,COT+ 703
+ 0AC0 50                              PUSH EAX
+ 0AC1 68 FF 00 00 00                  PUSH  255
+ 0AC6 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0AC9 83 C4 0C                        ADD ESP, 12
+ 0ACC 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0AD2 50                              PUSH EAX
+ 0AD3 8B 7D FC                        MOV EDI,[EBP-4]
+ 0AD6 8D 47 C9                        LEA EAX,[EDI-55]
+ 0AD9 50                              PUSH EAX
+ 0ADA 68 FF 00 00 00                  PUSH  255
+ 0ADF E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0AE2 83 C4 0C                        ADD ESP, 12
+ 0AE5 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0AEB 50                              PUSH EAX
+ 0AEC B8 CA 02 00 00                  MOV EAX,COT+ 714
+ 0AF1 50                              PUSH EAX
+ 0AF2 68 FF 00 00 00                  PUSH  255
+ 0AF7 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0AFA 83 C4 0C                        ADD ESP, 12
+ 0AFD 8B 5D FC                        MOV EBX,[EBP-4]
+ 0B00 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 0B06 50                              PUSH EAX
+ 0B07 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0B0D 51                              PUSH ECX
+ 0B0E 68 FF 00 00 00                  PUSH  255
+ 0B13 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0B16 83 C4 0C                        ADD ESP, 12
+ 0B19 EB 00                           JMP L 1119
+        es:
+ 0B1B                      L 1119  EQU $
+        %end
+ 0B1B C9                              LEAVE
+ 0B1C C3                              RET
+ 0B1D                      L 1115  EQU $
+        -> esac
+ 0B1D EB 00                           JMP L 1012
+    esw(7):
+ 0B1F                      L 1135  EQU $
+        %begin
+ 0B1F E8 00 00                        CALL '' (INTERNAL L 1136 )
+ 0B22 EB 00                           JMP L 1137
+ 0B24                      L 1136  EQU $
+ 0B24 C8 00 00 02                     ENTER 0000, 2
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+ 0B28 8B 75 FC                        MOV ESI,[EBP-4]
+ 0B2B 8B 46 0C                        MOV EAX,[ESI+ 12]
+ 0B2E 25 0F 00 00 00                  AND EAX, 15
+ 0B33 C1 E0 02                        SHL EAX, 2
+ 0B36 89 C7                           MOV EDI,EAX
+ 0B38 FF A7 C0 01 00 00               JMP WORD [EDI+SWTAB+ 448]
+        ssw(*): msg = "Resolution fails ".eventmsg; -> es
+ 0B3E                      L 1138  EQU $
+ 0B3E                      L 1139  EQU $
+ 0B3E                      L 1140  EQU $
+ 0B3E                      L 1141  EQU $
+ 0B3E                      L 1142  EQU $
+ 0B3E                      L 1143  EQU $
+ 0B3E                      L 1144  EQU $
+ 0B3E                      L 1145  EQU $
+ 0B3E                      L 1146  EQU $
+ 0B3E                      L 1147  EQU $
+ 0B3E                      L 1148  EQU $
+ 0B3E                      L 1149  EQU $
+ 0B3E                      L 1150  EQU $
+ 0B3E                      L 1151  EQU $
+ 0B3E                      L 1152  EQU $
+ 0B3E                      L 1153  EQU $
+ 0B3E 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0B44 50                              PUSH EAX
+ 0B45 B8 CC 02 00 00                  MOV EAX,COT+ 716
+ 0B4A 50                              PUSH EAX
+ 0B4B 68 FF 00 00 00                  PUSH  255
+ 0B50 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0B53 83 C4 0C                        ADD ESP, 12
+ 0B56 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0B5C 50                              PUSH EAX
+ 0B5D 8B 5D FC                        MOV EBX,[EBP-4]
+ 0B60 8D 83 C9 FD FF FF               LEA EAX,[EBX-567]
+ 0B66 50                              PUSH EAX
+ 0B67 68 FF 00 00 00                  PUSH  255
+ 0B6C E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0B6F 83 C4 0C                        ADD ESP, 12
+ 0B72 8B 75 FC                        MOV ESI,[EBP-4]
+ 0B75 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 0B7B 50                              PUSH EAX
+ 0B7C 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0B82 51                              PUSH ECX
+ 0B83 68 FF 00 00 00                  PUSH  255
+ 0B88 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0B8B 83 C4 0C                        ADD ESP, 12
+ 0B8E EB 00                           JMP L 1154
+        es:
+ 0B90                      L 1154  EQU $
+        %end
+ 0B90 C9                              LEAVE
+ 0B91 C3                              RET
+ 0B92                      L 1137  EQU $
+        -> esac
+ 0B92 EB 00                           JMP L 1012
+    esw(8):
+ 0B94                      L 1155  EQU $
+        %begin
+ 0B94 E8 00 00                        CALL '' (INTERNAL L 1156 )
+ 0B97 EB 00                           JMP L 1157
+ 0B99                      L 1156  EQU $
+ 0B99 C8 00 00 02                     ENTER 0000, 2
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+ 0B9D 8B 7D FC                        MOV EDI,[EBP-4]
+ 0BA0 8B 47 0C                        MOV EAX,[EDI+ 12]
+ 0BA3 25 0F 00 00 00                  AND EAX, 15
+ 0BA8 C1 E0 02                        SHL EAX, 2
+ 0BAB 89 C3                           MOV EBX,EAX
+ 0BAD FF A3 00 02 00 00               JMP WORD [EBX+SWTAB+ 512]
+        ssw(1): msg = "Unassigned variable"             ; -> es
+ 0BB3                      L 1158  EQU $
+ 0BB3 8B 75 FC                        MOV ESI,[EBP-4]
+ 0BB6 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 0BBC 50                              PUSH EAX
+ 0BBD B9 DE 02 00 00                  MOV ECX,COT+ 734
+ 0BC2 51                              PUSH ECX
+ 0BC3 68 FF 00 00 00                  PUSH  255
+ 0BC8 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0BCB 83 C4 0C                        ADD ESP, 12
+ 0BCE EB 00                           JMP L 1159
+        ssw(2): msg = "No switch label '".x."'"         ; -> es
+ 0BD0                      L 1160  EQU $
+ 0BD0 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0BD6 50                              PUSH EAX
+ 0BD7 B8 F2 02 00 00                  MOV EAX,COT+ 754
+ 0BDC 50                              PUSH EAX
+ 0BDD 68 FF 00 00 00                  PUSH  255
+ 0BE2 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0BE5 83 C4 0C                        ADD ESP, 12
+ 0BE8 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0BEE 50                              PUSH EAX
+ 0BEF 8B 7D FC                        MOV EDI,[EBP-4]
+ 0BF2 8D 47 C9                        LEA EAX,[EDI-55]
+ 0BF5 50                              PUSH EAX
+ 0BF6 68 FF 00 00 00                  PUSH  255
+ 0BFB E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0BFE 83 C4 0C                        ADD ESP, 12
+ 0C01 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0C07 50                              PUSH EAX
+ 0C08 B8 04 03 00 00                  MOV EAX,COT+ 772
+ 0C0D 50                              PUSH EAX
+ 0C0E 68 FF 00 00 00                  PUSH  255
+ 0C13 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0C16 83 C4 0C                        ADD ESP, 12
+ 0C19 8B 5D FC                        MOV EBX,[EBP-4]
+ 0C1C 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 0C22 50                              PUSH EAX
+ 0C23 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0C29 51                              PUSH ECX
+ 0C2A 68 FF 00 00 00                  PUSH  255
+ 0C2F E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0C32 83 C4 0C                        ADD ESP, 12
+ 0C35 EB 00                           JMP L 1159
+        ssw(3): msg = "For variable corrupt"            ; -> es
+ 0C37                      L 1161  EQU $
+ 0C37 8B 75 FC                        MOV ESI,[EBP-4]
+ 0C3A 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 0C40 50                              PUSH EAX
+ 0C41 B9 06 03 00 00                  MOV ECX,COT+ 774
+ 0C46 51                              PUSH ECX
+ 0C47 68 FF 00 00 00                  PUSH  255
+ 0C4C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0C4F 83 C4 0C                        ADD ESP, 12
+ 0C52 EB 00                           JMP L 1159
+        ssw(*): msg = "Undefined switch value ".eventmsg; -> es
+ 0C54                      L 1162  EQU $
+ 0C54                      L 1163  EQU $
+ 0C54                      L 1164  EQU $
+ 0C54                      L 1165  EQU $
+ 0C54                      L 1166  EQU $
+ 0C54                      L 1167  EQU $
+ 0C54                      L 1168  EQU $
+ 0C54                      L 1169  EQU $
+ 0C54                      L 1170  EQU $
+ 0C54                      L 1171  EQU $
+ 0C54                      L 1172  EQU $
+ 0C54                      L 1173  EQU $
+ 0C54                      L 1174  EQU $
+ 0C54 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0C5A 50                              PUSH EAX
+ 0C5B B8 1B 03 00 00                  MOV EAX,COT+ 795
+ 0C60 50                              PUSH EAX
+ 0C61 68 FF 00 00 00                  PUSH  255
+ 0C66 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0C69 83 C4 0C                        ADD ESP, 12
+ 0C6C 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0C72 50                              PUSH EAX
+ 0C73 8B 7D FC                        MOV EDI,[EBP-4]
+ 0C76 8D 87 C9 FD FF FF               LEA EAX,[EDI-567]
+ 0C7C 50                              PUSH EAX
+ 0C7D 68 FF 00 00 00                  PUSH  255
+ 0C82 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0C85 83 C4 0C                        ADD ESP, 12
+ 0C88 8B 5D FC                        MOV EBX,[EBP-4]
+ 0C8B 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 0C91 50                              PUSH EAX
+ 0C92 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0C98 51                              PUSH ECX
+ 0C99 68 FF 00 00 00                  PUSH  255
+ 0C9E E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0CA1 83 C4 0C                        ADD ESP, 12
+ 0CA4 EB 00                           JMP L 1159
+        es:
+ 0CA6                      L 1159  EQU $
+        %end
+ 0CA6 C9                              LEAVE
+ 0CA7 C3                              RET
+ 0CA8                      L 1157  EQU $
+        -> esac
+ 0CA8 EB 00                           JMP L 1012
+    esw(9):
+ 0CAA                      L 1175  EQU $
+        %begin
+ 0CAA E8 00 00                        CALL '' (INTERNAL L 1176 )
+ 0CAD EB 00                           JMP L 1177
+ 0CAF                      L 1176  EQU $
+ 0CAF C8 00 00 02                     ENTER 0000, 2
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+ 0CB3 8B 75 FC                        MOV ESI,[EBP-4]
+ 0CB6 8B 46 0C                        MOV EAX,[ESI+ 12]
+ 0CB9 25 0F 00 00 00                  AND EAX, 15
+ 0CBE C1 E0 02                        SHL EAX, 2
+ 0CC1 89 C7                           MOV EDI,EAX
+ 0CC3 FF A7 40 02 00 00               JMP WORD [EDI+SWTAB+ 576]
+        ssw(1):  msg = "Unexpected end of input"                ; -> es
+ 0CC9                      L 1178  EQU $
+ 0CC9 8B 5D FC                        MOV EBX,[EBP-4]
+ 0CCC 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 0CD2 50                              PUSH EAX
+ 0CD3 B9 33 03 00 00                  MOV ECX,COT+ 819
+ 0CD8 51                              PUSH ECX
+ 0CD9 68 FF 00 00 00                  PUSH  255
+ 0CDE E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0CE1 83 C4 0C                        ADD ESP, 12
+ 0CE4 EB 00                           JMP L 1179
+        ssw(2):  msg = "Couldn't open file. Error Code '".x."'" ; -> es
+ 0CE6                      L 1180  EQU $
+ 0CE6 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0CEC 50                              PUSH EAX
+ 0CED B8 4B 03 00 00                  MOV EAX,COT+ 843
+ 0CF2 50                              PUSH EAX
+ 0CF3 68 FF 00 00 00                  PUSH  255
+ 0CF8 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0CFB 83 C4 0C                        ADD ESP, 12
+ 0CFE 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0D04 50                              PUSH EAX
+ 0D05 8B 75 FC                        MOV ESI,[EBP-4]
+ 0D08 8D 46 C9                        LEA EAX,[ESI-55]
+ 0D0B 50                              PUSH EAX
+ 0D0C 68 FF 00 00 00                  PUSH  255
+ 0D11 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0D14 83 C4 0C                        ADD ESP, 12
+ 0D17 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0D1D 50                              PUSH EAX
+ 0D1E B8 6C 03 00 00                  MOV EAX,COT+ 876
+ 0D23 50                              PUSH EAX
+ 0D24 68 FF 00 00 00                  PUSH  255
+ 0D29 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0D2C 83 C4 0C                        ADD ESP, 12
+ 0D2F 8B 7D FC                        MOV EDI,[EBP-4]
+ 0D32 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 0D38 50                              PUSH EAX
+ 0D39 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0D3F 51                              PUSH ECX
+ 0D40 68 FF 00 00 00                  PUSH  255
+ 0D45 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0D48 83 C4 0C                        ADD ESP, 12
+ 0D4B EB 00                           JMP L 1179
+        ssw(3):  msg = "File system error '".x."'"              ; -> es
+ 0D4D                      L 1181  EQU $
+ 0D4D 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0D53 50                              PUSH EAX
+ 0D54 B8 6E 03 00 00                  MOV EAX,COT+ 878
+ 0D59 50                              PUSH EAX
+ 0D5A 68 FF 00 00 00                  PUSH  255
+ 0D5F E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0D62 83 C4 0C                        ADD ESP, 12
+ 0D65 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0D6B 50                              PUSH EAX
+ 0D6C 8B 5D FC                        MOV EBX,[EBP-4]
+ 0D6F 8D 43 C9                        LEA EAX,[EBX-55]
+ 0D72 50                              PUSH EAX
+ 0D73 68 FF 00 00 00                  PUSH  255
+ 0D78 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0D7B 83 C4 0C                        ADD ESP, 12
+ 0D7E 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0D84 50                              PUSH EAX
+ 0D85 B8 82 03 00 00                  MOV EAX,COT+ 898
+ 0D8A 50                              PUSH EAX
+ 0D8B 68 FF 00 00 00                  PUSH  255
+ 0D90 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0D93 83 C4 0C                        ADD ESP, 12
+ 0D96 8B 75 FC                        MOV ESI,[EBP-4]
+ 0D99 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 0D9F 50                              PUSH EAX
+ 0DA0 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0DA6 51                              PUSH ECX
+ 0DA7 68 FF 00 00 00                  PUSH  255
+ 0DAC E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0DAF 83 C4 0C                        ADD ESP, 12
+ 0DB2 EB 00                           JMP L 1179
+        ssw(4):  msg = "Input stream '".x."' has not been opened"  ; -> es
+ 0DB4                      L 1182  EQU $
+ 0DB4 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0DBA 50                              PUSH EAX
+ 0DBB B8 84 03 00 00                  MOV EAX,COT+ 900
+ 0DC0 50                              PUSH EAX
+ 0DC1 68 FF 00 00 00                  PUSH  255
+ 0DC6 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0DC9 83 C4 0C                        ADD ESP, 12
+ 0DCC 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0DD2 50                              PUSH EAX
+ 0DD3 8B 7D FC                        MOV EDI,[EBP-4]
+ 0DD6 8D 47 C9                        LEA EAX,[EDI-55]
+ 0DD9 50                              PUSH EAX
+ 0DDA 68 FF 00 00 00                  PUSH  255
+ 0DDF E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0DE2 83 C4 0C                        ADD ESP, 12
+ 0DE5 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0DEB 50                              PUSH EAX
+ 0DEC B8 93 03 00 00                  MOV EAX,COT+ 915
+ 0DF1 50                              PUSH EAX
+ 0DF2 68 FF 00 00 00                  PUSH  255
+ 0DF7 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0DFA 83 C4 0C                        ADD ESP, 12
+ 0DFD 8B 5D FC                        MOV EBX,[EBP-4]
+ 0E00 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 0E06 50                              PUSH EAX
+ 0E07 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0E0D 51                              PUSH ECX
+ 0E0E 68 FF 00 00 00                  PUSH  255
+ 0E13 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0E16 83 C4 0C                        ADD ESP, 12
+ 0E19 EB 00                           JMP L 1179
+        ssw(5):  msg = "Output stream '".x."' has not been opened" ; -> es
+ 0E1B                      L 1183  EQU $
+ 0E1B 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0E21 50                              PUSH EAX
+ 0E22 B8 A9 03 00 00                  MOV EAX,COT+ 937
+ 0E27 50                              PUSH EAX
+ 0E28 68 FF 00 00 00                  PUSH  255
+ 0E2D E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0E30 83 C4 0C                        ADD ESP, 12
+ 0E33 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0E39 50                              PUSH EAX
+ 0E3A 8B 75 FC                        MOV ESI,[EBP-4]
+ 0E3D 8D 46 C9                        LEA EAX,[ESI-55]
+ 0E40 50                              PUSH EAX
+ 0E41 68 FF 00 00 00                  PUSH  255
+ 0E46 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0E49 83 C4 0C                        ADD ESP, 12
+ 0E4C 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0E52 50                              PUSH EAX
+ 0E53 B8 B9 03 00 00                  MOV EAX,COT+ 953
+ 0E58 50                              PUSH EAX
+ 0E59 68 FF 00 00 00                  PUSH  255
+ 0E5E E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0E61 83 C4 0C                        ADD ESP, 12
+ 0E64 8B 7D FC                        MOV EDI,[EBP-4]
+ 0E67 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 0E6D 50                              PUSH EAX
+ 0E6E 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0E74 51                              PUSH ECX
+ 0E75 68 FF 00 00 00                  PUSH  255
+ 0E7A E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0E7D 83 C4 0C                        ADD ESP, 12
+ 0E80 EB 00                           JMP L 1179
+        ssw(9):  msg = "Bad stream# '".x."'"                    ; -> es
+ 0E82                      L 1184  EQU $
+ 0E82 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0E88 50                              PUSH EAX
+ 0E89 B8 CF 03 00 00                  MOV EAX,COT+ 975
+ 0E8E 50                              PUSH EAX
+ 0E8F 68 FF 00 00 00                  PUSH  255
+ 0E94 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0E97 83 C4 0C                        ADD ESP, 12
+ 0E9A 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0EA0 50                              PUSH EAX
+ 0EA1 8B 5D FC                        MOV EBX,[EBP-4]
+ 0EA4 8D 43 C9                        LEA EAX,[EBX-55]
+ 0EA7 50                              PUSH EAX
+ 0EA8 68 FF 00 00 00                  PUSH  255
+ 0EAD E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0EB0 83 C4 0C                        ADD ESP, 12
+ 0EB3 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0EB9 50                              PUSH EAX
+ 0EBA B8 DD 03 00 00                  MOV EAX,COT+ 989
+ 0EBF 50                              PUSH EAX
+ 0EC0 68 FF 00 00 00                  PUSH  255
+ 0EC5 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0EC8 83 C4 0C                        ADD ESP, 12
+ 0ECB 8B 75 FC                        MOV ESI,[EBP-4]
+ 0ECE 8D 86 C9 FE FF FF               LEA EAX,[ESI-311]
+ 0ED4 50                              PUSH EAX
+ 0ED5 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0EDB 51                              PUSH ECX
+ 0EDC 68 FF 00 00 00                  PUSH  255
+ 0EE1 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0EE4 83 C4 0C                        ADD ESP, 12
+ 0EE7 EB 00                           JMP L 1179
+        ssw(10): msg = "Invalid filename for stream# '".x."'"   ; -> es
+ 0EE9                      L 1185  EQU $
+ 0EE9 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0EEF 50                              PUSH EAX
+ 0EF0 B8 DF 03 00 00                  MOV EAX,COT+ 991
+ 0EF5 50                              PUSH EAX
+ 0EF6 68 FF 00 00 00                  PUSH  255
+ 0EFB E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0EFE 83 C4 0C                        ADD ESP, 12
+ 0F01 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0F07 50                              PUSH EAX
+ 0F08 8B 7D FC                        MOV EDI,[EBP-4]
+ 0F0B 8D 47 C9                        LEA EAX,[EDI-55]
+ 0F0E 50                              PUSH EAX
+ 0F0F 68 FF 00 00 00                  PUSH  255
+ 0F14 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0F17 83 C4 0C                        ADD ESP, 12
+ 0F1A 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0F20 50                              PUSH EAX
+ 0F21 B8 FE 03 00 00                  MOV EAX,COT+ 1022
+ 0F26 50                              PUSH EAX
+ 0F27 68 FF 00 00 00                  PUSH  255
+ 0F2C E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0F2F 83 C4 0C                        ADD ESP, 12
+ 0F32 8B 5D FC                        MOV EBX,[EBP-4]
+ 0F35 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 0F3B 50                              PUSH EAX
+ 0F3C 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0F42 51                              PUSH ECX
+ 0F43 68 FF 00 00 00                  PUSH  255
+ 0F48 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0F4B 83 C4 0C                        ADD ESP, 12
+ 0F4E EB 00                           JMP L 1179
+        ssw(*):  msg = "Input/Output error ".eventmsg           ; -> es
+ 0F50                      L 1186  EQU $
+ 0F50                      L 1187  EQU $
+ 0F50                      L 1188  EQU $
+ 0F50                      L 1189  EQU $
+ 0F50                      L 1190  EQU $
+ 0F50                      L 1191  EQU $
+ 0F50                      L 1192  EQU $
+ 0F50                      L 1193  EQU $
+ 0F50                      L 1194  EQU $
+ 0F50 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0F56 50                              PUSH EAX
+ 0F57 B8 00 04 00 00                  MOV EAX,COT+ 1024
+ 0F5C 50                              PUSH EAX
+ 0F5D 68 FF 00 00 00                  PUSH  255
+ 0F62 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0F65 83 C4 0C                        ADD ESP, 12
+ 0F68 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0F6E 50                              PUSH EAX
+ 0F6F 8B 75 FC                        MOV ESI,[EBP-4]
+ 0F72 8D 86 C9 FD FF FF               LEA EAX,[ESI-567]
+ 0F78 50                              PUSH EAX
+ 0F79 68 FF 00 00 00                  PUSH  255
+ 0F7E E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0F81 83 C4 0C                        ADD ESP, 12
+ 0F84 8B 7D FC                        MOV EDI,[EBP-4]
+ 0F87 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 0F8D 50                              PUSH EAX
+ 0F8E 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 0F94 51                              PUSH ECX
+ 0F95 68 FF 00 00 00                  PUSH  255
+ 0F9A E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0F9D 83 C4 0C                        ADD ESP, 12
+ 0FA0 EB 00                           JMP L 1179
+        es:
+ 0FA2                      L 1179  EQU $
+        %end
+ 0FA2 C9                              LEAVE
+ 0FA3 C3                              RET
+ 0FA4                      L 1177  EQU $
+        -> esac
+ 0FA4 EB 00                           JMP L 1012
+    esw(10):
+ 0FA6                      L 1195  EQU $
+        %begin
+ 0FA6 E8 00 00                        CALL '' (INTERNAL L 1196 )
+ 0FA9 EB 00                           JMP L 1197
+ 0FAB                      L 1196  EQU $
+ 0FAB C8 00 00 02                     ENTER 0000, 2
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+ 0FAF 8B 5D FC                        MOV EBX,[EBP-4]
+ 0FB2 8B 43 0C                        MOV EAX,[EBX+ 12]
+ 0FB5 25 0F 00 00 00                  AND EAX, 15
+ 0FBA C1 E0 02                        SHL EAX, 2
+ 0FBD 89 C6                           MOV ESI,EAX
+ 0FBF FF A6 80 02 00 00               JMP WORD [ESI+SWTAB+ 640]
+        ssw(1): msg = "Incorrect command line parameter count. Argc=".x; -> es
+ 0FC5                      L 1198  EQU $
+ 0FC5 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0FCB 50                              PUSH EAX
+ 0FCC B8 14 04 00 00                  MOV EAX,COT+ 1044
+ 0FD1 50                              PUSH EAX
+ 0FD2 68 FF 00 00 00                  PUSH  255
+ 0FD7 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0FDA 83 C4 0C                        ADD ESP, 12
+ 0FDD 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 0FE3 50                              PUSH EAX
+ 0FE4 8B 7D FC                        MOV EDI,[EBP-4]
+ 0FE7 8D 47 C9                        LEA EAX,[EDI-55]
+ 0FEA 50                              PUSH EAX
+ 0FEB 68 FF 00 00 00                  PUSH  255
+ 0FF0 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0FF3 83 C4 0C                        ADD ESP, 12
+ 0FF6 8B 5D FC                        MOV EBX,[EBP-4]
+ 0FF9 8D 83 C9 FE FF FF               LEA EAX,[EBX-311]
+ 0FFF 50                              PUSH EAX
+ 1000 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 1006 51                              PUSH ECX
+ 1007 68 FF 00 00 00                  PUSH  255
+ 100C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 100F 83 C4 0C                        ADD ESP, 12
+ 1012 EB 00                           JMP L 1199
+        ssw(*): msg = "Library procedure error ".eventmsg; -> es
+ 1014                      L 1200  EQU $
+ 1014                      L 1201  EQU $
+ 1014                      L 1202  EQU $
+ 1014                      L 1203  EQU $
+ 1014                      L 1204  EQU $
+ 1014                      L 1205  EQU $
+ 1014                      L 1206  EQU $
+ 1014                      L 1207  EQU $
+ 1014                      L 1208  EQU $
+ 1014                      L 1209  EQU $
+ 1014                      L 1210  EQU $
+ 1014                      L 1211  EQU $
+ 1014                      L 1212  EQU $
+ 1014                      L 1213  EQU $
+ 1014                      L 1214  EQU $
+ 1014 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 101A 50                              PUSH EAX
+ 101B B8 42 04 00 00                  MOV EAX,COT+ 1090
+ 1020 50                              PUSH EAX
+ 1021 68 FF 00 00 00                  PUSH  255
+ 1026 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1029 83 C4 0C                        ADD ESP, 12
+ 102C 8D 85 F8 FE FF FF               LEA EAX,[EBP-264]
+ 1032 50                              PUSH EAX
+ 1033 8B 75 FC                        MOV ESI,[EBP-4]
+ 1036 8D 86 C9 FD FF FF               LEA EAX,[ESI-567]
+ 103C 50                              PUSH EAX
+ 103D 68 FF 00 00 00                  PUSH  255
+ 1042 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 1045 83 C4 0C                        ADD ESP, 12
+ 1048 8B 7D FC                        MOV EDI,[EBP-4]
+ 104B 8D 87 C9 FE FF FF               LEA EAX,[EDI-311]
+ 1051 50                              PUSH EAX
+ 1052 8D 8D F8 FE FF FF               LEA ECX,[EBP-264]
+ 1058 51                              PUSH ECX
+ 1059 68 FF 00 00 00                  PUSH  255
+ 105E E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1061 83 C4 0C                        ADD ESP, 12
+ 1064 EB 00                           JMP L 1199
+        es:
+ 1066                      L 1199  EQU $
+        %end
+ 1066 C9                              LEAVE
+ 1067 C3                              RET
+ 1068                      L 1197  EQU $
+        -> esac
+ 1068 EB 00                           JMP L 1012
+    esw(*):
+ 106A                      L 1215  EQU $
+ 106A                      L 1216  EQU $
+ 106A                      L 1217  EQU $
+ 106A                      L 1218  EQU $
+ 106A                      L 1219  EQU $
+        msg = "Signal ".eventmsg." called."; -> esac
+ 106A 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 1070 50                              PUSH EAX
+ 1071 B8 5B 04 00 00                  MOV EAX,COT+ 1115
+ 1076 50                              PUSH EAX
+ 1077 68 FF 00 00 00                  PUSH  255
+ 107C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 107F 83 C4 0C                        ADD ESP, 12
+ 1082 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 1088 50                              PUSH EAX
+ 1089 8D 85 C9 FD FF FF               LEA EAX,[EBP-567]
+ 108F 50                              PUSH EAX
+ 1090 68 FF 00 00 00                  PUSH  255
+ 1095 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 1098 83 C4 0C                        ADD ESP, 12
+ 109B 8D 85 C8 FC FF FF               LEA EAX,[EBP-824]
+ 10A1 50                              PUSH EAX
+ 10A2 B8 63 04 00 00                  MOV EAX,COT+ 1123
+ 10A7 50                              PUSH EAX
+ 10A8 68 FF 00 00 00                  PUSH  255
+ 10AD E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 10B0 83 C4 0C                        ADD ESP, 12
+ 10B3 8D 85 C9 FE FF FF               LEA EAX,[EBP-311]
+ 10B9 50                              PUSH EAX
+ 10BA 8D 8D C8 FC FF FF               LEA ECX,[EBP-824]
+ 10C0 51                              PUSH ECX
+ 10C1 68 FF 00 00 00                  PUSH  255
+ 10C6 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 10C9 83 C4 0C                        ADD ESP, 12
+ 10CC EB 00                           JMP L 1012
+    esac:
+ 10CE                      L 1012  EQU $
+
+        lastevent_event = event
+ 10CE 8B 45 10                        MOV EAX,[EBP+ 16]
+ 10D1 89 05 00 00 00 00               MOV [DATA+0000],EAX
+        lastevent_sub = sub
+ 10D7 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 10DA 89 05 04 00 00 00               MOV [DATA+0004],EAX
+        lastevent_extra = extra
+ 10E0 8B 45 08                        MOV EAX,[EBP+ 8]
+ 10E3 89 05 08 00 00 00               MOV [DATA+0008],EAX
+        lastevent_message = msg
+ 10E9 B8 0C 00 00 00                  MOV EAX,DATA+ 12
+ 10EE 50                              PUSH EAX
+ 10EF 8D 8D C9 FE FF FF               LEA ECX,[EBP-311]
+ 10F5 51                              PUSH ECX
+ 10F6 68 FF 00 00 00                  PUSH  255
+ 10FB E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 10FE 83 C4 0C                        ADD ESP, 12
+    %end
+ 1101 C9                              LEAVE
+ 1102 C3                              RET
+
+    %external %routine messageFormatA( %integer message id )
+ 1103                      L 1220  EQU $
+ 1103 C8 00 00 01                     ENTER 0000, 1
+        %switch mess(1:8)
+        %string(16) evt,sub,xtr
+
+        evt = itos(lastevent_event,0)
+ 1107 FF 35 00 00 00 00               PUSH WORD [DATA+0000]
+ 110D 6A 00                           PUSH  0
+ 110F 8D 85 C8 FE FF FF               LEA EAX,[EBP-312]
+ 1115 50                              PUSH EAX
+ 1116 E8 3E 00                        CALL 'ITOS' (EXTERN  62)
+ 1119 83 C4 0C                        ADD ESP, 12
+ 111C 8D 45 EB                        LEA EAX,[EBP-21]
+ 111F 50                              PUSH EAX
+ 1120 8D 8D C8 FE FF FF               LEA ECX,[EBP-312]
+ 1126 51                              PUSH ECX
+ 1127 6A 10                           PUSH  16
+ 1129 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 112C 83 C4 0C                        ADD ESP, 12
+        sub = itos(lastevent_sub,0)
+ 112F FF 35 04 00 00 00               PUSH WORD [DATA+0004]
+ 1135 6A 00                           PUSH  0
+ 1137 8D 85 C8 FE FF FF               LEA EAX,[EBP-312]
+ 113D 50                              PUSH EAX
+ 113E E8 3E 00                        CALL 'ITOS' (EXTERN  62)
+ 1141 83 C4 0C                        ADD ESP, 12
+ 1144 8D 45 DA                        LEA EAX,[EBP-38]
+ 1147 50                              PUSH EAX
+ 1148 8D 8D C8 FE FF FF               LEA ECX,[EBP-312]
+ 114E 51                              PUSH ECX
+ 114F 6A 10                           PUSH  16
+ 1151 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1154 83 C4 0C                        ADD ESP, 12
+        xtr = itos(lastevent_extra,0)
+ 1157 FF 35 08 00 00 00               PUSH WORD [DATA+0008]
+ 115D 6A 00                           PUSH  0
+ 115F 8D 85 C8 FE FF FF               LEA EAX,[EBP-312]
+ 1165 50                              PUSH EAX
+ 1166 E8 3E 00                        CALL 'ITOS' (EXTERN  62)
+ 1169 83 C4 0C                        ADD ESP, 12
+ 116C 8D 45 C9                        LEA EAX,[EBP-55]
+ 116F 50                              PUSH EAX
+ 1170 8D 8D C8 FE FF FF               LEA ECX,[EBP-312]
+ 1176 51                              PUSH ECX
+ 1177 6A 10                           PUSH  16
+ 1179 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 117C 83 C4 0C                        ADD ESP, 12
+
+        selectoutput(0)
+ 117F 6A 00                           PUSH  0
+ 1181 E8 23 00                        CALL 'SELECTOUTPUT' (EXTERN  35)
+ 1184 83 C4 04                        ADD ESP, 4
+        newline
+ 1187 E8 38 00                        CALL 'NEWLINE' (EXTERN  56)
+        printstring( "IMPRTL: " )
+ 118A 81 EC 00 01 00 00               SUB ESP, 256
+ 1190 89 E0                           MOV EAX,ESP
+ 1192 50                              PUSH EAX
+ 1193 B8 7C 04 00 00                  MOV EAX,COT+ 1148
+ 1198 50                              PUSH EAX
+ 1199 68 FF 00 00 00                  PUSH  255
+ 119E E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 11A1 83 C4 0C                        ADD ESP, 12
+ 11A4 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 11A7 81 C4 00 01 00 00               ADD ESP, 256
+        -> mess(message id)
+ 11AD 8B 45 08                        MOV EAX,[EBP+ 8]
+ 11B0 C1 E0 02                        SHL EAX, 2
+ 11B3 89 C3                           MOV EBX,EAX
+ 11B5 FF A3 BC 02 00 00               JMP WORD [EBX+SWTAB+ 700]
+    mess(1): printstring( "SHOWEVENT: " )
+ 11BB                      L 1221  EQU $
+ 11BB 81 EC 00 01 00 00               SUB ESP, 256
+ 11C1 89 E0                           MOV EAX,ESP
+ 11C3 50                              PUSH EAX
+ 11C4 B8 85 04 00 00                  MOV EAX,COT+ 1157
+ 11C9 50                              PUSH EAX
+ 11CA 68 FF 00 00 00                  PUSH  255
+ 11CF E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 11D2 83 C4 0C                        ADD ESP, 12
+ 11D5 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 11D8 81 C4 00 01 00 00               ADD ESP, 256
+             printstring( lastevent_message )
+ 11DE 81 EC 00 01 00 00               SUB ESP, 256
+ 11E4 89 E0                           MOV EAX,ESP
+ 11E6 50                              PUSH EAX
+ 11E7 B8 0C 00 00 00                  MOV EAX,DATA+ 12
+ 11EC 50                              PUSH EAX
+ 11ED 68 FF 00 00 00                  PUSH  255
+ 11F2 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 11F5 83 C4 0C                        ADD ESP, 12
+ 11F8 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 11FB 81 C4 00 01 00 00               ADD ESP, 256
+             -> esac
+ 1201 EB 00                           JMP L 1222
+    mess(2): printstring( "Start of Stack dump" )
+ 1203                      L 1223  EQU $
+ 1203 81 EC 00 01 00 00               SUB ESP, 256
+ 1209 89 E0                           MOV EAX,ESP
+ 120B 50                              PUSH EAX
+ 120C B8 91 04 00 00                  MOV EAX,COT+ 1169
+ 1211 50                              PUSH EAX
+ 1212 68 FF 00 00 00                  PUSH  255
+ 1217 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 121A 83 C4 0C                        ADD ESP, 12
+ 121D E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 1220 81 C4 00 01 00 00               ADD ESP, 256
+             -> esac
+ 1226 EB 00                           JMP L 1222
+    mess(3): printstring( "Signal No handler found for signalled event (" )
+ 1228                      L 1224  EQU $
+ 1228 81 EC 00 01 00 00               SUB ESP, 256
+ 122E 89 E0                           MOV EAX,ESP
+ 1230 50                              PUSH EAX
+ 1231 B8 A5 04 00 00                  MOV EAX,COT+ 1189
+ 1236 50                              PUSH EAX
+ 1237 68 FF 00 00 00                  PUSH  255
+ 123C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 123F 83 C4 0C                        ADD ESP, 12
+ 1242 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 1245 81 C4 00 01 00 00               ADD ESP, 256
+             printstring( evt )
+ 124B 81 EC 00 01 00 00               SUB ESP, 256
+ 1251 89 E0                           MOV EAX,ESP
+ 1253 50                              PUSH EAX
+ 1254 8D 45 EB                        LEA EAX,[EBP-21]
+ 1257 50                              PUSH EAX
+ 1258 68 FF 00 00 00                  PUSH  255
+ 125D E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1260 83 C4 0C                        ADD ESP, 12
+ 1263 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 1266 81 C4 00 01 00 00               ADD ESP, 256
+             printstring( ", " )
+ 126C 81 EC 00 01 00 00               SUB ESP, 256
+ 1272 89 E0                           MOV EAX,ESP
+ 1274 50                              PUSH EAX
+ 1275 B8 D3 04 00 00                  MOV EAX,COT+ 1235
+ 127A 50                              PUSH EAX
+ 127B 68 FF 00 00 00                  PUSH  255
+ 1280 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1283 83 C4 0C                        ADD ESP, 12
+ 1286 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 1289 81 C4 00 01 00 00               ADD ESP, 256
+             printstring( sub )
+ 128F 81 EC 00 01 00 00               SUB ESP, 256
+ 1295 89 E0                           MOV EAX,ESP
+ 1297 50                              PUSH EAX
+ 1298 8D 45 DA                        LEA EAX,[EBP-38]
+ 129B 50                              PUSH EAX
+ 129C 68 FF 00 00 00                  PUSH  255
+ 12A1 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 12A4 83 C4 0C                        ADD ESP, 12
+ 12A7 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 12AA 81 C4 00 01 00 00               ADD ESP, 256
+             printstring( ", " )
+ 12B0 81 EC 00 01 00 00               SUB ESP, 256
+ 12B6 89 E0                           MOV EAX,ESP
+ 12B8 50                              PUSH EAX
+ 12B9 B8 D6 04 00 00                  MOV EAX,COT+ 1238
+ 12BE 50                              PUSH EAX
+ 12BF 68 FF 00 00 00                  PUSH  255
+ 12C4 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 12C7 83 C4 0C                        ADD ESP, 12
+ 12CA E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 12CD 81 C4 00 01 00 00               ADD ESP, 256
+             printstring( xtr )
+ 12D3 81 EC 00 01 00 00               SUB ESP, 256
+ 12D9 89 E0                           MOV EAX,ESP
+ 12DB 50                              PUSH EAX
+ 12DC 8D 45 C9                        LEA EAX,[EBP-55]
+ 12DF 50                              PUSH EAX
+ 12E0 68 FF 00 00 00                  PUSH  255
+ 12E5 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 12E8 83 C4 0C                        ADD ESP, 12
+ 12EB E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 12EE 81 C4 00 01 00 00               ADD ESP, 256
+             printstring( ")." )
+ 12F4 81 EC 00 01 00 00               SUB ESP, 256
+ 12FA 89 E0                           MOV EAX,ESP
+ 12FC 50                              PUSH EAX
+ 12FD B8 D9 04 00 00                  MOV EAX,COT+ 1241
+ 1302 50                              PUSH EAX
+ 1303 68 FF 00 00 00                  PUSH  255
+ 1308 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 130B 83 C4 0C                        ADD ESP, 12
+ 130E E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 1311 81 C4 00 01 00 00               ADD ESP, 256
+             -> esac
+ 1317 EB 00                           JMP L 1222
+    mess(4): printstring( "Possible stack error?" )
+ 1319                      L 1225  EQU $
+ 1319 81 EC 00 01 00 00               SUB ESP, 256
+ 131F 89 E0                           MOV EAX,ESP
+ 1321 50                              PUSH EAX
+ 1322 B8 DC 04 00 00                  MOV EAX,COT+ 1244
+ 1327 50                              PUSH EAX
+ 1328 68 FF 00 00 00                  PUSH  255
+ 132D E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1330 83 C4 0C                        ADD ESP, 12
+ 1333 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 1336 81 C4 00 01 00 00               ADD ESP, 256
+             -> esac
+ 133C EB 00                           JMP L 1222
+    mess(5): printstring( "End of Stack dump" )
+ 133E                      L 1226  EQU $
+ 133E 81 EC 00 01 00 00               SUB ESP, 256
+ 1344 89 E0                           MOV EAX,ESP
+ 1346 50                              PUSH EAX
+ 1347 B8 F2 04 00 00                  MOV EAX,COT+ 1266
+ 134C 50                              PUSH EAX
+ 134D 68 FF 00 00 00                  PUSH  255
+ 1352 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1355 83 C4 0C                        ADD ESP, 12
+ 1358 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 135B 81 C4 00 01 00 00               ADD ESP, 256
+             -> esac
+ 1361 EB 00                           JMP L 1222
+    mess(6): printstring( "Stopping program with exit status=" )
+ 1363                      L 1227  EQU $
+ 1363 81 EC 00 01 00 00               SUB ESP, 256
+ 1369 89 E0                           MOV EAX,ESP
+ 136B 50                              PUSH EAX
+ 136C B8 04 05 00 00                  MOV EAX,COT+ 1284
+ 1371 50                              PUSH EAX
+ 1372 68 FF 00 00 00                  PUSH  255
+ 1377 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 137A 83 C4 0C                        ADD ESP, 12
+ 137D E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 1380 81 C4 00 01 00 00               ADD ESP, 256
+             printstring( sub )
+ 1386 81 EC 00 01 00 00               SUB ESP, 256
+ 138C 89 E0                           MOV EAX,ESP
+ 138E 50                              PUSH EAX
+ 138F 8D 45 DA                        LEA EAX,[EBP-38]
+ 1392 50                              PUSH EAX
+ 1393 68 FF 00 00 00                  PUSH  255
+ 1398 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 139B 83 C4 0C                        ADD ESP, 12
+ 139E E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 13A1 81 C4 00 01 00 00               ADD ESP, 256
+             -> esac
+ 13A7 EB 00                           JMP L 1222
+
+    mess(*): printstring( "Unknown message# given." )
+ 13A9                      L 1228  EQU $
+ 13A9                      L 1229  EQU $
+ 13A9 81 EC 00 01 00 00               SUB ESP, 256
+ 13AF 89 E0                           MOV EAX,ESP
+ 13B1 50                              PUSH EAX
+ 13B2 B8 27 05 00 00                  MOV EAX,COT+ 1319
+ 13B7 50                              PUSH EAX
+ 13B8 68 FF 00 00 00                  PUSH  255
+ 13BD E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 13C0 83 C4 0C                        ADD ESP, 12
+ 13C3 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 13C6 81 C4 00 01 00 00               ADD ESP, 256
+             -> esac
+ 13CC EB 00                           JMP L 1222
+    esac:
+ 13CE                      L 1222  EQU $
+        newline
+ 13CE E8 38 00                        CALL 'NEWLINE' (EXTERN  56)
+    %end
+ 13D1 C9                              LEAVE
+ 13D2 C3                              RET
+
+    %external %routine messageFormatB( %integer loc )
+ 13D3                      L 1230  EQU $
+ 13D3 C8 00 00 01                     ENTER 0000, 1
+
+        selectoutput(0)
+ 13D7 6A 00                           PUSH  0
+ 13D9 E8 23 00                        CALL 'SELECTOUTPUT' (EXTERN  35)
+ 13DC 83 C4 04                        ADD ESP, 4
+        printstring( "IMPRTL: " )
+ 13DF 81 EC 00 01 00 00               SUB ESP, 256
+ 13E5 89 E0                           MOV EAX,ESP
+ 13E7 50                              PUSH EAX
+ 13E8 B8 3F 05 00 00                  MOV EAX,COT+ 1343
+ 13ED 50                              PUSH EAX
+ 13EE 68 FF 00 00 00                  PUSH  255
+ 13F3 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 13F6 83 C4 0C                        ADD ESP, 12
+ 13F9 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 13FC 81 C4 00 01 00 00               ADD ESP, 256
+        printstring( "Called from (x'" )
+ 1402 81 EC 00 01 00 00               SUB ESP, 256
+ 1408 89 E0                           MOV EAX,ESP
+ 140A 50                              PUSH EAX
+ 140B B8 48 05 00 00                  MOV EAX,COT+ 1352
+ 1410 50                              PUSH EAX
+ 1411 68 FF 00 00 00                  PUSH  255
+ 1416 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1419 83 C4 0C                        ADD ESP, 12
+ 141C E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 141F 81 C4 00 01 00 00               ADD ESP, 256
+        printstring( int2ascii(loc,16,0) )
+ 1425 FF 75 08                        PUSH WORD [EBP+ 8]
+ 1428 6A 10                           PUSH  16
+ 142A 6A 00                           PUSH  0
+ 142C 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 1432 50                              PUSH EAX
+ 1433 E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 1436 83 C4 10                        ADD ESP, 16
+ 1439 81 EC 00 01 00 00               SUB ESP, 256
+ 143F 89 E0                           MOV EAX,ESP
+ 1441 50                              PUSH EAX
+ 1442 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 1448 50                              PUSH EAX
+ 1449 68 FF 00 00 00                  PUSH  255
+ 144E E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1451 83 C4 0C                        ADD ESP, 12
+ 1454 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 1457 81 C4 00 01 00 00               ADD ESP, 256
+        printstring( "') in '" )
+ 145D 81 EC 00 01 00 00               SUB ESP, 256
+ 1463 89 E0                           MOV EAX,ESP
+ 1465 50                              PUSH EAX
+ 1466 B8 58 05 00 00                  MOV EAX,COT+ 1368
+ 146B 50                              PUSH EAX
+ 146C 68 FF 00 00 00                  PUSH  255
+ 1471 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 1474 83 C4 0C                        ADD ESP, 12
+ 1477 E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 147A 81 C4 00 01 00 00               ADD ESP, 256
+        printstring( handler name( loc ) )
+ 1480 FF 75 08                        PUSH WORD [EBP+ 8]
+ 1483 8D 85 EC FE FF FF               LEA EAX,[EBP-276]
+ 1489 50                              PUSH EAX
+ 148A E8 62 00                        CALL 'HANDLERNAME' (EXTERN  98)
+ 148D 83 C4 08                        ADD ESP, 8
+ 1490 81 EC 00 01 00 00               SUB ESP, 256
+ 1496 89 E0                           MOV EAX,ESP
+ 1498 50                              PUSH EAX
+ 1499 8D 85 EC FE FF FF               LEA EAX,[EBP-276]
+ 149F 50                              PUSH EAX
+ 14A0 68 FF 00 00 00                  PUSH  255
+ 14A5 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 14A8 83 C4 0C                        ADD ESP, 12
+ 14AB E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 14AE 81 C4 00 01 00 00               ADD ESP, 256
+        printstring( "'" )
+ 14B4 81 EC 00 01 00 00               SUB ESP, 256
+ 14BA 89 E0                           MOV EAX,ESP
+ 14BC 50                              PUSH EAX
+ 14BD B8 60 05 00 00                  MOV EAX,COT+ 1376
+ 14C2 50                              PUSH EAX
+ 14C3 68 FF 00 00 00                  PUSH  255
+ 14C8 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 14CB 83 C4 0C                        ADD ESP, 12
+ 14CE E8 30 00                        CALL 'PRINTSTRING' (EXTERN  48)
+ 14D1 81 C4 00 01 00 00               ADD ESP, 256
+        newline
+ 14D7 E8 38 00                        CALL 'NEWLINE' (EXTERN  56)
+    %end
+ 14DA C9                              LEAVE
+ 14DB C3                              RET
+
+{------------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+ 0000 01 00                           db 01,00 ; ..
+ 0002 00 00                           db 00,00 ; ..
+ 0004 00 00                           db 00,00 ; ..
+ 0006 00 00                           db 00,00 ; ..
+ 0008 0F 00                           db 0F,00 ; ..
+ 000A 00 00                           db 00,00 ; ..
+ 000C 00 00                           db 00,00 ; ..
+ 000E 00 00                           db 00,00 ; ..
+ 0010 01 28                           db 01,28 ; .(
+ 0012 01 2C                           db 01,2C ; .,
+ 0014 01 2C                           db 01,2C ; .,
+ 0016 01 29                           db 01,29 ; .)
+ 0018 20 41                           db 20,41 ; .A
+ 001A 62 61                           db 62,61 ; ba
+ 001C 6E 64                           db 6E,64 ; nd
+ 001E 6F 6E                           db 6F,6E ; on
+ 0020 20 70                           db 20,70 ; .p
+ 0022 72 6F                           db 72,6F ; ro
+ 0024 67 72                           db 67,72 ; gr
+ 0026 61 6D                           db 61,6D ; am
+ 0028 2C 20                           db 2C,20 ; ,.
+ 002A 73 61                           db 73,61 ; sa
+ 002C 75 76                           db 75,76 ; uv
+ 002E 65 20                           db 65,20 ; e.
+ 0030 71 75                           db 71,75 ; qu
+ 0032 69 20                           db 69,20 ; i.
+ 0034 70 75                           db 70,75 ; pu
+ 0036 65 74                           db 65,74 ; et
+ 0038 21 05                           db 21,05 ; !.
+ 003A 25 73                           db 25,73 ; %s
+ 003C 74 6F                           db 74,6F ; to
+ 003E 70 16                           db 70,16 ; p.
+ 0040 55 73                           db 55,73 ; Us
+ 0042 65 72                           db 65,72 ; er
+ 0044 20 67                           db 20,67 ; .g
+ 0046 65 6E                           db 65,6E ; en
+ 0048 65 72                           db 65,72 ; er
+ 004A 61 74                           db 61,74 ; at
+ 004C 65 64                           db 65,64 ; ed
+ 004E 20 65                           db 20,65 ; .e
+ 0050 72 72                           db 72,72 ; rr
+ 0052 6F 72                           db 6F,72 ; or
+ 0054 2E 20                           db 2E,20 ; ..
+ 0056 10 49                           db 10,49 ; .I
+ 0058 6E 74                           db 6E,74 ; nt
+ 005A 65 67                           db 65,67 ; eg
+ 005C 65 72                           db 65,72 ; er
+ 005E 20 6F                           db 20,6F ; .o
+ 0060 76 65                           db 76,65 ; ve
+ 0062 72 66                           db 72,66 ; rf
+ 0064 6C 6F                           db 6C,6F ; lo
+ 0066 77 0D                           db 77,0D ; w.
+ 0068 52 65                           db 52,65 ; Re
+ 006A 61 6C                           db 61,6C ; al
+ 006C 20 6F                           db 20,6F ; .o
+ 006E 76 65                           db 76,65 ; ve
+ 0070 72 66                           db 72,66 ; rf
+ 0072 6C 6F                           db 6C,6F ; lo
+ 0074 77 0F                           db 77,0F ; w.
+ 0076 53 74                           db 53,74 ; St
+ 0078 72 69                           db 72,69 ; ri
+ 007A 6E 67                           db 6E,67 ; ng
+ 007C 20 6F                           db 20,6F ; .o
+ 007E 76 65                           db 76,65 ; ve
+ 0080 72 66                           db 72,66 ; rf
+ 0082 6C 6F                           db 6C,6F ; lo
+ 0084 77 10                           db 77,10 ; w.
+ 0086 44 69                           db 44,69 ; Di
+ 0088 76 69                           db 76,69 ; vi
+ 008A 73 69                           db 73,69 ; si
+ 008C 6F 6E                           db 6F,6E ; on
+ 008E 20 62                           db 20,62 ; .b
+ 0090 79 20                           db 79,20 ; y.
+ 0092 7A 65                           db 7A,65 ; ze
+ 0094 72 6F                           db 72,6F ; ro
+ 0096 0A 54                           db 0A,54 ; .T
+ 0098 72 75                           db 72,75 ; ru
+ 009A 6E 63                           db 6E,63 ; nc
+ 009C 61 74                           db 61,74 ; at
+ 009E 69 6F                           db 69,6F ; io
+ 00A0 6E 09                           db 6E,09 ; n.
+ 00A2 4F 76                           db 4F,76 ; Ov
+ 00A4 65 72                           db 65,72 ; er
+ 00A6 66 6C                           db 66,6C ; fl
+ 00A8 6F 77                           db 6F,77 ; ow
+ 00AA 20 10                           db 20,10 ; ..
+ 00AC 4E 6F                           db 4E,6F ; No
+ 00AE 74 20                           db 74,20 ; t.
+ 00B0 65 6E                           db 65,6E ; en
+ 00B2 6F 75                           db 6F,75 ; ou
+ 00B4 67 68                           db 67,68 ; gh
+ 00B6 20 73                           db 20,73 ; .s
+ 00B8 74 6F                           db 74,6F ; to
+ 00BA 72 65                           db 72,65 ; re
+ 00BC 0F 4F                           db 0F,4F ; .O
+ 00BE 75 74                           db 75,74 ; ut
+ 00C0 70 75                           db 70,75 ; pu
+ 00C2 74 20                           db 74,20 ; t.
+ 00C4 65 78                           db 65,78 ; ex
+ 00C6 63 65                           db 63,65 ; ce
+ 00C8 65 64                           db 65,64 ; ed
+ 00CA 65 64                           db 65,64 ; ed
+ 00CC 0D 54                           db 0D,54 ; .T
+ 00CE 69 6D                           db 69,6D ; im
+ 00D0 65 20                           db 65,20 ; e.
+ 00D2 65 78                           db 65,78 ; ex
+ 00D4 63 65                           db 63,65 ; ce
+ 00D6 65 64                           db 65,64 ; ed
+ 00D8 65 64                           db 65,64 ; ed
+ 00DA 10 45                           db 10,45 ; .E
+ 00DC 78 63                           db 78,63 ; xc
+ 00DE 65 73                           db 65,73 ; es
+ 00E0 73 20                           db 73,20 ; s.
+ 00E2 52 65                           db 52,65 ; Re
+ 00E4 73 6F                           db 73,6F ; so
+ 00E6 75 72                           db 75,72 ; ur
+ 00E8 63 65                           db 63,65 ; ce
+ 00EA 20 15                           db 20,15 ; ..
+ 00EC 44 61                           db 44,61 ; Da
+ 00EE 74 61                           db 74,61 ; ta
+ 00F0 20 65                           db 20,65 ; .e
+ 00F2 72 72                           db 72,72 ; rr
+ 00F4 6F 72                           db 6F,72 ; or
+ 00F6 20 2D                           db 20,2D ; .-
+ 00F8 20 53                           db 20,53 ; .S
+ 00FA 79 6D                           db 79,6D ; ym
+ 00FC 62 6F                           db 62,6F ; bo
+ 00FE 6C 20                           db 6C,20 ; l.
+ 0100 27 03                           db 27,03 ; '.
+ 0102 27 20                           db 27,20 ; '.
+ 0104 28 01                           db 28,01 ; (.
+ 0106 29 0B                           db 29,0B ; ).
+ 0108 44 61                           db 44,61 ; Da
+ 010A 74 61                           db 74,61 ; ta
+ 010C 20 65                           db 20,65 ; .e
+ 010E 72 72                           db 72,72 ; rr
+ 0110 6F 72                           db 6F,72 ; or
+ 0112 20 0E                           db 20,0E ; ..
+ 0114 53 79                           db 53,79 ; Sy
+ 0116 6D 62                           db 6D,62 ; mb
+ 0118 6F 6C                           db 6F,6C ; ol
+ 011A 20 69                           db 20,69 ; .i
+ 011C 6E 20                           db 6E,20 ; n.
+ 011E 64 61                           db 64,61 ; da
+ 0120 74 61                           db 74,61 ; ta
+ 0122 0D 49                           db 0D,49 ; .I
+ 0124 6E 76                           db 6E,76 ; nv
+ 0126 61 6C                           db 61,6C ; al
+ 0128 69 64                           db 69,64 ; id
+ 012A 20 64                           db 20,64 ; .d
+ 012C 61 74                           db 61,74 ; at
+ 012E 61 20                           db 61,20 ; a.
+ 0130 10 49                           db 10,49 ; .I
+ 0132 6C 6C                           db 6C,6C ; ll
+ 0134 65 67                           db 65,67 ; eg
+ 0136 61 6C                           db 61,6C ; al
+ 0138 20 46                           db 20,46 ; .F
+ 013A 4F 52                           db 4F,52 ; OR
+ 013C 20 6C                           db 20,6C ; .l
+ 013E 6F 6F                           db 6F,6F ; oo
+ 0140 70 1E                           db 70,1E ; p.
+ 0142 49 6C                           db 49,6C ; Il
+ 0144 6C 65                           db 6C,65 ; le
+ 0146 67 61                           db 67,61 ; ga
+ 0148 6C 20                           db 6C,20 ; l.
+ 014A 65 78                           db 65,78 ; ex
+ 014C 70 6F                           db 70,6F ; po
+ 014E 6E 65                           db 6E,65 ; ne
+ 0150 6E 74                           db 6E,74 ; nt
+ 0152 20 2D                           db 20,2D ; .-
+ 0154 20 45                           db 20,45 ; .E
+ 0156 78 70                           db 78,70 ; xp
+ 0158 6F 6E                           db 6F,6E ; on
+ 015A 65 6E                           db 65,6E ; en
+ 015C 74 20                           db 74,20 ; t.
+ 015E 3D 20                           db 3D,20 ; =.
+ 0160 10 41                           db 10,41 ; .A
+ 0162 72 72                           db 72,72 ; rr
+ 0164 61 79                           db 61,79 ; ay
+ 0166 20 69                           db 20,69 ; .i
+ 0168 6E 73                           db 6E,73 ; ns
+ 016A 69 64                           db 69,64 ; id
+ 016C 65 2D                           db 65,2D ; e-
+ 016E 6F 75                           db 6F,75 ; ou
+ 0170 74 11                           db 74,11 ; t.
+ 0172 53 74                           db 53,74 ; St
+ 0174 72 69                           db 72,69 ; ri
+ 0176 6E 67                           db 6E,67 ; ng
+ 0178 20 69                           db 20,69 ; .i
+ 017A 6E 73                           db 6E,73 ; ns
+ 017C 69 64                           db 69,64 ; id
+ 017E 65 2D                           db 65,2D ; e-
+ 0180 6F 75                           db 6F,75 ; ou
+ 0182 74 12                           db 74,12 ; t.
+ 0184 49 6C                           db 49,6C ; Il
+ 0186 6C 65                           db 6C,65 ; le
+ 0188 67 61                           db 67,61 ; ga
+ 018A 6C 20                           db 6C,20 ; l.
+ 018C 65 78                           db 65,78 ; ex
+ 018E 70 6F                           db 70,6F ; po
+ 0190 6E 65                           db 6E,65 ; ne
+ 0192 6E 74                           db 6E,74 ; nt
+ 0194 20 27                           db 20,27 ; .'
+ 0196 01 27                           db 01,27 ; .'
+ 0198 14 49                           db 14,49 ; .I
+ 019A 6E 76                           db 6E,76 ; nv
+ 019C 61 6C                           db 61,6C ; al
+ 019E 69 64                           db 69,64 ; id
+ 01A0 20 61                           db 20,61 ; .a
+ 01A2 72 67                           db 72,67 ; rg
+ 01A4 75 6D                           db 75,6D ; um
+ 01A6 65 6E                           db 65,6E ; en
+ 01A8 74 20                           db 74,20 ; t.
+ 01AA 2D 20                           db 2D,20 ; -.
+ 01AC 27 0D                           db 27,0D ; '.
+ 01AE 20 53                           db 20,53 ; .S
+ 01B0 75 62                           db 75,62 ; ub
+ 01B2 2D 63                           db 2D,63 ; -c
+ 01B4 6C 61                           db 6C,61 ; la
+ 01B6 73 73                           db 73,73 ; ss
+ 01B8 20 3D                           db 20,3D ; .=
+ 01BA 20 0A                           db 20,0A ; ..
+ 01BC 2C 20                           db 2C,20 ; ,.
+ 01BE 56 61                           db 56,61 ; Va
+ 01C0 6C 75                           db 6C,75 ; lu
+ 01C2 65 20                           db 65,20 ; e.
+ 01C4 3D 20                           db 3D,20 ; =.
+ 01C6 01 27                           db 01,27 ; .'
+ 01C8 11 43                           db 11,43 ; .C
+ 01CA 61 70                           db 61,70 ; ap
+ 01CC 61 63                           db 61,63 ; ac
+ 01CE 69 74                           db 69,74 ; it
+ 01D0 79 20                           db 79,20 ; y.
+ 01D2 65 78                           db 65,78 ; ex
+ 01D4 63 65                           db 63,65 ; ce
+ 01D6 65 64                           db 65,64 ; ed
+ 01D8 65 64                           db 65,64 ; ed
+ 01DA 17 20                           db 17,20 ; ..
+ 01DC 28 53                           db 28,53 ; (S
+ 01DE 74 72                           db 74,72 ; tr
+ 01E0 69 6E                           db 69,6E ; in
+ 01E2 67 20                           db 67,20 ; g.
+ 01E4 63 6F                           db 63,6F ; co
+ 01E6 70 79                           db 70,79 ; py
+ 01E8 20 6F                           db 20,6F ; .o
+ 01EA 76 65                           db 76,65 ; ve
+ 01EC 72 66                           db 72,66 ; rf
+ 01EE 6C 6F                           db 6C,6F ; lo
+ 01F0 77 29                           db 77,29 ; w)
+ 01F2 19 20                           db 19,20 ; ..
+ 01F4 28 53                           db 28,53 ; (S
+ 01F6 74 72                           db 74,72 ; tr
+ 01F8 69 6E                           db 69,6E ; in
+ 01FA 67 20                           db 67,20 ; g.
+ 01FC 61 70                           db 61,70 ; ap
+ 01FE 70 65                           db 70,65 ; pe
+ 0200 6E 64                           db 6E,64 ; nd
+ 0202 20 6F                           db 20,6F ; .o
+ 0204 76 65                           db 76,65 ; ve
+ 0206 72 66                           db 72,66 ; rf
+ 0208 6C 6F                           db 6C,6F ; lo
+ 020A 77 29                           db 77,29 ; w)
+ 020C 01 2E                           db 01,2E ; ..
+ 020E 1C 41                           db 1C,41 ; .A
+ 0210 72 72                           db 72,72 ; rr
+ 0212 61 79                           db 61,79 ; ay
+ 0214 20 62                           db 20,62 ; .b
+ 0216 6F 75                           db 6F,75 ; ou
+ 0218 6E 64                           db 6E,64 ; nd
+ 021A 20 66                           db 20,66 ; .f
+ 021C 61 75                           db 61,75 ; au
+ 021E 6C 74                           db 6C,74 ; lt
+ 0220 20 2D                           db 20,2D ; .-
+ 0222 20 49                           db 20,49 ; .I
+ 0224 6E 64                           db 6E,64 ; nd
+ 0226 65 78                           db 65,78 ; ex
+ 0228 20 3D                           db 20,3D ; .=
+ 022A 20 15                           db 20,15 ; ..
+ 022C 53 77                           db 53,77 ; Sw
+ 022E 69 74                           db 69,74 ; it
+ 0230 63 68                           db 63,68 ; ch
+ 0232 20 62                           db 20,62 ; .b
+ 0234 6F 75                           db 6F,75 ; ou
+ 0236 6E 64                           db 6E,64 ; nd
+ 0238 20 66                           db 20,66 ; .f
+ 023A 61 75                           db 61,75 ; au
+ 023C 6C 74                           db 6C,74 ; lt
+ 023E 20 3D                           db 20,3D ; .=
+ 0240 20 14                           db 20,14 ; ..
+ 0242 49 6C                           db 49,6C ; Il
+ 0244 6C 65                           db 6C,65 ; le
+ 0246 67 61                           db 67,61 ; ga
+ 0248 6C 20                           db 6C,20 ; l.
+ 024A 65 76                           db 65,76 ; ev
+ 024C 65 6E                           db 65,6E ; en
+ 024E 74 20                           db 74,20 ; t.
+ 0250 73 69                           db 73,69 ; si
+ 0252 67 6E                           db 67,6E ; gn
+ 0254 61 6C                           db 61,6C ; al
+ 0256 15 43                           db 15,43 ; .C
+ 0258 48 41                           db 48,41 ; HA
+ 025A 52 4E                           db 52,4E ; RN
+ 025C 4F 20                           db 4F,20 ; O.
+ 025E 6F 75                           db 6F,75 ; ou
+ 0260 74 20                           db 74,20 ; t.
+ 0262 6F 66                           db 6F,66 ; of
+ 0264 20 72                           db 20,72 ; .r
+ 0266 61 6E                           db 61,6E ; an
+ 0268 67 65                           db 67,65 ; ge
+ 026A 20 27                           db 20,27 ; .'
+ 026C 01 27                           db 01,27 ; .'
+ 026E 17 54                           db 17,54 ; .T
+ 0270 4F 53                           db 4F,53 ; OS
+ 0272 54 52                           db 54,52 ; TR
+ 0274 49 4E                           db 49,4E ; IN
+ 0276 47 20                           db 47,20 ; G.
+ 0278 6F 75                           db 6F,75 ; ou
+ 027A 74 20                           db 74,20 ; t.
+ 027C 6F 66                           db 6F,66 ; of
+ 027E 20 72                           db 20,72 ; .r
+ 0280 61 6E                           db 61,6E ; an
+ 0282 67 65                           db 67,65 ; ge
+ 0284 20 27                           db 20,27 ; .'
+ 0286 01 27                           db 01,27 ; .'
+ 0288 0F 49                           db 0F,49 ; .I
+ 028A 6C 6C                           db 6C,6C ; ll
+ 028C 65 67                           db 65,67 ; eg
+ 028E 61 6C                           db 61,6C ; al
+ 0290 20 73                           db 20,73 ; .s
+ 0292 68 69                           db 68,69 ; hi
+ 0294 66 74                           db 66,74 ; ft
+ 0296 20 27                           db 20,27 ; .'
+ 0298 01 27                           db 01,27 ; .'
+ 029A 16 4F                           db 16,4F ; .O
+ 029C 75 74                           db 75,74 ; ut
+ 029E 20 6F                           db 20,6F ; .o
+ 02A0 66 20                           db 66,20 ; f.
+ 02A2 72 61                           db 72,61 ; ra
+ 02A4 6E 67                           db 6E,67 ; ng
+ 02A6 65 20                           db 65,20 ; e.
+ 02A8 66 61                           db 66,61 ; fa
+ 02AA 75 6C                           db 75,6C ; ul
+ 02AC 74 20                           db 74,20 ; t.
+ 02AE 2D 20                           db 2D,20 ; -.
+ 02B0 28 0D                           db 28,0D ; (.
+ 02B2 20 53                           db 20,53 ; .S
+ 02B4 75 62                           db 75,62 ; ub
+ 02B6 2D 63                           db 2D,63 ; -c
+ 02B8 6C 61                           db 6C,61 ; la
+ 02BA 73 73                           db 73,73 ; ss
+ 02BC 20 3D                           db 20,3D ; .=
+ 02BE 20 0A                           db 20,0A ; ..
+ 02C0 2C 20                           db 2C,20 ; ,.
+ 02C2 56 61                           db 56,61 ; Va
+ 02C4 6C 75                           db 6C,75 ; lu
+ 02C6 65 20                           db 65,20 ; e.
+ 02C8 3D 20                           db 3D,20 ; =.
+ 02CA 01 29                           db 01,29 ; .)
+ 02CC 11 52                           db 11,52 ; .R
+ 02CE 65 73                           db 65,73 ; es
+ 02D0 6F 6C                           db 6F,6C ; ol
+ 02D2 75 74                           db 75,74 ; ut
+ 02D4 69 6F                           db 69,6F ; io
+ 02D6 6E 20                           db 6E,20 ; n.
+ 02D8 66 61                           db 66,61 ; fa
+ 02DA 69 6C                           db 69,6C ; il
+ 02DC 73 20                           db 73,20 ; s.
+ 02DE 13 55                           db 13,55 ; .U
+ 02E0 6E 61                           db 6E,61 ; na
+ 02E2 73 73                           db 73,73 ; ss
+ 02E4 69 67                           db 69,67 ; ig
+ 02E6 6E 65                           db 6E,65 ; ne
+ 02E8 64 20                           db 64,20 ; d.
+ 02EA 76 61                           db 76,61 ; va
+ 02EC 72 69                           db 72,69 ; ri
+ 02EE 61 62                           db 61,62 ; ab
+ 02F0 6C 65                           db 6C,65 ; le
+ 02F2 11 4E                           db 11,4E ; .N
+ 02F4 6F 20                           db 6F,20 ; o.
+ 02F6 73 77                           db 73,77 ; sw
+ 02F8 69 74                           db 69,74 ; it
+ 02FA 63 68                           db 63,68 ; ch
+ 02FC 20 6C                           db 20,6C ; .l
+ 02FE 61 62                           db 61,62 ; ab
+ 0300 65 6C                           db 65,6C ; el
+ 0302 20 27                           db 20,27 ; .'
+ 0304 01 27                           db 01,27 ; .'
+ 0306 14 46                           db 14,46 ; .F
+ 0308 6F 72                           db 6F,72 ; or
+ 030A 20 76                           db 20,76 ; .v
+ 030C 61 72                           db 61,72 ; ar
+ 030E 69 61                           db 69,61 ; ia
+ 0310 62 6C                           db 62,6C ; bl
+ 0312 65 20                           db 65,20 ; e.
+ 0314 63 6F                           db 63,6F ; co
+ 0316 72 72                           db 72,72 ; rr
+ 0318 75 70                           db 75,70 ; up
+ 031A 74 17                           db 74,17 ; t.
+ 031C 55 6E                           db 55,6E ; Un
+ 031E 64 65                           db 64,65 ; de
+ 0320 66 69                           db 66,69 ; fi
+ 0322 6E 65                           db 6E,65 ; ne
+ 0324 64 20                           db 64,20 ; d.
+ 0326 73 77                           db 73,77 ; sw
+ 0328 69 74                           db 69,74 ; it
+ 032A 63 68                           db 63,68 ; ch
+ 032C 20 76                           db 20,76 ; .v
+ 032E 61 6C                           db 61,6C ; al
+ 0330 75 65                           db 75,65 ; ue
+ 0332 20 17                           db 20,17 ; ..
+ 0334 55 6E                           db 55,6E ; Un
+ 0336 65 78                           db 65,78 ; ex
+ 0338 70 65                           db 70,65 ; pe
+ 033A 63 74                           db 63,74 ; ct
+ 033C 65 64                           db 65,64 ; ed
+ 033E 20 65                           db 20,65 ; .e
+ 0340 6E 64                           db 6E,64 ; nd
+ 0342 20 6F                           db 20,6F ; .o
+ 0344 66 20                           db 66,20 ; f.
+ 0346 69 6E                           db 69,6E ; in
+ 0348 70 75                           db 70,75 ; pu
+ 034A 74 20                           db 74,20 ; t.
+ 034C 43 6F                           db 43,6F ; Co
+ 034E 75 6C                           db 75,6C ; ul
+ 0350 64 6E                           db 64,6E ; dn
+ 0352 27 74                           db 27,74 ; 't
+ 0354 20 6F                           db 20,6F ; .o
+ 0356 70 65                           db 70,65 ; pe
+ 0358 6E 20                           db 6E,20 ; n.
+ 035A 66 69                           db 66,69 ; fi
+ 035C 6C 65                           db 6C,65 ; le
+ 035E 2E 20                           db 2E,20 ; ..
+ 0360 45 72                           db 45,72 ; Er
+ 0362 72 6F                           db 72,6F ; ro
+ 0364 72 20                           db 72,20 ; r.
+ 0366 43 6F                           db 43,6F ; Co
+ 0368 64 65                           db 64,65 ; de
+ 036A 20 27                           db 20,27 ; .'
+ 036C 01 27                           db 01,27 ; .'
+ 036E 13 46                           db 13,46 ; .F
+ 0370 69 6C                           db 69,6C ; il
+ 0372 65 20                           db 65,20 ; e.
+ 0374 73 79                           db 73,79 ; sy
+ 0376 73 74                           db 73,74 ; st
+ 0378 65 6D                           db 65,6D ; em
+ 037A 20 65                           db 20,65 ; .e
+ 037C 72 72                           db 72,72 ; rr
+ 037E 6F 72                           db 6F,72 ; or
+ 0380 20 27                           db 20,27 ; .'
+ 0382 01 27                           db 01,27 ; .'
+ 0384 0E 49                           db 0E,49 ; .I
+ 0386 6E 70                           db 6E,70 ; np
+ 0388 75 74                           db 75,74 ; ut
+ 038A 20 73                           db 20,73 ; .s
+ 038C 74 72                           db 74,72 ; tr
+ 038E 65 61                           db 65,61 ; ea
+ 0390 6D 20                           db 6D,20 ; m.
+ 0392 27 15                           db 27,15 ; '.
+ 0394 27 20                           db 27,20 ; '.
+ 0396 68 61                           db 68,61 ; ha
+ 0398 73 20                           db 73,20 ; s.
+ 039A 6E 6F                           db 6E,6F ; no
+ 039C 74 20                           db 74,20 ; t.
+ 039E 62 65                           db 62,65 ; be
+ 03A0 65 6E                           db 65,6E ; en
+ 03A2 20 6F                           db 20,6F ; .o
+ 03A4 70 65                           db 70,65 ; pe
+ 03A6 6E 65                           db 6E,65 ; ne
+ 03A8 64 0F                           db 64,0F ; d.
+ 03AA 4F 75                           db 4F,75 ; Ou
+ 03AC 74 70                           db 74,70 ; tp
+ 03AE 75 74                           db 75,74 ; ut
+ 03B0 20 73                           db 20,73 ; .s
+ 03B2 74 72                           db 74,72 ; tr
+ 03B4 65 61                           db 65,61 ; ea
+ 03B6 6D 20                           db 6D,20 ; m.
+ 03B8 27 15                           db 27,15 ; '.
+ 03BA 27 20                           db 27,20 ; '.
+ 03BC 68 61                           db 68,61 ; ha
+ 03BE 73 20                           db 73,20 ; s.
+ 03C0 6E 6F                           db 6E,6F ; no
+ 03C2 74 20                           db 74,20 ; t.
+ 03C4 62 65                           db 62,65 ; be
+ 03C6 65 6E                           db 65,6E ; en
+ 03C8 20 6F                           db 20,6F ; .o
+ 03CA 70 65                           db 70,65 ; pe
+ 03CC 6E 65                           db 6E,65 ; ne
+ 03CE 64 0D                           db 64,0D ; d.
+ 03D0 42 61                           db 42,61 ; Ba
+ 03D2 64 20                           db 64,20 ; d.
+ 03D4 73 74                           db 73,74 ; st
+ 03D6 72 65                           db 72,65 ; re
+ 03D8 61 6D                           db 61,6D ; am
+ 03DA 23 20                           db 23,20 ; #.
+ 03DC 27 01                           db 27,01 ; '.
+ 03DE 27 1E                           db 27,1E ; '.
+ 03E0 49 6E                           db 49,6E ; In
+ 03E2 76 61                           db 76,61 ; va
+ 03E4 6C 69                           db 6C,69 ; li
+ 03E6 64 20                           db 64,20 ; d.
+ 03E8 66 69                           db 66,69 ; fi
+ 03EA 6C 65                           db 6C,65 ; le
+ 03EC 6E 61                           db 6E,61 ; na
+ 03EE 6D 65                           db 6D,65 ; me
+ 03F0 20 66                           db 20,66 ; .f
+ 03F2 6F 72                           db 6F,72 ; or
+ 03F4 20 73                           db 20,73 ; .s
+ 03F6 74 72                           db 74,72 ; tr
+ 03F8 65 61                           db 65,61 ; ea
+ 03FA 6D 23                           db 6D,23 ; m#
+ 03FC 20 27                           db 20,27 ; .'
+ 03FE 01 27                           db 01,27 ; .'
+ 0400 13 49                           db 13,49 ; .I
+ 0402 6E 70                           db 6E,70 ; np
+ 0404 75 74                           db 75,74 ; ut
+ 0406 2F 4F                           db 2F,4F ; /O
+ 0408 75 74                           db 75,74 ; ut
+ 040A 70 75                           db 70,75 ; pu
+ 040C 74 20                           db 74,20 ; t.
+ 040E 65 72                           db 65,72 ; er
+ 0410 72 6F                           db 72,6F ; ro
+ 0412 72 20                           db 72,20 ; r.
+ 0414 2D 49                           db 2D,49 ; -I
+ 0416 6E 63                           db 6E,63 ; nc
+ 0418 6F 72                           db 6F,72 ; or
+ 041A 72 65                           db 72,65 ; re
+ 041C 63 74                           db 63,74 ; ct
+ 041E 20 63                           db 20,63 ; .c
+ 0420 6F 6D                           db 6F,6D ; om
+ 0422 6D 61                           db 6D,61 ; ma
+ 0424 6E 64                           db 6E,64 ; nd
+ 0426 20 6C                           db 20,6C ; .l
+ 0428 69 6E                           db 69,6E ; in
+ 042A 65 20                           db 65,20 ; e.
+ 042C 70 61                           db 70,61 ; pa
+ 042E 72 61                           db 72,61 ; ra
+ 0430 6D 65                           db 6D,65 ; me
+ 0432 74 65                           db 74,65 ; te
+ 0434 72 20                           db 72,20 ; r.
+ 0436 63 6F                           db 63,6F ; co
+ 0438 75 6E                           db 75,6E ; un
+ 043A 74 2E                           db 74,2E ; t.
+ 043C 20 41                           db 20,41 ; .A
+ 043E 72 67                           db 72,67 ; rg
+ 0440 63 3D                           db 63,3D ; c=
+ 0442 18 4C                           db 18,4C ; .L
+ 0444 69 62                           db 69,62 ; ib
+ 0446 72 61                           db 72,61 ; ra
+ 0448 72 79                           db 72,79 ; ry
+ 044A 20 70                           db 20,70 ; .p
+ 044C 72 6F                           db 72,6F ; ro
+ 044E 63 65                           db 63,65 ; ce
+ 0450 64 75                           db 64,75 ; du
+ 0452 72 65                           db 72,65 ; re
+ 0454 20 65                           db 20,65 ; .e
+ 0456 72 72                           db 72,72 ; rr
+ 0458 6F 72                           db 6F,72 ; or
+ 045A 20 07                           db 20,07 ; ..
+ 045C 53 69                           db 53,69 ; Si
+ 045E 67 6E                           db 67,6E ; gn
+ 0460 61 6C                           db 61,6C ; al
+ 0462 20 08                           db 20,08 ; ..
+ 0464 20 63                           db 20,63 ; .c
+ 0466 61 6C                           db 61,6C ; al
+ 0468 6C 65                           db 6C,65 ; le
+ 046A 64 2E                           db 64,2E ; d.
+ 046C 01 00                           db 01,00 ; ..
+ 046E 00 00                           db 00,00 ; ..
+ 0470 01 00                           db 01,00 ; ..
+ 0472 00 00                           db 00,00 ; ..
+ 0474 08 00                           db 08,00 ; ..
+ 0476 00 00                           db 00,00 ; ..
+ 0478 00 00                           db 00,00 ; ..
+ 047A 00 00                           db 00,00 ; ..
+ 047C 08 49                           db 08,49 ; .I
+ 047E 4D 50                           db 4D,50 ; MP
+ 0480 52 54                           db 52,54 ; RT
+ 0482 4C 3A                           db 4C,3A ; L:
+ 0484 20 0B                           db 20,0B ; ..
+ 0486 53 48                           db 53,48 ; SH
+ 0488 4F 57                           db 4F,57 ; OW
+ 048A 45 56                           db 45,56 ; EV
+ 048C 45 4E                           db 45,4E ; EN
+ 048E 54 3A                           db 54,3A ; T:
+ 0490 20 13                           db 20,13 ; ..
+ 0492 53 74                           db 53,74 ; St
+ 0494 61 72                           db 61,72 ; ar
+ 0496 74 20                           db 74,20 ; t.
+ 0498 6F 66                           db 6F,66 ; of
+ 049A 20 53                           db 20,53 ; .S
+ 049C 74 61                           db 74,61 ; ta
+ 049E 63 6B                           db 63,6B ; ck
+ 04A0 20 64                           db 20,64 ; .d
+ 04A2 75 6D                           db 75,6D ; um
+ 04A4 70 2D                           db 70,2D ; p-
+ 04A6 53 69                           db 53,69 ; Si
+ 04A8 67 6E                           db 67,6E ; gn
+ 04AA 61 6C                           db 61,6C ; al
+ 04AC 20 4E                           db 20,4E ; .N
+ 04AE 6F 20                           db 6F,20 ; o.
+ 04B0 68 61                           db 68,61 ; ha
+ 04B2 6E 64                           db 6E,64 ; nd
+ 04B4 6C 65                           db 6C,65 ; le
+ 04B6 72 20                           db 72,20 ; r.
+ 04B8 66 6F                           db 66,6F ; fo
+ 04BA 75 6E                           db 75,6E ; un
+ 04BC 64 20                           db 64,20 ; d.
+ 04BE 66 6F                           db 66,6F ; fo
+ 04C0 72 20                           db 72,20 ; r.
+ 04C2 73 69                           db 73,69 ; si
+ 04C4 67 6E                           db 67,6E ; gn
+ 04C6 61 6C                           db 61,6C ; al
+ 04C8 6C 65                           db 6C,65 ; le
+ 04CA 64 20                           db 64,20 ; d.
+ 04CC 65 76                           db 65,76 ; ev
+ 04CE 65 6E                           db 65,6E ; en
+ 04D0 74 20                           db 74,20 ; t.
+ 04D2 28 02                           db 28,02 ; (.
+ 04D4 2C 20                           db 2C,20 ; ,.
+ 04D6 02 2C                           db 02,2C ; .,
+ 04D8 20 02                           db 20,02 ; ..
+ 04DA 29 2E                           db 29,2E ; ).
+ 04DC 15 50                           db 15,50 ; .P
+ 04DE 6F 73                           db 6F,73 ; os
+ 04E0 73 69                           db 73,69 ; si
+ 04E2 62 6C                           db 62,6C ; bl
+ 04E4 65 20                           db 65,20 ; e.
+ 04E6 73 74                           db 73,74 ; st
+ 04E8 61 63                           db 61,63 ; ac
+ 04EA 6B 20                           db 6B,20 ; k.
+ 04EC 65 72                           db 65,72 ; er
+ 04EE 72 6F                           db 72,6F ; ro
+ 04F0 72 3F                           db 72,3F ; r?
+ 04F2 11 45                           db 11,45 ; .E
+ 04F4 6E 64                           db 6E,64 ; nd
+ 04F6 20 6F                           db 20,6F ; .o
+ 04F8 66 20                           db 66,20 ; f.
+ 04FA 53 74                           db 53,74 ; St
+ 04FC 61 63                           db 61,63 ; ac
+ 04FE 6B 20                           db 6B,20 ; k.
+ 0500 64 75                           db 64,75 ; du
+ 0502 6D 70                           db 6D,70 ; mp
+ 0504 22 53                           db 22,53 ; "S
+ 0506 74 6F                           db 74,6F ; to
+ 0508 70 70                           db 70,70 ; pp
+ 050A 69 6E                           db 69,6E ; in
+ 050C 67 20                           db 67,20 ; g.
+ 050E 70 72                           db 70,72 ; pr
+ 0510 6F 67                           db 6F,67 ; og
+ 0512 72 61                           db 72,61 ; ra
+ 0514 6D 20                           db 6D,20 ; m.
+ 0516 77 69                           db 77,69 ; wi
+ 0518 74 68                           db 74,68 ; th
+ 051A 20 65                           db 20,65 ; .e
+ 051C 78 69                           db 78,69 ; xi
+ 051E 74 20                           db 74,20 ; t.
+ 0520 73 74                           db 73,74 ; st
+ 0522 61 74                           db 61,74 ; at
+ 0524 75 73                           db 75,73 ; us
+ 0526 3D 17                           db 3D,17 ; =.
+ 0528 55 6E                           db 55,6E ; Un
+ 052A 6B 6E                           db 6B,6E ; kn
+ 052C 6F 77                           db 6F,77 ; ow
+ 052E 6E 20                           db 6E,20 ; n.
+ 0530 6D 65                           db 6D,65 ; me
+ 0532 73 73                           db 73,73 ; ss
+ 0534 61 67                           db 61,67 ; ag
+ 0536 65 23                           db 65,23 ; e#
+ 0538 20 67                           db 20,67 ; .g
+ 053A 69 76                           db 69,76 ; iv
+ 053C 65 6E                           db 65,6E ; en
+ 053E 2E 08                           db 2E,08 ; ..
+ 0540 49 4D                           db 49,4D ; IM
+ 0542 50 52                           db 50,52 ; PR
+ 0544 54 4C                           db 54,4C ; TL
+ 0546 3A 20                           db 3A,20 ; :.
+ 0548 0F 43                           db 0F,43 ; .C
+ 054A 61 6C                           db 61,6C ; al
+ 054C 6C 65                           db 6C,65 ; le
+ 054E 64 20                           db 64,20 ; d.
+ 0550 66 72                           db 66,72 ; fr
+ 0552 6F 6D                           db 6F,6D ; om
+ 0554 20 28                           db 20,28 ; .(
+ 0556 78 27                           db 78,27 ; x'
+ 0558 07 27                           db 07,27 ; .'
+ 055A 29 20                           db 29,20 ; ).
+ 055C 69 6E                           db 69,6E ; in
+ 055E 20 27                           db 20,27 ; .'
+ 0560 01 27                           db 01,27 ; .'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+ 0000 00 00                           db 00,00 ; ..
+ 0002 00 00                           db 00,00 ; ..
+ 0004 00 00                           db 00,00 ; ..
+ 0006 00 00                           db 00,00 ; ..
+ 0008 00 00                           db 00,00 ; ..
+ 000A 00 00                           db 00,00 ; ..
+ 000C 00 00                           db 00,00 ; ..
+ 000E 00 00                           db 00,00 ; ..
+ 0010 00 00                           db 00,00 ; ..
+ 0012 00 00                           db 00,00 ; ..
+ 0014 00 00                           db 00,00 ; ..
+ 0016 00 00                           db 00,00 ; ..
+ 0018 00 00                           db 00,00 ; ..
+ 001A 00 00                           db 00,00 ; ..
+ 001C 00 00                           db 00,00 ; ..
+ 001E 00 00                           db 00,00 ; ..
+ 0020 00 00                           db 00,00 ; ..
+ 0022 00 00                           db 00,00 ; ..
+ 0024 00 00                           db 00,00 ; ..
+ 0026 00 00                           db 00,00 ; ..
+ 0028 00 00                           db 00,00 ; ..
+ 002A 00 00                           db 00,00 ; ..
+ 002C 00 00                           db 00,00 ; ..
+ 002E 00 00                           db 00,00 ; ..
+ 0030 00 00                           db 00,00 ; ..
+ 0032 00 00                           db 00,00 ; ..
+ 0034 00 00                           db 00,00 ; ..
+ 0036 00 00                           db 00,00 ; ..
+ 0038 00 00                           db 00,00 ; ..
+ 003A 00 00                           db 00,00 ; ..
+ 003C 00 00                           db 00,00 ; ..
+ 003E 00 00                           db 00,00 ; ..
+ 0040 00 00                           db 00,00 ; ..
+ 0042 00 00                           db 00,00 ; ..
+ 0044 00 00                           db 00,00 ; ..
+ 0046 00 00                           db 00,00 ; ..
+ 0048 00 00                           db 00,00 ; ..
+ 004A 00 00                           db 00,00 ; ..
+ 004C 00 00                           db 00,00 ; ..
+ 004E 00 00                           db 00,00 ; ..
+ 0050 00 00                           db 00,00 ; ..
+ 0052 00 00                           db 00,00 ; ..
+ 0054 00 00                           db 00,00 ; ..
+ 0056 00 00                           db 00,00 ; ..
+ 0058 00 00                           db 00,00 ; ..
+ 005A 00 00                           db 00,00 ; ..
+ 005C 00 00                           db 00,00 ; ..
+ 005E 00 00                           db 00,00 ; ..
+ 0060 00 00                           db 00,00 ; ..
+ 0062 00 00                           db 00,00 ; ..
+ 0064 00 00                           db 00,00 ; ..
+ 0066 00 00                           db 00,00 ; ..
+ 0068 00 00                           db 00,00 ; ..
+ 006A 00 00                           db 00,00 ; ..
+ 006C 00 00                           db 00,00 ; ..
+ 006E 00 00                           db 00,00 ; ..
+ 0070 00 00                           db 00,00 ; ..
+ 0072 00 00                           db 00,00 ; ..
+ 0074 00 00                           db 00,00 ; ..
+ 0076 00 00                           db 00,00 ; ..
+ 0078 00 00                           db 00,00 ; ..
+ 007A 00 00                           db 00,00 ; ..
+ 007C 00 00                           db 00,00 ; ..
+ 007E 00 00                           db 00,00 ; ..
+ 0080 00 00                           db 00,00 ; ..
+ 0082 00 00                           db 00,00 ; ..
+ 0084 00 00                           db 00,00 ; ..
+ 0086 00 00                           db 00,00 ; ..
+ 0088 00 00                           db 00,00 ; ..
+ 008A 00 00                           db 00,00 ; ..
+ 008C 00 00                           db 00,00 ; ..
+ 008E 00 00                           db 00,00 ; ..
+ 0090 00 00                           db 00,00 ; ..
+ 0092 00 00                           db 00,00 ; ..
+ 0094 00 00                           db 00,00 ; ..
+ 0096 00 00                           db 00,00 ; ..
+ 0098 00 00                           db 00,00 ; ..
+ 009A 00 00                           db 00,00 ; ..
+ 009C 00 00                           db 00,00 ; ..
+ 009E 00 00                           db 00,00 ; ..
+ 00A0 00 00                           db 00,00 ; ..
+ 00A2 00 00                           db 00,00 ; ..
+ 00A4 00 00                           db 00,00 ; ..
+ 00A6 00 00                           db 00,00 ; ..
+ 00A8 00 00                           db 00,00 ; ..
+ 00AA 00 00                           db 00,00 ; ..
+ 00AC 00 00                           db 00,00 ; ..
+ 00AE 00 00                           db 00,00 ; ..
+ 00B0 00 00                           db 00,00 ; ..
+ 00B2 00 00                           db 00,00 ; ..
+ 00B4 00 00                           db 00,00 ; ..
+ 00B6 00 00                           db 00,00 ; ..
+ 00B8 00 00                           db 00,00 ; ..
+ 00BA 00 00                           db 00,00 ; ..
+ 00BC 00 00                           db 00,00 ; ..
+ 00BE 00 00                           db 00,00 ; ..
+ 00C0 00 00                           db 00,00 ; ..
+ 00C2 00 00                           db 00,00 ; ..
+ 00C4 00 00                           db 00,00 ; ..
+ 00C6 00 00                           db 00,00 ; ..
+ 00C8 00 00                           db 00,00 ; ..
+ 00CA 00 00                           db 00,00 ; ..
+ 00CC 00 00                           db 00,00 ; ..
+ 00CE 00 00                           db 00,00 ; ..
+ 00D0 00 00                           db 00,00 ; ..
+ 00D2 00 00                           db 00,00 ; ..
+ 00D4 00 00                           db 00,00 ; ..
+ 00D6 00 00                           db 00,00 ; ..
+ 00D8 00 00                           db 00,00 ; ..
+ 00DA 00 00                           db 00,00 ; ..
+ 00DC 00 00                           db 00,00 ; ..
+ 00DE 00 00                           db 00,00 ; ..
+ 00E0 00 00                           db 00,00 ; ..
+ 00E2 00 00                           db 00,00 ; ..
+ 00E4 00 00                           db 00,00 ; ..
+ 00E6 00 00                           db 00,00 ; ..
+ 00E8 00 00                           db 00,00 ; ..
+ 00EA 00 00                           db 00,00 ; ..
+ 00EC 00 00                           db 00,00 ; ..
+ 00EE 00 00                           db 00,00 ; ..
+ 00F0 00 00                           db 00,00 ; ..
+ 00F2 00 00                           db 00,00 ; ..
+ 00F4 00 00                           db 00,00 ; ..
+ 00F6 00 00                           db 00,00 ; ..
+ 00F8 00 00                           db 00,00 ; ..
+ 00FA 00 00                           db 00,00 ; ..
+ 00FC 00 00                           db 00,00 ; ..
+ 00FE 00 00                           db 00,00 ; ..
+ 0100 00 00                           db 00,00 ; ..
+ 0102 00 00                           db 00,00 ; ..
+ 0104 00 00                           db 00,00 ; ..
+ 0106 00 00                           db 00,00 ; ..
+ 0108 00 00                           db 00,00 ; ..
+ 010A 00 00                           db 00,00 ; ..
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+ 0000 EE 03                           db EE,03 ; ..
+ 0002 F5 03                           db F5,03 ; ..
+ 0004 09 04                           db 09,04 ; ..
+ 0006 1D 04                           db 1D,04 ; ..
+ 0008 31 04                           db 31,04 ; 1.
+ 000A 45 04                           db 45,04 ; E.
+ 000C 59 04                           db 59,04 ; Y.
+ 000E 6F 04                           db 6F,04 ; o.
+ 0010 83 04                           db 83,04 ; ..
+ 0012 97 04                           db 97,04 ; ..
+ 0014 AB 04                           db AB,04 ; ..
+ 0016 BF 04                           db BF,04 ; ..
+ 0018 C0 04                           db C0,04 ; ..
+ 001A C1 04                           db C1,04 ; ..
+ 001C C2 04                           db C2,04 ; ..
+ 001E C3 04                           db C3,04 ; ..
+ 0020 FE 03                           db FE,03 ; ..
+ 0022 F8 03                           db F8,03 ; ..
+ 0024 FA 03                           db FA,03 ; ..
+ 0026 FB 03                           db FB,03 ; ..
+ 0028 FC 03                           db FC,03 ; ..
+ 002A FD 03                           db FD,03 ; ..
+ 002C FF 03                           db FF,03 ; ..
+ 002E 00 04                           db 00,04 ; ..
+ 0030 01 04                           db 01,04 ; ..
+ 0032 02 04                           db 02,04 ; ..
+ 0034 03 04                           db 03,04 ; ..
+ 0036 04 04                           db 04,04 ; ..
+ 0038 05 04                           db 05,04 ; ..
+ 003A 06 04                           db 06,04 ; ..
+ 003C 07 04                           db 07,04 ; ..
+ 003E 08 04                           db 08,04 ; ..
+ 0040 10 04                           db 10,04 ; ..
+ 0042 0C 04                           db 0C,04 ; ..
+ 0044 0E 04                           db 0E,04 ; ..
+ 0046 0F 04                           db 0F,04 ; ..
+ 0048 11 04                           db 11,04 ; ..
+ 004A 12 04                           db 12,04 ; ..
+ 004C 13 04                           db 13,04 ; ..
+ 004E 14 04                           db 14,04 ; ..
+ 0050 15 04                           db 15,04 ; ..
+ 0052 16 04                           db 16,04 ; ..
+ 0054 17 04                           db 17,04 ; ..
+ 0056 18 04                           db 18,04 ; ..
+ 0058 19 04                           db 19,04 ; ..
+ 005A 1A 04                           db 1A,04 ; ..
+ 005C 1B 04                           db 1B,04 ; ..
+ 005E 1C 04                           db 1C,04 ; ..
+ 0060 22 04                           db 22,04 ; ".
+ 0062 20 04                           db 20,04 ; ..
+ 0064 23 04                           db 23,04 ; #.
+ 0066 24 04                           db 24,04 ; $.
+ 0068 25 04                           db 25,04 ; %.
+ 006A 26 04                           db 26,04 ; &.
+ 006C 27 04                           db 27,04 ; '.
+ 006E 28 04                           db 28,04 ; (.
+ 0070 29 04                           db 29,04 ; ).
+ 0072 2A 04                           db 2A,04 ; *.
+ 0074 2B 04                           db 2B,04 ; +.
+ 0076 2C 04                           db 2C,04 ; ,.
+ 0078 2D 04                           db 2D,04 ; -.
+ 007A 2E 04                           db 2E,04 ; ..
+ 007C 2F 04                           db 2F,04 ; /.
+ 007E 30 04                           db 30,04 ; 0.
+ 0080 36 04                           db 36,04 ; 6.
+ 0082 34 04                           db 34,04 ; 4.
+ 0084 37 04                           db 37,04 ; 7.
+ 0086 38 04                           db 38,04 ; 8.
+ 0088 39 04                           db 39,04 ; 9.
+ 008A 3A 04                           db 3A,04 ; :.
+ 008C 3B 04                           db 3B,04 ; ;.
+ 008E 3C 04                           db 3C,04 ; <.
+ 0090 3D 04                           db 3D,04 ; =.
+ 0092 3E 04                           db 3E,04 ; >.
+ 0094 3F 04                           db 3F,04 ; ?.
+ 0096 40 04                           db 40,04 ; @.
+ 0098 41 04                           db 41,04 ; A.
+ 009A 42 04                           db 42,04 ; B.
+ 009C 43 04                           db 43,04 ; C.
+ 009E 44 04                           db 44,04 ; D.
+ 00A0 4E 04                           db 4E,04 ; N.
+ 00A2 48 04                           db 48,04 ; H.
+ 00A4 4A 04                           db 4A,04 ; J.
+ 00A6 4B 04                           db 4B,04 ; K.
+ 00A8 4C 04                           db 4C,04 ; L.
+ 00AA 4D 04                           db 4D,04 ; M.
+ 00AC 4F 04                           db 4F,04 ; O.
+ 00AE 50 04                           db 50,04 ; P.
+ 00B0 51 04                           db 51,04 ; Q.
+ 00B2 52 04                           db 52,04 ; R.
+ 00B4 53 04                           db 53,04 ; S.
+ 00B6 54 04                           db 54,04 ; T.
+ 00B8 55 04                           db 55,04 ; U.
+ 00BA 56 04                           db 56,04 ; V.
+ 00BC 57 04                           db 57,04 ; W.
+ 00BE 58 04                           db 58,04 ; X.
+ 00C0 66 04                           db 66,04 ; f.
+ 00C2 5C 04                           db 5C,04 ; \.
+ 00C4 60 04                           db 60,04 ; `.
+ 00C6 61 04                           db 61,04 ; a.
+ 00C8 62 04                           db 62,04 ; b.
+ 00CA 63 04                           db 63,04 ; c.
+ 00CC 64 04                           db 64,04 ; d.
+ 00CE 65 04                           db 65,04 ; e.
+ 00D0 67 04                           db 67,04 ; g.
+ 00D2 68 04                           db 68,04 ; h.
+ 00D4 69 04                           db 69,04 ; i.
+ 00D6 6A 04                           db 6A,04 ; j.
+ 00D8 6B 04                           db 6B,04 ; k.
+ 00DA 6C 04                           db 6C,04 ; l.
+ 00DC 6D 04                           db 6D,04 ; m.
+ 00DE 6E 04                           db 6E,04 ; n.
+ 00E0 72 04                           db 72,04 ; r.
+ 00E2 73 04                           db 73,04 ; s.
+ 00E4 74 04                           db 74,04 ; t.
+ 00E6 75 04                           db 75,04 ; u.
+ 00E8 76 04                           db 76,04 ; v.
+ 00EA 77 04                           db 77,04 ; w.
+ 00EC 78 04                           db 78,04 ; x.
+ 00EE 79 04                           db 79,04 ; y.
+ 00F0 7A 04                           db 7A,04 ; z.
+ 00F2 7B 04                           db 7B,04 ; {.
+ 00F4 7C 04                           db 7C,04 ; |.
+ 00F6 7D 04                           db 7D,04 ; }.
+ 00F8 7E 04                           db 7E,04 ; ~.
+ 00FA 7F 04                           db 7F,04 ; ..
+ 00FC 80 04                           db 80,04 ; ..
+ 00FE 81 04                           db 81,04 ; ..
+ 0100 8A 04                           db 8A,04 ; ..
+ 0102 86 04                           db 86,04 ; ..
+ 0104 88 04                           db 88,04 ; ..
+ 0106 89 04                           db 89,04 ; ..
+ 0108 8B 04                           db 8B,04 ; ..
+ 010A 8C 04                           db 8C,04 ; ..
+ 010C 8D 04                           db 8D,04 ; ..
+ 010E 8E 04                           db 8E,04 ; ..
+ 0110 8F 04                           db 8F,04 ; ..
+ 0112 90 04                           db 90,04 ; ..
+ 0114 91 04                           db 91,04 ; ..
+ 0116 92 04                           db 92,04 ; ..
+ 0118 93 04                           db 93,04 ; ..
+ 011A 94 04                           db 94,04 ; ..
+ 011C 95 04                           db 95,04 ; ..
+ 011E 96 04                           db 96,04 ; ..
+ 0120 A2 04                           db A2,04 ; ..
+ 0122 9A 04                           db 9A,04 ; ..
+ 0124 9C 04                           db 9C,04 ; ..
+ 0126 9D 04                           db 9D,04 ; ..
+ 0128 9E 04                           db 9E,04 ; ..
+ 012A 9F 04                           db 9F,04 ; ..
+ 012C A3 04                           db A3,04 ; ..
+ 012E A4 04                           db A4,04 ; ..
+ 0130 A5 04                           db A5,04 ; ..
+ 0132 A0 04                           db A0,04 ; ..
+ 0134 A1 04                           db A1,04 ; ..
+ 0136 A6 04                           db A6,04 ; ..
+ 0138 A7 04                           db A7,04 ; ..
+ 013A A8 04                           db A8,04 ; ..
+ 013C A9 04                           db A9,04 ; ..
+ 013E AA 04                           db AA,04 ; ..
+ 0140 B0 04                           db B0,04 ; ..
+ 0142 AE 04                           db AE,04 ; ..
+ 0144 B1 04                           db B1,04 ; ..
+ 0146 B2 04                           db B2,04 ; ..
+ 0148 B3 04                           db B3,04 ; ..
+ 014A B4 04                           db B4,04 ; ..
+ 014C B5 04                           db B5,04 ; ..
+ 014E B6 04                           db B6,04 ; ..
+ 0150 B7 04                           db B7,04 ; ..
+ 0152 B8 04                           db B8,04 ; ..
+ 0154 B9 04                           db B9,04 ; ..
+ 0156 BA 04                           db BA,04 ; ..
+ 0158 BB 04                           db BB,04 ; ..
+ 015A BC 04                           db BC,04 ; ..
+ 015C BD 04                           db BD,04 ; ..
+ 015E BE 04                           db BE,04 ; ..
+ 0160 C5 04                           db C5,04 ; ..
+ 0162 C7 04                           db C7,04 ; ..
+ 0164 C8 04                           db C8,04 ; ..
+ 0166 C9 04                           db C9,04 ; ..
+ 0168 CA 04                           db CA,04 ; ..
+ 016A CB 04                           db CB,04 ; ..
+ 016C CC 04                           db CC,04 ; ..
+ 016E CD 04                           db CD,04 ; ..
+      _SWTAB   ENDS

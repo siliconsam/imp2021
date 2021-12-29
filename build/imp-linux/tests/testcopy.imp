@@ -1,0 +1,35 @@
+%begin
+
+    %string(16) filename = "zzz.lis"
+    %string(15) sourcename = "zzzsource.txt"
+    %string(255) longdata
+    %integer ch
+
+    selectoutput(0)
+    printstring("Opening source ".sourcename); newline
+    printstring("Opening file ".filename); newline
+
+SETDEBUGLEVEL( 0 { + dbgprog + dbgmain} + dbgio )
+!    openinput(1,sourcename)
+    selectinput(1)
+!    openoutput(1,filename)
+    selectoutput(1)
+    
+    %cycle
+        readsymbol(ch)
+selectoutput(0)
+        printsymbol(ch) %unless (ch = eof)
+selectoutput(1)
+        printsymbol(ch) %unless (ch = eof)
+    %repeat %until (ch = eof)
+
+    closeinput
+    closeoutput
+    selectoutput(0)
+    newline
+    printstring("Closed file ".sourcename); newline
+    printstring("Closed file ".filename); newline
+
+SETDEBUGLEVEL(0)
+
+%end %of %program

@@ -1,0 +1,46 @@
+{----------------------------------------------------------------------------}
+    %external %string(255) %function I to S(%integer n, places)
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %string(255) s
+	
+        s = int2ascii( n, 10, places )
+ 0004 FF 75 10                        PUSH WORD [EBP+ 16]
+ 0007 6A 0A                           PUSH  10
+ 0009 FF 75 0C                        PUSH WORD [EBP+ 12]
+ 000C 8D 85 FC FD FF FF               LEA EAX,[EBP-516]
+ 0012 50                              PUSH EAX
+ 0013 E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 0016 83 C4 10                        ADD ESP, 16
+ 0019 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 001F 50                              PUSH EAX
+ 0020 8D 8D FC FD FF FF               LEA ECX,[EBP-516]
+ 0026 51                              PUSH ECX
+ 0027 68 FF 00 00 00                  PUSH  255
+ 002C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 002F 83 C4 0C                        ADD ESP, 12
+
+        %result = s
+ 0032 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0035 50                              PUSH EAX
+ 0036 8D 8D FC FE FF FF               LEA ECX,[EBP-260]
+ 003C 51                              PUSH ECX
+ 003D 68 FF 00 00 00                  PUSH  255
+ 0042 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0045 83 C4 0C                        ADD ESP, 12
+ 0048 C9                              LEAVE
+ 0049 C3                              RET
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

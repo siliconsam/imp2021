@@ -1,0 +1,13 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {----------------------------------------------------------------------------}
+   2      %external %routine skipsymbol
+   3          %integer trash
+   4  
+   5          readsymbol(trash)
+   6      %end
+   7  
+   8  {----------------------------------------------------------------------------}
+   9  %endoffile
+
+   5 Statements compiled

@@ -1,0 +1,28 @@
+%begin
+
+%integer a
+%constinteger fin1 = 1, fin2 = 2
+%constinteger fout1 = 1, fout2 = 2, fout3 = 3
+
+select input( 0 ); select output ( 0 );
+
+printstring( "Current input = "); write( input stream, 0 ); newline
+printstring( "Current output = "); write( output stream, 0 ); newline
+
+select input( fin1 ); select output ( fout1 );
+printstring( "Current input = "); write( input stream, 0 ); newline
+printstring( "Current output = "); write( output stream, 0 ); newline
+
+select input( fin2 ); select output ( fout1 );
+printstring( "Current input = "); write( input stream, 0 ); newline
+printstring( "Current output = "); write( output stream, 0 ); newline
+
+select input( fin1 ); select output ( fout2 );
+printstring( "Current input = "); write( input stream, 0 ); newline
+printstring( "Current output = "); write( output stream, 0 ); newline
+
+select input( fin2 ); select output ( fout2 );
+printstring( "Current input = "); write( input stream, 0 ); newline
+printstring( "Current output = "); write( output stream, 0 ); newline
+
+%endofprogram

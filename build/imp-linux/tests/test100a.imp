@@ -1,0 +1,43 @@
+%begin
+  %const %integer arraysize = 4
+
+  ! variant/union format requires () brackets around the field list
+  %recordformat fm (%integer a,(%bytearray char(1:arraysize) %or %longinteger blurb))
+
+  %record (fm) bill
+
+  %integer loop
+
+  bill_a = 3
+  bill_blurb = 257
+  ! splitting _blurb into  byte values would give
+  ! _blurb %and 255 -> 1
+  ! _blurb << 8 %and 255 -> 1
+  printstring("Blurb = ")
+  printstring(itos(bill_blurb,3))
+  newline
+
+  ! splitting _blurb into  byte values would give
+  ! _blurb %and 255 -> _char(1) = 1
+  ! _blurb << 8 %and 255 -> char(2) = 1
+  printstring("Bill_char = ")
+  %for loop = 1,1,arraysize %cycle
+     printstring(itos(bill_char(loop),3))
+  %repeat
+  newline
+
+  Bill_char(1) = 5
+
+  ! joining _char bytes into the _blurb integer would give
+  ! _char(1) + 256*(char(1) + 256*(char(2) + 256*char(4))) as value for _blurb
+  printstring("Blurb = ")
+  printstring(itos(bill_blurb,3))
+  newline
+
+  printstring("Bill_char = ")
+  %for loop = 1,1,arraysize %cycle
+     printstring(itos(bill_char(loop),3))
+  %repeat
+  newline
+
+%endofprogram

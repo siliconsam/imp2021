@@ -1,0 +1,126 @@
+
+    %include "inc.386.registers"
+
+    %constant %integer max panic = 20
+
+    %recordformat impframe( (%record(impframe) %name xebp %or %integer ximp), %integer xret )
+
+    %external %routine %spec terminate io 
+    %external %routine %spec save event( %integer event, sub, extra )
+    %external %routine %spec messageFormatA( %integer message id )
+    %external %routine %spec messageFormatB( %integer address )
+    %external %routine %spec dumpalltrapinfo
+    %external %predicate %spec handler found ( %integer event, address )
+    %external %predicate %spec initial entry found ( %integer address )
+    %external %integer %function %spec handler entry address( %integer address )
+
+{------------------------------------------------------------------------------}
+    %routine impexit( %integer status )
+        terminateio
+        exit( status )
+    %end
+
+{------------------------------------------------------------------------------}
+    %external %routine impstop
+        impexit(1)
+    %end
+
+{------------------------------------------------------------------------------}
+    %external %routine impsignal ( %integer event,extra,sub )
+        %integer status
+        %record(impframe) %name mybp,chainbp
+        %integer panic
+
+        ! JDM: This code will dump out the IMP trap tables
+        ! Uncomment when debugging the run-time code
+        ! Do NOT delete from this source code
+        %if (debugmode = dbgtrap) %then dumpalltrapinfo
+
+        ! Remember the event data and form the event message
+        save event( event, sub, extra )
+
+        ! try to find our own base pointer...
+        ! We have to use embedded machine code to read the Frame Pointer/Base Pointer
+        *mov_ mybp,ebp
+
+        ! make a copy of the current frame
+        chainbp == mybp
+
+        ! Now chainbp_xret is a code address in the IMP program.
+        ! We trace back the stack until we find a valid trap block
+        ! or we've been nested too deeply (i.e. panic cout)
+        ! or we reach the IMP program entry point
+        panic = 0
+        %cycle
+            ! Can we find a handler to catch the event?
+            ! JDM: We must match the event trapbits
+            ! and the address inside the "defence" zone
+            %if handler found ( event, chainbp_xret ) %start
+
+                ! Yes, so overwrite the Frame Pointer and return address
+                mybp_xebp == chainbp_xebp                         { set my return BP to the trappers BP }
+                mybp_xret = handler entry address( chainbp_xret ) { and my return location is the trap }
+
+                %return                    { kazzam! }
+            %finish
+
+            %exit %if initial entry found ( chainbp_xret )
+
+            chainbp == chainbp_xebp  { previous stack frame }
+            panic = panic + 1
+
+            ! Set up various loop exit tests
+            %exit %if (panic > 20)       ;! We've been looking too many times
+            %exit %if (chainbp_xret = 0) ;! We've gone too far down the chain
+        %repeat
+
+        ! If we get here, we didn't find a willing catcher,
+        ! so instead we'll print a diagnostic stack dump and then exit
+        %if (event # 0) %start { Don't report a normal %stop }
+
+            messageFormatA( 1 )
+
+            ! We've already initialised our stack traceback to look for
+            ! trap blocks, so now we re-run the trace with some printout
+            panic = 0
+
+            messageFormatA( 2 )
+
+            ! loop back through the stack
+            %cycle
+                messageFormatB( mybp_xret )
+
+                ! have we gone too far, and found the enty point's trap handler?
+                %exit %if initial entry found ( mybp_xret )
+
+                mybp == mybp_xebp  { previous stack frame }
+                panic = panic + 1;
+
+                %if (panic > 20) %or (mybp_xret = 0) %start
+
+                    messageFormatA( 4 )
+
+                    %exit
+                %finish
+            %repeat
+
+            messageFormatA( 5 )
+            messageFormatA( 3 )
+
+            status = 1
+        %finish %else %start
+            status = sub
+
+            %if (extra = 0) %start
+                ! %signal 0,0,n  == %stop with exit status == n
+                %if ((DEBUGMODE & dbgcore) # 0) %then messageFormatA( 6 )
+            %finish %else %start
+                messageFormatA( 3 )
+            %finish
+        %finish
+
+        impexit( status )
+    %end
+
+{------------------------------------------------------------------------------}
+%endoffile

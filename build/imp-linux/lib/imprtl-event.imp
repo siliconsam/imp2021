@@ -1,0 +1,227 @@
+
+    %include "inc.386.registers"
+
+    %recordformat impevent( %integer event,sub,extra, %string(255) message )
+
+    %own %record(impevent) lastevent
+
+    %external %string(14) %function %spec handler name( %integer address )
+
+{------------------------------------------------------------------------------}
+    %external %integer %function get event
+        %result = lastevent_event
+    %end
+
+    %external %integer %function get eventsub
+        %result = lastevent_sub
+    %end
+
+    %external %integer %function get eventinfo
+        %result = lastevent_extra
+    %end
+
+    %external %routine get eventmessage( %string(*) %name message )
+        message = lastevent_message
+    %end
+
+    %external %routine save event( %integer event, sub, extra )
+        %switch esw(0:max event - 1)
+        %string(16) e,s,x
+        %string(255) msg,eventmsg
+
+        e = itos(event,0)
+        s = itos(sub,0)
+        x = itos(extra,0)
+
+        eventmsg = "(".e.",".s.",".x.")"
+
+        ! For the main ones we generate, try to be helpful...
+        -> esw(event) %if (0 < event) %and (event < max event)
+        -> esw(max event - 1)
+    esw(0):
+        %begin
+           ! sub value has full integer range
+           %if (sub < 0) %then msg = "Abandon program, sauve qui puet!"
+           %if (sub = 0) %then msg = "%stop"
+           %if (sub > 0) %then msg = "User generated error. ".s
+        %end
+        -> esac
+    esw(1):
+        %begin
+           %switch ssw(0:15)
+           -> ssw(sub&16_f)
+        ssw(1): msg = "Integer overflow"  ; -> es
+        ssw(2): msg = "Real overflow"     ; -> es
+        ssw(3): msg = "String overflow"   ; -> es
+        ssw(4): msg = "Division by zero"  ; -> es
+        ssw(5): msg = "Truncation"        ; -> es
+        ssw(*): msg = "Overflow ".eventmsg; -> es
+        es:
+        %end
+        -> esac
+    esw(2):
+        %begin
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+        ssw(1): msg = "Not enough store"         ; -> es
+        ssw(2): msg = "Output exceeded"          ; -> es
+        ssw(3): msg = "Time exceeded"            ; -> es
+        ssw(*): msg = "Excess Resource ".eventmsg; -> es
+        es:
+        %end
+        -> esac
+    esw(3):
+        %begin
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+        ssw(1): msg = "Data error - Symbol '".tostring(extra&16_ff)."' (".x.")"; -> es
+        ssw(*): msg = "Data error ".eventmsg                                   ; -> es
+        es:
+        %end
+        -> esac
+    esw(4):
+        %begin
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+        ssw(1): msg = "Symbol in data"        ; -> es
+        ssw(*): msg = "Invalid data ".eventmsg; -> es
+        es:
+        %end
+        -> esac
+    esw(5):
+        %begin
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+        ssw(1): msg = "Illegal FOR loop"                                           ; -> es
+        ssw(2): msg = "Illegal exponent - Exponent = ".x                           ; -> es 
+        ssw(3): msg = "Array inside-out"                                           ; -> es
+        ssw(4): msg = "String inside-out"                                          ; -> es
+        ssw(5): msg = "Illegal exponent '".x."'"                                   ; -> es
+        ssw(*): msg = "Invalid argument - '".e." Sub-class = ".s.", Value = ".x."'"; -> es
+        es:
+        %end
+        -> esac
+    esw(6):
+        %begin
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+        ssw(1): msg = "Capacity exceeded"
+                %if (extra = 1) %then msg = msg." (String copy overflow)"
+                %if (extra = 2) %then msg = msg." (String append overflow)"
+                msg=msg."."                                                          ; -> es
+        ssw(2): msg = "Array bound fault - Index = ".x                               ; -> es
+        ssw(3): msg = "Switch bound fault = ".x                                      ; -> es
+        ssw(4): msg = "Illegal event signal"                                         ; -> es
+        ssw(5): msg = "CHARNO out of range '".x."'"                                  ; -> es
+        ssw(6): msg = "TOSTRING out of range '".x."'"                                ; -> es
+        ssw(7): msg = "Illegal shift '".x."'"                                        ; -> es
+        ssw(*): msg = "Out of range fault - (".e." Sub-class = ".s.", Value = ".x.")"; -> es
+        es:
+        %end
+        -> esac
+    esw(7):
+        %begin
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+        ssw(*): msg = "Resolution fails ".eventmsg; -> es
+        es:
+        %end
+        -> esac
+    esw(8):
+        %begin
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+        ssw(1): msg = "Unassigned variable"             ; -> es
+        ssw(2): msg = "No switch label '".x."'"         ; -> es
+        ssw(3): msg = "For variable corrupt"            ; -> es
+        ssw(*): msg = "Undefined switch value ".eventmsg; -> es
+        es:
+        %end
+        -> esac
+    esw(9):
+        %begin
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+        ssw(1):  msg = "Unexpected end of input"                ; -> es
+        ssw(2):  msg = "Couldn't open file. Error Code '".x."'" ; -> es
+        ssw(3):  msg = "File system error '".x."'"              ; -> es
+        ssw(4):  msg = "Input stream '".x."' has not been opened"  ; -> es
+        ssw(5):  msg = "Output stream '".x."' has not been opened" ; -> es
+        ssw(9):  msg = "Bad stream# '".x."'"                    ; -> es
+        ssw(10): msg = "Invalid filename for stream# '".x."'"   ; -> es
+        ssw(*):  msg = "Input/Output error ".eventmsg           ; -> es
+        es:
+        %end
+        -> esac
+    esw(10):
+        %begin
+            %switch ssw(0:15)
+            -> ssw(sub&16_f)
+        ssw(1): msg = "Incorrect command line parameter count. Argc=".x; -> es
+        ssw(*): msg = "Library procedure error ".eventmsg; -> es
+        es:
+        %end
+        -> esac
+    esw(*):
+        msg = "Signal ".eventmsg." called."; -> esac
+    esac:
+
+        lastevent_event = event
+        lastevent_sub = sub
+        lastevent_extra = extra
+        lastevent_message = msg
+    %end
+
+    %external %routine messageFormatA( %integer message id )
+        %switch mess(1:8)
+        %string(16) evt,sub,xtr
+
+        evt = itos(lastevent_event,0)
+        sub = itos(lastevent_sub,0)
+        xtr = itos(lastevent_extra,0)
+
+        selectoutput(0)
+        newline
+        printstring( "IMPRTL: " )
+        -> mess(message id)
+    mess(1): printstring( "SHOWEVENT: " )
+             printstring( lastevent_message )
+             -> esac
+    mess(2): printstring( "Start of Stack dump" )
+             -> esac
+    mess(3): printstring( "Signal No handler found for signalled event (" )
+             printstring( evt )
+             printstring( ", " )
+             printstring( sub )
+             printstring( ", " )
+             printstring( xtr )
+             printstring( ")." )
+             -> esac
+    mess(4): printstring( "Possible stack error?" )
+             -> esac
+    mess(5): printstring( "End of Stack dump" )
+             -> esac
+    mess(6): printstring( "Stopping program with exit status=" )
+             printstring( sub )
+             -> esac
+
+    mess(*): printstring( "Unknown message# given." )
+             -> esac
+    esac:
+        newline
+    %end
+
+    %external %routine messageFormatB( %integer loc )
+
+        selectoutput(0)
+        printstring( "IMPRTL: " )
+        printstring( "Called from (x'" )
+        printstring( int2ascii(loc,16,0) )
+        printstring( "') in '" )
+        printstring( handler name( loc ) )
+        printstring( "'" )
+        newline
+    %end
+
+{------------------------------------------------------------------------------}
+%endoffile

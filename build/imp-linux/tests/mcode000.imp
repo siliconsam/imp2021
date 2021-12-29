@@ -1,0 +1,28 @@
+
+    %include "inc.386.registers"
+
+    %constant %integer pass2 = 2<<14
+    %constant %integer flags = 16_7
+
+!    %diagnose pass2 + flags;
+
+    %external %integer %function mcode000( %integer number )
+        %integer sum
+
+        *MOV _ eax,number
+        *ADD _ eax,#158
+        *MOV _ sum,eax
+
+        %result = sum
+    %end
+
+    ! Similar behaviour to mcode000
+    ! BUT declared as a routine and result left in register eax
+    %external %routine mcode000x( %integer number )
+
+        *MOV _ eax,number
+        *ADD _ eax,#159
+
+    %end
+
+%endoffile

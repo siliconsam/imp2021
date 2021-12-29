@@ -1,0 +1,274 @@
+{----------------------------------------------------------------------------}
+    ! Print a floating point number out, along the lines of
+    ! +/-nnn.nnn@+/-nn, to occupy Places character spaces.
+    ! Note - there's a bug in this code such that it does not
+    ! round the number properly.  EG 3.999999999 to 4 places
+    ! should be 4.00 but we print 3.99
+
+    %external %routine print(%longreal x, %integer places)
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %integer exponent, digit, point, printexpo
+
+        %if x = 0 %start
+ 0004 DD 45 0C                        FLD QWORD [EBP+ 12]
+ 0007 D9 EE                           FLDZ
+ 0009 DE D9                           FCOMPP ST( 1),ST
+ 000B DF E0                           FSTSW AX
+ 000D 9E                              SAHF
+ 000E 75 00                           JNE L 1001
+            printsymbol('0')
+ 0010 6A 30                           PUSH  48
+ 0012 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 0015 83 C4 04                        ADD ESP, 4
+            printsymbol('.')
+ 0018 6A 2E                           PUSH  46
+ 001A E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 001D 83 C4 04                        ADD ESP, 4
+            printsymbol('0')
+ 0020 6A 30                           PUSH  48
+ 0022 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 0025 83 C4 04                        ADD ESP, 4
+            %while places > 3 %cycle
+ 0028                      L 1002  EQU $
+ 0028 8B 45 08                        MOV EAX,[EBP+ 8]
+ 002B 3D 03 00 00 00                  CMP EAX, 3
+ 0030 7E 00                           JLE L 1003
+                printsymbol('0')
+ 0032 6A 30                           PUSH  48
+ 0034 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 0037 83 C4 04                        ADD ESP, 4
+                places = places - 1
+ 003A FF 4D 08                        DEC WORD [EBP+ 8]
+            %repeat
+ 003D EB 00                           JMP L 1002
+ 003F                      L 1003  EQU $
+            %return
+ 003F C9                              LEAVE
+ 0040 C3                              RET
+        %finish
+ 0041                      L 1001  EQU $
+
+        %if x < 0 %then printsymbol('-') %and x = -x %and places = places - 1
+ 0041 DD 45 0C                        FLD QWORD [EBP+ 12]
+ 0044 D9 EE                           FLDZ
+ 0046 DE D9                           FCOMPP ST( 1),ST
+ 0048 DF E0                           FSTSW AX
+ 004A 9E                              SAHF
+ 004B 76 00                           JBE L 1004
+ 004D 6A 2D                           PUSH  45
+ 004F E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 0052 83 C4 04                        ADD ESP, 4
+ 0055 DD 45 0C                        FLD QWORD [EBP+ 12]
+ 0058 D9 E0                           FCHS ST( 0),ST
+ 005A DD 5D 0C                        FSTP QWORD [EBP+ 12]
+ 005D FF 4D 08                        DEC WORD [EBP+ 8]
+ 0060                      L 1004  EQU $
+
+        %if places < 3 %then places = 3
+ 0060 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0063 3D 03 00 00 00                  CMP EAX, 3
+ 0068 7D 00                           JGE L 1005
+ 006A C7 45 08 03 00 00 00            MOV WORD [EBP+ 8], 3
+ 0071                      L 1005  EQU $
+   
+        exponent = 0
+ 0071 C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
+        printexpo = 0
+ 0078 C7 45 EC 00 00 00 00            MOV WORD [EBP-20], 0
+
+        %while x < 1 %cycle
+ 007F                      L 1006  EQU $
+ 007F DD 45 0C                        FLD QWORD [EBP+ 12]
+ 0082 DB 05 00 00 00 00               FILD [COT+0000]
+ 0088 DE D9                           FCOMPP ST( 1),ST
+ 008A DF E0                           FSTSW AX
+ 008C 9E                              SAHF
+ 008D 76 00                           JBE L 1007
+            x = x * 10
+ 008F DD 45 0C                        FLD QWORD [EBP+ 12]
+ 0092 DB 05 04 00 00 00               FILD [COT+0004]
+ 0098 DE C9                           FMULP ST( 1),ST
+ 009A DD 5D 0C                        FSTP QWORD [EBP+ 12]
+            exponent = exponent - 1
+ 009D FF 4D F8                        DEC WORD [EBP-8]
+        %repeat
+ 00A0 EB 00                           JMP L 1006
+ 00A2                      L 1007  EQU $
+
+        %while x >= 10 %cycle
+ 00A2                      L 1008  EQU $
+ 00A2 DD 45 0C                        FLD QWORD [EBP+ 12]
+ 00A5 DB 05 04 00 00 00               FILD [COT+0004]
+ 00AB DE D9                           FCOMPP ST( 1),ST
+ 00AD DF E0                           FSTSW AX
+ 00AF 9E                              SAHF
+ 00B0 77 00                           JA L 1009
+            x = x / 10
+ 00B2 DD 45 0C                        FLD QWORD [EBP+ 12]
+ 00B5 DB 05 04 00 00 00               FILD [COT+0004]
+ 00BB DE F9                           FDIVP ST( 1),ST
+ 00BD DD 5D 0C                        FSTP QWORD [EBP+ 12]
+            exponent = exponent + 1
+ 00C0 FF 45 F8                        INC WORD [EBP-8]
+        %repeat
+ 00C3 EB 00                           JMP L 1008
+ 00C5                      L 1009  EQU $
+
+        ! Now X is between 1.0 and 9.99 and exponent is set accordingly
+        ! If the exponent is "large" we will use scientific notation
+        point = places - 2;     ! for useful digits after the "0."
+ 00C5 8B 45 08                        MOV EAX,[EBP+ 8]
+ 00C8 2D 02 00 00 00                  SUB EAX, 2
+ 00CD 89 45 F0                        MOV [EBP-16],EAX
+        %if exponent >= places %or exponent < -point %start
+ 00D0 8B 45 F8                        MOV EAX,[EBP-8]
+ 00D3 3B 45 08                        CMP EAX,[EBP+ 8]
+ 00D6 7D 00                           JGE L 1010
+ 00D8 8B 45 F0                        MOV EAX,[EBP-16]
+ 00DB F7 D8                           NEG EAX
+ 00DD 8B 4D F8                        MOV ECX,[EBP-8]
+ 00E0 39 C1                           CMP ECX,EAX
+ 00E2 7D 00                           JGE L 1011
+ 00E4                      L 1010  EQU $
+            printexpo = exponent
+ 00E4 8B 45 F8                        MOV EAX,[EBP-8]
+ 00E7 89 45 EC                        MOV [EBP-20],EAX
+            exponent = 0
+ 00EA C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
+            places = places - 2
+ 00F1 83 6D 08 02                     SUB WORD [EBP+ 8], 2
+        %finish
+ 00F5                      L 1011  EQU $
+
+        ! Now the exponent is small-ish
+        %if exponent < 0 %start;      ! 0.nnnn
+ 00F5 8B 45 F8                        MOV EAX,[EBP-8]
+ 00F8 3D 00 00 00 00                  CMP EAX, 0
+ 00FD 7D 00                           JGE L 1012
+            printsymbol('0')
+ 00FF 6A 30                           PUSH  48
+ 0101 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 0104 83 C4 04                        ADD ESP, 4
+            printsymbol('.')
+ 0107 6A 2E                           PUSH  46
+ 0109 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 010C 83 C4 04                        ADD ESP, 4
+            places = places - 2
+ 010F 83 6D 08 02                     SUB WORD [EBP+ 8], 2
+
+            %while exponent < -1 %cycle
+ 0113                      L 1013  EQU $
+ 0113 8B 45 F8                        MOV EAX,[EBP-8]
+ 0116 3D FF FF FF FF                  CMP EAX,-1
+ 011B 7D 00                           JGE L 1014
+                printsymbol('0')
+ 011D 6A 30                           PUSH  48
+ 011F E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 0122 83 C4 04                        ADD ESP, 4
+                exponent = exponent + 1
+ 0125 FF 45 F8                        INC WORD [EBP-8]
+                places = places - 1
+ 0128 FF 4D 08                        DEC WORD [EBP+ 8]
+            %repeat
+ 012B EB 00                           JMP L 1013
+ 012D                      L 1014  EQU $
+
+            point = -1; ! because we've already passed that
+ 012D C7 45 F0 FF FF FF FF            MOV WORD [EBP-16],-1
+        %else;          ! nnn.nnn
+ 0134 EB 00                           JMP L 1015
+ 0136                      L 1012  EQU $
+            point = exponent
+ 0136 8B 45 F8                        MOV EAX,[EBP-8]
+ 0139 89 45 F0                        MOV [EBP-16],EAX
+        %finish
+ 013C                      L 1015  EQU $
+
+        %while places > 0 %cycle
+ 013C                      L 1016  EQU $
+ 013C 8B 45 08                        MOV EAX,[EBP+ 8]
+ 013F 3D 00 00 00 00                  CMP EAX, 0
+ 0144 7E 00                           JLE L 1017
+            digit = int pt(x)
+ 0146 DD 45 0C                        FLD QWORD [EBP+ 12]
+ 0149 83 EC 08                        SUB ESP, 8
+ 014C 89 E6                           MOV ESI,ESP
+ 014E DD 1E                           FSTP QWORD [ESI]
+ 0150 E8 3B 00                        CALL 'INTPT' (EXTERN  59)
+ 0153 83 C4 08                        ADD ESP, 8
+ 0156 89 45 F4                        MOV [EBP-12],EAX
+            ! Rounding as we go through this loop can "oversize" the digit.  This
+            ! of course tells us that we should have printed (eg) 40000 but we
+            ! are now stuck with printing 39999
+            %if digit > 9 %then digit = 9
+ 0159 8B 45 F4                        MOV EAX,[EBP-12]
+ 015C 3D 09 00 00 00                  CMP EAX, 9
+ 0161 7E 00                           JLE L 1018
+ 0163 C7 45 F4 09 00 00 00            MOV WORD [EBP-12], 9
+ 016A                      L 1018  EQU $
+            printsymbol(digit + '0')
+ 016A 8B 45 F4                        MOV EAX,[EBP-12]
+ 016D 05 30 00 00 00                  ADD EAX, 48
+ 0172 50                              PUSH EAX
+ 0173 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 0176 83 C4 04                        ADD ESP, 4
+            x = (x - digit)*10
+ 0179 DD 45 0C                        FLD QWORD [EBP+ 12]
+ 017C DB 45 F4                        FILD [EBP-12]
+ 017F DE E9                           FSUBP ST( 1),ST
+ 0181 DB 05 04 00 00 00               FILD [COT+0004]
+ 0187 DE C9                           FMULP ST( 1),ST
+ 0189 DD 5D 0C                        FSTP QWORD [EBP+ 12]
+            %if point = 0 %then printsymbol('.') %and places = places - 1
+ 018C 8B 45 F0                        MOV EAX,[EBP-16]
+ 018F 3D 00 00 00 00                  CMP EAX, 0
+ 0194 75 00                           JNE L 1019
+ 0196 6A 2E                           PUSH  46
+ 0198 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 019B 83 C4 04                        ADD ESP, 4
+ 019E FF 4D 08                        DEC WORD [EBP+ 8]
+ 01A1                      L 1019  EQU $
+            point = point - 1
+ 01A1 FF 4D F0                        DEC WORD [EBP-16]
+            places = places - 1
+ 01A4 FF 4D 08                        DEC WORD [EBP+ 8]
+        %repeat
+ 01A7 EB 00                           JMP L 1016
+ 01A9                      L 1017  EQU $
+
+        %if printexpo # 0 %start
+ 01A9 8B 45 EC                        MOV EAX,[EBP-20]
+ 01AC 3D 00 00 00 00                  CMP EAX, 0
+ 01B1 74 00                           JE L 1020
+            printsymbol('@')
+ 01B3 6A 40                           PUSH  64
+ 01B5 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
+ 01B8 83 C4 04                        ADD ESP, 4
+            write(printexpo, 1)
+ 01BB FF 75 EC                        PUSH WORD [EBP-20]
+ 01BE 6A 01                           PUSH  1
+ 01C0 E8 35 00                        CALL 'WRITE' (EXTERN  53)
+ 01C3 83 C4 08                        ADD ESP, 8
+        %finish
+ 01C6                      L 1020  EQU $
+    %end
+ 01C6 C9                              LEAVE
+ 01C7 C3                              RET
+
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+ 0000 01 00                           db 01,00 ; ..
+ 0002 00 00                           db 00,00 ; ..
+ 0004 0A 00                           db 0A,00 ; ..
+ 0006 00 00                           db 00,00 ; ..
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

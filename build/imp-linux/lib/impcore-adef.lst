@@ -1,0 +1,52 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  
+   2      %include "inc.386.registers"
+ &  1  %endoflist
+ & 10  %endoffile
+   3  
+   4  {------------------------------------------------------------------------------}
+   5      ! Given a dope vector calculate the offset (in bytes) of the
+   6      ! highest element, and also the offset from A(0,...,0) of
+   7      ! the first element - the size of the store to allocate is
+   8      ! therefore the difference.  We return the two 32 bit answers
+   9      ! with one result => "high" answer is in DX, "low" answer
+   10      ! is in AX.  Thus DX contains the top, AX the A(0) offset
+   11      ! The way we achieve this is compiler dependent, so we declare
+   12      ! this as VOID and then do the return in-line
+   13      %external %routine impadef ( %integer %name dvp )
+   14          %integer dim, sz
+   15          %integer lb, ub, row
+   16          %integer i, base, limit
+   17  
+   18          dim = dvp
+   19          sz = integer( addr(dvp) + 4*(2*dim + 1) )
+   20          ! initialise the base "address" and limit "address"
+   21          base = 0
+   22          limit = 0
+   23  
+   24          %for i=0,1,dim - 1 %cycle
+   25  
+   26              ! General case iterates backwards toward first dimension
+   27              lb = integer( addr(dvp) + 4*(2*dim - 2*i - 1));  ! at i=0, point to the rightmost lower bound
+   28              ub = integer( addr(dvp) + 4*(2*dim - 2*i)    );  ! at i=0, point to the rightmost upper bound
+   29  
+   30              %signal 5, 3, 0 %unless lb <= ub; ! we declare array bounds so that lb <= ub
+   31              row   = (ub - lb) + 1;               ! Number of objects in a row
+   32              base  = base * row + lb
+   33              limit = limit * row + ub
+   34          %repeat
+   35  
+   36          base = base * sz
+   37          limit = (limit + 1) * sz
+   38  
+   39          *mov_ edx,limit
+   40          *mov_ eax,base
+   41  
+   42          %return
+   43      %end
+   44  
+   45  {------------------------------------------------------------------------------}
+   46  %endoffile
+
+   28 Statements compiled

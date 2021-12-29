@@ -1,0 +1,49 @@
+{----------------------------------------------------------------------------}
+    ! Make sure debug mode is initially switched off
+    %own %integer debuglevel = 0
+
+    %external %routine Set Debug
+        debuglevel = dbgprog
+    %end
+
+    %external %routine Clear Debug
+        debuglevel = dbgoff
+    %end
+
+    %external %integer %fn Debug Mode
+        %result = debuglevel
+    %end
+
+    %external %routine Set Debug Level( %integer level )
+        debuglevel = level
+    %end
+
+{----------------------------------------------------------------------------}
+    %external %routine debug space
+        debugsymbol( ' ' )
+    %end
+
+    %external %routine debug spaces( %integer count )
+        %integer i
+
+        %if (count > 0) %start
+            %for i = 1,1,count %cycle
+                debug space
+            %repeat
+        %finish
+    %end
+
+    %external %routine debug string ( %string(255) s )
+        %integer i
+
+        %for i=1,1,length(s) %cycle
+            debug symbol( charno(s,i))
+        %repeat
+    %end
+
+    %external %routine debug newline
+        debug symbol( nl )
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

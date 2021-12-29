@@ -1,0 +1,127 @@
+{----------------------------------------------------------------------------}
+    ! format the number to the given number base
+    ! and prefix by the number base expressed in base 10
+    %external %string(255) %function formatNumber( %integer n,base,places)
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %string(255) s,x
+        %integer i
+
+        %if base = 10 %start
+ 0004 8B 45 10                        MOV EAX,[EBP+ 16]
+ 0007 3D 0A 00 00 00                  CMP EAX, 10
+ 000C 75 00                           JNE L 1001
+            x = int2ascii( n, base, places)
+ 000E FF 75 14                        PUSH WORD [EBP+ 20]
+ 0011 FF 75 10                        PUSH WORD [EBP+ 16]
+ 0014 FF 75 0C                        PUSH WORD [EBP+ 12]
+ 0017 8D 85 F8 FC FF FF               LEA EAX,[EBP-776]
+ 001D 50                              PUSH EAX
+ 001E E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 0021 83 C4 10                        ADD ESP, 16
+ 0024 8D 85 FC FD FF FF               LEA EAX,[EBP-516]
+ 002A 50                              PUSH EAX
+ 002B 8D 8D F8 FC FF FF               LEA ECX,[EBP-776]
+ 0031 51                              PUSH ECX
+ 0032 68 FF 00 00 00                  PUSH  255
+ 0037 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 003A 83 C4 0C                        ADD ESP, 12
+        %else
+ 003D EB 00                           JMP L 1002
+ 003F                      L 1001  EQU $
+            s = int2ascii( n, base, 0)
+ 003F FF 75 14                        PUSH WORD [EBP+ 20]
+ 0042 FF 75 10                        PUSH WORD [EBP+ 16]
+ 0045 6A 00                           PUSH  0
+ 0047 8D 85 F8 FC FF FF               LEA EAX,[EBP-776]
+ 004D 50                              PUSH EAX
+ 004E E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 0051 83 C4 10                        ADD ESP, 16
+ 0054 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 005A 50                              PUSH EAX
+ 005B 8D 8D F8 FC FF FF               LEA ECX,[EBP-776]
+ 0061 51                              PUSH ECX
+ 0062 68 FF 00 00 00                  PUSH  255
+ 0067 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 006A 83 C4 0C                        ADD ESP, 12
+            x = int2ascii( base, 10, places - length(s)  - 1 )
+ 006D FF 75 10                        PUSH WORD [EBP+ 16]
+ 0070 6A 0A                           PUSH  10
+ 0072 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 0075 31 C9                           XOR ECX,ECX
+ 0077 8A 8D FC FE FF FF               MOV CL,[EBP-260]
+ 007D 29 C8                           SUB EAX,ECX
+ 007F 48                              DEC EAX
+ 0080 50                              PUSH EAX
+ 0081 8D 85 F8 FC FF FF               LEA EAX,[EBP-776]
+ 0087 50                              PUSH EAX
+ 0088 E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 008B 83 C4 10                        ADD ESP, 16
+ 008E 8D 85 FC FD FF FF               LEA EAX,[EBP-516]
+ 0094 50                              PUSH EAX
+ 0095 8D 8D F8 FC FF FF               LEA ECX,[EBP-776]
+ 009B 51                              PUSH ECX
+ 009C 68 FF 00 00 00                  PUSH  255
+ 00A1 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 00A4 83 C4 0C                        ADD ESP, 12
+
+            length(x) = length(x) + 1
+ 00A7 FE 85 FC FD FF FF               INC BYTE [EBP-516]
+            charno(x,length(x)) = '_'
+ 00AD 8D 85 FC FD FF FF               LEA EAX,[EBP-516]
+ 00B3 31 C9                           XOR ECX,ECX
+ 00B5 8A 8D FC FD FF FF               MOV CL,[EBP-516]
+ 00BB 01 C8                           ADD EAX,ECX
+ 00BD C6 00 5F                        MOV BYTE [EAX], 95
+            %for i = 1,1,length(s) %cycle
+ 00C0 31 C0                           XOR EAX,EAX
+ 00C2 8A 85 FC FE FF FF               MOV AL,[EBP-260]
+ 00C8 89 85 F4 FC FF FF               MOV [EBP-780],EAX
+ 00CE C7 85 F8 FD FF FF 00 00         MOV WORD [EBP-520], 0
+ 00D8                      L 1003  EQU $
+ 00D8 8B 85 F8 FD FF FF               MOV EAX,[EBP-520]
+ 00DE 3B 85 F4 FC FF FF               CMP EAX,[EBP-780]
+ 00E4 74 00                           JE L 1004
+ 00E6 40                              INC EAX
+ 00E7 89 85 F8 FD FF FF               MOV [EBP-520],EAX
+                length(x) = length(x) + 1
+ 00ED FE 85 FC FD FF FF               INC BYTE [EBP-516]
+                charno(x,length(x)) = charno(s,i)
+ 00F3 8D 85 FC FD FF FF               LEA EAX,[EBP-516]
+ 00F9 31 C9                           XOR ECX,ECX
+ 00FB 8A 8D FC FD FF FF               MOV CL,[EBP-516]
+ 0101 01 C8                           ADD EAX,ECX
+ 0103 8D 8D FC FE FF FF               LEA ECX,[EBP-260]
+ 0109 03 8D F8 FD FF FF               ADD ECX,[EBP-520]
+ 010F 8A 11                           MOV DL,[ECX]
+ 0111 88 10                           MOV [EAX],DL
+            %repeat
+ 0113 EB 00                           JMP L 1003
+ 0115                      L 1004  EQU $
+        %finish
+ 0115                      L 1002  EQU $
+
+        %result = x
+ 0115 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0118 50                              PUSH EAX
+ 0119 8D 8D FC FD FF FF               LEA ECX,[EBP-516]
+ 011F 51                              PUSH ECX
+ 0120 68 FF 00 00 00                  PUSH  255
+ 0125 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0128 83 C4 0C                        ADD ESP, 12
+ 012B C9                              LEAVE
+ 012C C3                              RET
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

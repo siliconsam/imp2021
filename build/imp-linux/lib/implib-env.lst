@@ -1,0 +1,154 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  
+   2      %constant %integer BYTESIZE = 1
+   3      %constant %integer WORDSIZE = 4
+   4  
+   5      ! This returns the pointer to the array of pointers to the environment variables 
+   6      %external %integer %name %function %spec getenvironment
+   7  
+   8      %external %integer %function getenvcount
+   9          %integer %name arr
+   10          %integer count
+   11  
+   12          arr == getenvironment
+   13  
+   14          count = 0
+   15          ! Find the count of environment variables
+   16          ! We treat an address as a 4-byte unsigned value
+   17          ! In this case we are only concerned about zero v non-zero values
+   18          %while integer( addr( arr ) + WORDSIZE*count ) # 0 %cycle
+   19              count = count + 1
+   20          %repeat
+   21  
+   22          %result = count
+   23      %end
+   24  
+   25      %external %string(255) %function getenvname( %integer index )
+   26          %integer i,eqpos,len
+   27          %byte %name b,src
+   28          %string(255) s
+   29  
+   30          length(s) = 0
+   31  
+   32          %if (0 < index <= getenvcount) %start
+   33              ! get the pointer (aka "name") to the C-style char array
+   34              b == byteinteger( integer( addr(getenvironment) + WORDSIZE*(index-1) ) )
+   35  
+   36              ! I ass-u-me that a C string has a length
+   37              ! in the range 0..MAXINT - 1, where MAXINT is 2^31
+   38              ! and each "char" is stored in a byte
+   39              !
+   40              ! Also, I should use len as a 32-bit UNSIGNED integer
+   41              ! and defend against negative values!!
+   42              len = 0
+   43              %while byteinteger( addr( b ) + len ) # 0 %cycle
+   44                  len = len + BYTESIZE
+   45  
+   46                  ! Defend against negative lengths
+   47                  %if (len = -1) %start
+   48                      len = 0
+   49                      %exit
+   50                  %finish
+   51     	        %repeat
+   52  
+   53              ! Now obtain the actual C string
+   54              ! Beware! IMP is restricted to 255 characters at most
+   55              !   An IMP string has a byte prefix indicating string length
+   56              !   So length = 0..255
+   57              ! C strings can be any length, terminated by 0 byte
+   58              eqpos = 0
+   59              %for i = 1,1,len %cycle
+   60                  src == byteinteger( addr( b ) + BYTESIZE*(i - 1) )
+   61                  ! have we found the '=' char
+   62                  %if (src = '=') %and (eqpos = 0) %then eqpos = i
+   63  
+   64                  ! 1) are we before the '=' char
+   65                  ! 2) will the length(string before '=') < 256
+   66                  %if (eqpos = 0) %and (length(s) < 256) %start
+   67                      ! yes to both conditions met so append the current char
+   68                      length(s) = length(s) + 1
+   69                      charno( s, length(s) ) = src
+   70                  %finish
+   71              %repeat
+   72  
+   73          %finish
+   74  
+   75          %result = s
+   76      %end
+   77  
+   78      %external %string(255) %function getenv( %integer index )
+   79          %integer i,eqpos,len
+   80          %byte %name b,src
+   81          %string(255) s
+   82  
+   83          length(s) = 0
+   84  
+   85          %if (0 < index <= getenvcount) %start
+   86              ! get the pointer (aka "name") to the C-style char array 
+   87              b == byteinteger( integer( addr(getenvironment) + WORDSIZE*(index-1) ) )
+   88  
+   89              ! I ass-u-me that a C string has a length
+   90              ! in the range 0..MAXINT - 1, where MAXINT is 2^31
+   91              ! and each "char" is stored in a byte
+   92              !
+   93              ! Also, I should use len as a 32-bit UNSIGNED integer
+   94              ! and defend against negative values!!
+   95              len = 0
+   96              %while byteinteger( addr( b ) + len ) # 0 %cycle
+   97                  len = len + BYTESIZE
+   98  
+   99                  ! Defend against negative lengths
+  100                  %if (len = -1) %start
+  101                      len = 0
+  102                      %exit
+  103                  %finish
+  104              %repeat
+  105  
+  106              ! Now obtain the actual C string
+  107              ! Beware! IMP is restricted to 255 characters at most
+  108              !   An IMP string has a byte prefix indicating string length
+  109              !   So length = 0..255
+  110              ! C strings can be any length, terminated by 0 byte
+  111              eqpos = 0
+  112              %for i = 1,1,len %cycle
+  113                  src == byteinteger( addr( b ) + BYTESIZE*(i - 1) )
+  114  
+  115                  ! 1) have we found the '=' char
+  116                  ! 2) will the length(string AFTER '=') < 256
+  117                  %if (eqpos # 0) %and ((len - eqpos) < 256) %start
+  118                      ! yes both conditions met so append the current char
+  119                      length(s) = length(s) + 1
+  120                      charno( s, length(s) ) = src
+  121                  %finish
+  122  
+  123                  ! have we found the '=' char
+  124                  %if (src = '=') %and (eqpos = 0) %then eqpos = i
+  125              %repeat
+  126  
+  127          %finish
+  128  
+  129          %result = s
+  130      %end
+  131  
+  132      %external %integer %function getenvindex( %string(255) varname )
+  133          %integer i,count,index
+  134  
+  135          index = 0
+  136  
+  137          count = getenvcount
+  138          i = 1
+  139          %cycle
+  140              %if (varname = getenvname( i )) %start
+  141                  index = i
+  142              %else
+  143                  i = i + 1
+  144              %finish
+  145          %repeat %until (index # 0) %or (i > count)
+  146  
+  147          %result = index
+  148      %end
+  149  
+  150  %endoffile
+
+   82 Statements compiled

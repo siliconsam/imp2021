@@ -1,0 +1,234 @@
+{----------------------------------------------------------------------------}
+    %external %string(255) %function int2ascii( %integer nn, base, places )
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+
+        %own %string(36) basechar = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        %string(255) reversed, human
+        %integer n, np, r, i, negative;
+
+        ! Validate the number base
+        ! Since basechar has from 1 to 36 characters, we can only output numbers
+        ! to base 2 thru 36. Of course if we add more characters then ...
+        ! NB a number to base 1 cannot sensibly be displayed
+        %if (base < 2) %then base = 10
+ 0004 8B 45 10                        MOV EAX,[EBP+ 16]
+ 0007 3D 02 00 00 00                  CMP EAX, 2
+ 000C 7D 00                           JGE L 1001
+ 000E C7 45 10 0A 00 00 00            MOV WORD [EBP+ 16], 10
+ 0015                      L 1001  EQU $
+        %if (base > 36) %then base = 10
+ 0015 8B 45 10                        MOV EAX,[EBP+ 16]
+ 0018 3D 24 00 00 00                  CMP EAX, 36
+ 001D 7E 00                           JLE L 1002
+ 001F C7 45 10 0A 00 00 00            MOV WORD [EBP+ 16], 10
+ 0026                      L 1002  EQU $
+
+        length(reversed) = 0
+ 0026 C6 85 FC FE FF FF 00            MOV BYTE [EBP-260], 0
+        n = nn
+ 002D 8B 45 14                        MOV EAX,[EBP+ 20]
+ 0030 89 85 F8 FD FF FF               MOV [EBP-520],EAX
+        %if (n = 0) %start
+ 0036 8B 85 F8 FD FF FF               MOV EAX,[EBP-520]
+ 003C 3D 00 00 00 00                  CMP EAX, 0
+ 0041 75 00                           JNE L 1003
+            r = 0
+ 0043 C7 85 F0 FD FF FF 00 00         MOV WORD [EBP-528], 0
+            ! string index starts at 1 - but r starts from 0
+            ! so if r = 0 we want char 1 in the "basechar" string etc...
+            length(reversed) = length(reversed) + 1
+ 004D FE 85 FC FE FF FF               INC BYTE [EBP-260]
+            charno(reversed,length(reversed)) = charno(basechar,r + 1)
+ 0053 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 0059 31 C9                           XOR ECX,ECX
+ 005B 8A 8D FC FE FF FF               MOV CL,[EBP-260]
+ 0061 01 C8                           ADD EAX,ECX
+ 0063 8B 8D F0 FD FF FF               MOV ECX,[EBP-528]
+ 0069 41                              INC ECX
+ 006A 81 C1 00 00 00 00               ADD ECX,DATA+ 0
+ 0070 8A 11                           MOV DL,[ECX]
+ 0072 88 10                           MOV [EAX],DL
+        %else
+ 0074 EB 00                           JMP L 1004
+ 0076                      L 1003  EQU $
+            ! Now to avoid problems with -MAXINT
+            %if (n > 0) %start
+ 0076 8B 85 F8 FD FF FF               MOV EAX,[EBP-520]
+ 007C 3D 00 00 00 00                  CMP EAX, 0
+ 0081 7E 00                           JLE L 1005
+                negative = 0
+ 0083 C7 85 E8 FD FF FF 00 00         MOV WORD [EBP-536], 0
+                n = -n
+ 008D F7 9D F8 FD FF FF               NEG WORD [EBP-520]
+            %else
+ 0093 EB 00                           JMP L 1006
+ 0095                      L 1005  EQU $
+                negative = 1
+ 0095 C7 85 E8 FD FF FF 01 00         MOV WORD [EBP-536], 1
+            %finish
+ 009F                      L 1006  EQU $
+
+            %while (n < 0) %cycle
+ 009F                      L 1007  EQU $
+ 009F 8B 85 F8 FD FF FF               MOV EAX,[EBP-520]
+ 00A5 3D 00 00 00 00                  CMP EAX, 0
+ 00AA 7D 00                           JGE L 1008
+                np = n // base
+ 00AC 8B 85 F8 FD FF FF               MOV EAX,[EBP-520]
+ 00B2 99                              CWD
+ 00B3 F7 7D 10                        IDIV WORD [EBP+ 16]
+ 00B6 89 85 F4 FD FF FF               MOV [EBP-524],EAX
+                r = (np * base) - n
+ 00BC 8B 85 F4 FD FF FF               MOV EAX,[EBP-524]
+ 00C2 F7 6D 10                        IMUL WORD [EBP+ 16]
+ 00C5 2B 85 F8 FD FF FF               SUB EAX,[EBP-520]
+ 00CB 89 85 F0 FD FF FF               MOV [EBP-528],EAX
+                ! string index starts at 1 - but r starts from 0
+                ! so if r = 0 we want char 1 in the "basechar" string etc...
+                length(reversed) = length(reversed) + 1
+ 00D1 FE 85 FC FE FF FF               INC BYTE [EBP-260]
+                charno(reversed,length(reversed)) = charno(basechar,r + 1)
+ 00D7 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 00DD 31 C9                           XOR ECX,ECX
+ 00DF 8A 8D FC FE FF FF               MOV CL,[EBP-260]
+ 00E5 01 C8                           ADD EAX,ECX
+ 00E7 8B 8D F0 FD FF FF               MOV ECX,[EBP-528]
+ 00ED 41                              INC ECX
+ 00EE 81 C1 00 00 00 00               ADD ECX,DATA+ 0
+ 00F4 8A 11                           MOV DL,[ECX]
+ 00F6 88 10                           MOV [EAX],DL
+                n = np
+ 00F8 8B 85 F4 FD FF FF               MOV EAX,[EBP-524]
+ 00FE 89 85 F8 FD FF FF               MOV [EBP-520],EAX
+            %repeat
+ 0104 EB 00                           JMP L 1007
+ 0106                      L 1008  EQU $
+
+            %if (negative > 0) %start
+ 0106 8B 85 E8 FD FF FF               MOV EAX,[EBP-536]
+ 010C 3D 00 00 00 00                  CMP EAX, 0
+ 0111 7E 00                           JLE L 1009
+                length(reversed) = length(reversed) + 1
+ 0113 FE 85 FC FE FF FF               INC BYTE [EBP-260]
+                charno(reversed,length(reversed)) = '-'
+ 0119 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 011F 31 C9                           XOR ECX,ECX
+ 0121 8A 8D FC FE FF FF               MOV CL,[EBP-260]
+ 0127 01 C8                           ADD EAX,ECX
+ 0129 C6 00 2D                        MOV BYTE [EAX], 45
+            %finish
+ 012C                      L 1009  EQU $
+        %finish
+ 012C                      L 1004  EQU $
+
+        ! Now we adjust Places, also slightly mysteriously
+        %if places <= 0 %then places = -places %else places = places + 1
+ 012C 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 012F 3D 00 00 00 00                  CMP EAX, 0
+ 0134 7F 00                           JG L 1010
+ 0136 F7 5D 0C                        NEG WORD [EBP+ 12]
+ 0139 EB 00                           JMP L 1011
+ 013B                      L 1010  EQU $
+ 013B FF 45 0C                        INC WORD [EBP+ 12]
+ 013E                      L 1011  EQU $
+
+        ! Pad out the digits with blank spaces if places more than actual number of 'digits'
+        %if (places > length(reversed)) %start
+ 013E 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 0141 31 C9                           XOR ECX,ECX
+ 0143 8A 8D FC FE FF FF               MOV CL,[EBP-260]
+ 0149 39 C8                           CMP EAX,ECX
+ 014B 7E 00                           JLE L 1012
+            %while length(reversed) < places %cycle
+ 014D                      L 1013  EQU $
+ 014D 31 C0                           XOR EAX,EAX
+ 014F 8A 85 FC FE FF FF               MOV AL,[EBP-260]
+ 0155 3B 45 0C                        CMP EAX,[EBP+ 12]
+ 0158 7D 00                           JGE L 1014
+                length(reversed) = length(reversed) + 1
+ 015A FE 85 FC FE FF FF               INC BYTE [EBP-260]
+                charno(reversed,length(reversed)) = ' '
+ 0160 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 0166 31 C9                           XOR ECX,ECX
+ 0168 8A 8D FC FE FF FF               MOV CL,[EBP-260]
+ 016E 01 C8                           ADD EAX,ECX
+ 0170 C6 00 20                        MOV BYTE [EAX], 32
+            %repeat
+ 0173 EB 00                           JMP L 1013
+ 0175                      L 1014  EQU $
+        %finish
+ 0175                      L 1012  EQU $
+
+        ! Now reverse the digits for human readability.
+        length(human) = 0
+ 0175 C6 85 FC FD FF FF 00            MOV BYTE [EBP-516], 0
+        %for i = length(reversed), -1, 1 %cycle
+ 017C 31 C0                           XOR EAX,EAX
+ 017E 8A 85 FC FE FF FF               MOV AL,[EBP-260]
+ 0184 40                              INC EAX
+ 0185 89 85 EC FD FF FF               MOV [EBP-532],EAX
+ 018B                      L 1015  EQU $
+ 018B 8B 85 EC FD FF FF               MOV EAX,[EBP-532]
+ 0191 3D 01 00 00 00                  CMP EAX, 1
+ 0196 74 00                           JE L 1016
+ 0198 48                              DEC EAX
+ 0199 89 85 EC FD FF FF               MOV [EBP-532],EAX
+            length(human) = length(human) + 1
+ 019F FE 85 FC FD FF FF               INC BYTE [EBP-516]
+            charno(human,length(human)) = charno( reversed, i )
+ 01A5 8D 85 FC FD FF FF               LEA EAX,[EBP-516]
+ 01AB 31 C9                           XOR ECX,ECX
+ 01AD 8A 8D FC FD FF FF               MOV CL,[EBP-516]
+ 01B3 01 C8                           ADD EAX,ECX
+ 01B5 8D 8D FC FE FF FF               LEA ECX,[EBP-260]
+ 01BB 03 8D EC FD FF FF               ADD ECX,[EBP-532]
+ 01C1 8A 11                           MOV DL,[ECX]
+ 01C3 88 10                           MOV [EAX],DL
+        %repeat
+ 01C5 EB 00                           JMP L 1015
+ 01C7                      L 1016  EQU $
+
+        %result = human
+ 01C7 8B 45 08                        MOV EAX,[EBP+ 8]
+ 01CA 50                              PUSH EAX
+ 01CB 8D 8D FC FD FF FF               LEA ECX,[EBP-516]
+ 01D1 51                              PUSH ECX
+ 01D2 68 FF 00 00 00                  PUSH  255
+ 01D7 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 01DA 83 C4 0C                        ADD ESP, 12
+ 01DD C9                              LEAVE
+ 01DE C3                              RET
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+ 0000 24 30                           db 24,30 ; $0
+ 0002 31 32                           db 31,32 ; 12
+ 0004 33 34                           db 33,34 ; 34
+ 0006 35 36                           db 35,36 ; 56
+ 0008 37 38                           db 37,38 ; 78
+ 000A 39 41                           db 39,41 ; 9A
+ 000C 42 43                           db 42,43 ; BC
+ 000E 44 45                           db 44,45 ; DE
+ 0010 46 47                           db 46,47 ; FG
+ 0012 48 49                           db 48,49 ; HI
+ 0014 4A 4B                           db 4A,4B ; JK
+ 0016 4C 4D                           db 4C,4D ; LM
+ 0018 4E 4F                           db 4E,4F ; NO
+ 001A 50 51                           db 50,51 ; PQ
+ 001C 52 53                           db 52,53 ; RS
+ 001E 54 55                           db 54,55 ; TU
+ 0020 56 57                           db 56,57 ; VW
+ 0022 58 59                           db 58,59 ; XY
+ 0024 5A 00                           db 5A,00 ; Z.
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

@@ -1,0 +1,17 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {----------------------------------------------------------------------------}
+   2      %external %routine printstring( %string(255) s)
+   3          %integer l, i
+   4  
+   5          l = length(s)
+   6  
+   7          %for i = 1, 1, l %cycle
+   8              printsymbol(charno(s, i))
+   9          %repeat
+   10      %end
+   11  
+   12  {----------------------------------------------------------------------------}
+   13  %endoffile
+
+   8 Statements compiled

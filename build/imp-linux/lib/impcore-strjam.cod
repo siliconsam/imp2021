@@ -1,0 +1,98 @@
+{------------------------------------------------------------------------------}
+    %external %routine impstrjam ( %byte %name dst,src, %integer len)
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %integer i
+        %integer count
+        %byte slen,dlen
+        %byte %name srcx,dstx
+
+        %if (len = 0) %then len = MAXLENIMPSTRING; ! string(*)name - comes from general %name's etc
+ 0004 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0007 3D 00 00 00 00                  CMP EAX, 0
+ 000C 75 00                           JNE L 1001
+ 000E C7 45 08 FF 00 00 00            MOV WORD [EBP+ 8], 255
+ 0015                      L 1001  EQU $
+
+        dlen = dst;   ! pick up existing destination length
+ 0015 8B 75 10                        MOV ESI,[EBP+ 16]
+ 0018 8A 06                           MOV AL,[ESI]
+ 001A 88 45 F2                        MOV [EBP-14],AL
+        slen = src;   ! fetch the source length
+ 001D 8B 7D 0C                        MOV EDI,[EBP+ 12]
+ 0020 8A 07                           MOV AL,[EDI]
+ 0022 88 45 F3                        MOV [EBP-13],AL
+
+        %if (slen > len) %start { force the length to fit }
+ 0025 31 C0                           XOR EAX,EAX
+ 0027 8A 45 F3                        MOV AL,[EBP-13]
+ 002A 3B 45 08                        CMP EAX,[EBP+ 8]
+ 002D 7E 00                           JLE L 1002
+            count = len
+ 002F 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0032 89 45 F4                        MOV [EBP-12],EAX
+        %else
+ 0035 EB 00                           JMP L 1003
+ 0037                      L 1002  EQU $
+            count = slen
+ 0037 31 C0                           XOR EAX,EAX
+ 0039 8A 45 F3                        MOV AL,[EBP-13]
+ 003C 89 45 F4                        MOV [EBP-12],EAX
+        %finish
+ 003F                      L 1003  EQU $
+        dlen = count
+ 003F 8B 45 F4                        MOV EAX,[EBP-12]
+ 0042 88 45 F2                        MOV [EBP-14],AL
+
+        ! update the destination count
+        dstx == byteinteger( addr( dst) ); ! get the address
+ 0045 8B 45 10                        MOV EAX,[EBP+ 16]
+ 0048 89 45 E8                        MOV [EBP-24],EAX
+        dstx = dlen;                       ! set the new length
+ 004B 8B 5D E8                        MOV EBX,[EBP-24]
+ 004E 8A 45 F2                        MOV AL,[EBP-14]
+ 0051 88 03                           MOV [EBX],AL
+
+        ! copy across the source chars (and length) 
+        %for i = 1,1,count %cycle
+ 0053 8B 45 F4                        MOV EAX,[EBP-12]
+ 0056 89 45 E4                        MOV [EBP-28],EAX
+ 0059 C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
+ 0060                      L 1004  EQU $
+ 0060 8B 45 F8                        MOV EAX,[EBP-8]
+ 0063 3B 45 E4                        CMP EAX,[EBP-28]
+ 0066 74 00                           JE L 1005
+ 0068 40                              INC EAX
+ 0069 89 45 F8                        MOV [EBP-8],EAX
+            srcx == byteinteger( addr(src) + i )
+ 006C 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 006F 03 45 F8                        ADD EAX,[EBP-8]
+ 0072 89 45 EC                        MOV [EBP-20],EAX
+            dstx == byteinteger( addr(dst) + i )
+ 0075 8B 45 10                        MOV EAX,[EBP+ 16]
+ 0078 03 45 F8                        ADD EAX,[EBP-8]
+ 007B 89 45 E8                        MOV [EBP-24],EAX
+            dstx = srcx
+ 007E 8B 75 E8                        MOV ESI,[EBP-24]
+ 0081 8B 7D EC                        MOV EDI,[EBP-20]
+ 0084 8A 07                           MOV AL,[EDI]
+ 0086 88 06                           MOV [ESI],AL
+        %repeat
+ 0088 EB 00                           JMP L 1004
+ 008A                      L 1005  EQU $
+    %end
+ 008A C9                              LEAVE
+ 008B C3                              RET
+
+{------------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

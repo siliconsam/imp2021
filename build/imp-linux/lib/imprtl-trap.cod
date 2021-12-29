@@ -1,0 +1,946 @@
+
+    %recordformat imptrap( %integer start,end,trapep,from, %byte %array data(0:15) )
+
+    %own %record(imptrap) noinfo
+
+    %external %record(imptrap)   %spec trapbase %alias "_imptrapbase"
+    %external %record(imptrap)   %spec trapend %alias "_imptrapend"
+
+{------------------------------------------------------------------------------}
+    %string(14) %function getprocname( %record(imptrap)%name tp )
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %string(14) procname
+        %integer i
+
+        length(procname) = 0
+ 0004 C6 45 ED 00                     MOV BYTE [EBP-19], 0
+        %for i= 1,1,14 %cycle
+ 0008 C7 45 E8 00 00 00 00            MOV WORD [EBP-24], 0
+ 000F                      L 1001  EQU $
+ 000F 8B 45 E8                        MOV EAX,[EBP-24]
+ 0012 3D 0E 00 00 00                  CMP EAX, 14
+ 0017 74 00                           JE L 1002
+ 0019 40                              INC EAX
+ 001A 89 45 E8                        MOV [EBP-24],EAX
+            %if (tp_data(i+1) # 0) %start
+ 001D 8B 45 E8                        MOV EAX,[EBP-24]
+ 0020 40                              INC EAX
+ 0021 50                              PUSH EAX
+ 0022 68 00 00 00 00                  PUSH COT+ 0
+ 0027 E8 09 00                        CALL '_IMPAREF' (EXTERN  9)
+ 002A 83 C4 08                        ADD ESP, 8
+ 002D 8B 75 0C                        MOV ESI,[EBP+ 12]
+ 0030 89 C7                           MOV EDI,EAX
+ 0032 01 F7                           ADD EDI,ESI
+ 0034 31 C0                           XOR EAX,EAX
+ 0036 8A 47 10                        MOV AL,[EDI+ 16]
+ 0039 3D 00 00 00 00                  CMP EAX, 0
+ 003E 74 00                           JE L 1003
+                length(procname) = length(procname) + 1
+ 0040 FE 45 ED                        INC BYTE [EBP-19]
+                charno(procname,i) = tp_data(i+1)
+ 0043 8D 45 ED                        LEA EAX,[EBP-19]
+ 0046 03 45 E8                        ADD EAX,[EBP-24]
+ 0049 8B 4D E8                        MOV ECX,[EBP-24]
+ 004C 41                              INC ECX
+ 004D 51                              PUSH ECX
+ 004E 68 00 00 00 00                  PUSH COT+ 0
+ 0053 89 45 E4                        MOV [EBP-28],EAX
+ 0056 E8 09 00                        CALL '_IMPAREF' (EXTERN  9)
+ 0059 83 C4 08                        ADD ESP, 8
+ 005C 8B 5D 0C                        MOV EBX,[EBP+ 12]
+ 005F 89 C6                           MOV ESI,EAX
+ 0061 01 DE                           ADD ESI,EBX
+ 0063 8B 7D E4                        MOV EDI,[EBP-28]
+ 0066 8A 46 10                        MOV AL,[ESI+ 16]
+ 0069 88 07                           MOV [EDI],AL
+            %finish
+ 006B                      L 1003  EQU $
+        %repeat
+ 006B EB 00                           JMP L 1001
+ 006D                      L 1002  EQU $
+
+        %result = procname
+ 006D 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0070 50                              PUSH EAX
+ 0071 8D 4D ED                        LEA ECX,[EBP-19]
+ 0074 51                              PUSH ECX
+ 0075 6A 0E                           PUSH  14
+ 0077 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 007A 83 C4 0C                        ADD ESP, 12
+ 007D C9                              LEAVE
+ 007E C3                              RET
+    %end
+
+{------------------------------------------------------------------------------}
+    %routine dumptrapinfo( %record(imptrap)%name tp )
+ 007F                      L 1004  EQU $
+ 007F C8 00 00 01                     ENTER 0000, 1
+        %integer events,i
+        %string(14) procname
+
+        events = (tp_data(1) << 8) + tp_data(0)
+ 0083 6A 01                           PUSH  1
+ 0085 68 00 00 00 00                  PUSH COT+ 0
+ 008A E8 09 00                        CALL '_IMPAREF' (EXTERN  9)
+ 008D 83 C4 08                        ADD ESP, 8
+ 0090 8B 5D 08                        MOV EBX,[EBP+ 8]
+ 0093 89 C6                           MOV ESI,EAX
+ 0095 01 DE                           ADD ESI,EBX
+ 0097 31 C0                           XOR EAX,EAX
+ 0099 8A 46 10                        MOV AL,[ESI+ 16]
+ 009C C1 E0 08                        SHL EAX, 8
+ 009F 6A 00                           PUSH  0
+ 00A1 68 00 00 00 00                  PUSH COT+ 0
+ 00A6 89 45 E0                        MOV [EBP-32],EAX
+ 00A9 E8 09 00                        CALL '_IMPAREF' (EXTERN  9)
+ 00AC 83 C4 08                        ADD ESP, 8
+ 00AF 8B 7D 08                        MOV EDI,[EBP+ 8]
+ 00B2 89 C3                           MOV EBX,EAX
+ 00B4 01 FB                           ADD EBX,EDI
+ 00B6 8B 45 E0                        MOV EAX,[EBP-32]
+ 00B9 8A 5B 10                        MOV BL,[EBX+ 16]
+ 00BC 81 E3 FF 00 00 00               AND EBX, 255
+ 00C2 01 D8                           ADD EAX,EBX
+ 00C4 89 45 F8                        MOV [EBP-8],EAX
+        procname = getprocname( tp )
+ 00C7 FF 75 08                        PUSH WORD [EBP+ 8]
+ 00CA 8D 45 D0                        LEA EAX,[EBP-48]
+ 00CD 50                              PUSH EAX
+ 00CE E8 00 00                        CALL 'GETPROCNAME' (INTERNAL L 1000 )
+ 00D1 83 C4 08                        ADD ESP, 8
+ 00D4 8D 45 E5                        LEA EAX,[EBP-27]
+ 00D7 50                              PUSH EAX
+ 00D8 8D 4D D0                        LEA ECX,[EBP-48]
+ 00DB 51                              PUSH ECX
+ 00DC 6A 0E                           PUSH  14
+ 00DE E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 00E1 83 C4 0C                        ADD ESP, 12
+
+        %if (events # 0) %start
+ 00E4 8B 45 F8                        MOV EAX,[EBP-8]
+ 00E7 3D 00 00 00 00                  CMP EAX, 0
+ 00EC 74 00                           JE L 1005
+            debugstring( "Event trap start @(".int2ascii(addr(tp),16,0).")" )
+ 00EE FF 75 08                        PUSH WORD [EBP+ 8]
+ 00F1 6A 10                           PUSH  16
+ 00F3 6A 00                           PUSH  0
+ 00F5 8D 85 D0 FE FF FF               LEA EAX,[EBP-304]
+ 00FB 50                              PUSH EAX
+ 00FC E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 00FF 83 C4 10                        ADD ESP, 16
+ 0102 8D 85 D0 FD FF FF               LEA EAX,[EBP-560]
+ 0108 50                              PUSH EAX
+ 0109 B8 10 00 00 00                  MOV EAX,COT+ 16
+ 010E 50                              PUSH EAX
+ 010F 68 FF 00 00 00                  PUSH  255
+ 0114 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0117 83 C4 0C                        ADD ESP, 12
+ 011A 8D 85 D0 FD FF FF               LEA EAX,[EBP-560]
+ 0120 50                              PUSH EAX
+ 0121 8D 85 D0 FE FF FF               LEA EAX,[EBP-304]
+ 0127 50                              PUSH EAX
+ 0128 68 FF 00 00 00                  PUSH  255
+ 012D E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0130 83 C4 0C                        ADD ESP, 12
+ 0133 8D 85 D0 FD FF FF               LEA EAX,[EBP-560]
+ 0139 50                              PUSH EAX
+ 013A B8 24 00 00 00                  MOV EAX,COT+ 36
+ 013F 50                              PUSH EAX
+ 0140 68 FF 00 00 00                  PUSH  255
+ 0145 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0148 83 C4 0C                        ADD ESP, 12
+ 014B 81 EC 00 01 00 00               SUB ESP, 256
+ 0151 89 E0                           MOV EAX,ESP
+ 0153 50                              PUSH EAX
+ 0154 8D 85 D0 FD FF FF               LEA EAX,[EBP-560]
+ 015A 50                              PUSH EAX
+ 015B 68 FF 00 00 00                  PUSH  255
+ 0160 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0163 83 C4 0C                        ADD ESP, 12
+ 0166 E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 0169 81 C4 00 01 00 00               ADD ESP, 256
+            debugstring( " for (start,end)=(".int2ascii(tp_start,16,0).",".int2ascii(tp_end,16,0).") in routine '" )
+ 016F 8B 75 08                        MOV ESI,[EBP+ 8]
+ 0172 FF 36                           PUSH WORD [ESI]
+ 0174 6A 10                           PUSH  16
+ 0176 6A 00                           PUSH  0
+ 0178 8D 85 D0 FD FF FF               LEA EAX,[EBP-560]
+ 017E 50                              PUSH EAX
+ 017F E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 0182 83 C4 10                        ADD ESP, 16
+ 0185 8D 85 D0 FC FF FF               LEA EAX,[EBP-816]
+ 018B 50                              PUSH EAX
+ 018C B8 26 00 00 00                  MOV EAX,COT+ 38
+ 0191 50                              PUSH EAX
+ 0192 68 FF 00 00 00                  PUSH  255
+ 0197 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 019A 83 C4 0C                        ADD ESP, 12
+ 019D 8D 85 D0 FC FF FF               LEA EAX,[EBP-816]
+ 01A3 50                              PUSH EAX
+ 01A4 8D 85 D0 FD FF FF               LEA EAX,[EBP-560]
+ 01AA 50                              PUSH EAX
+ 01AB 68 FF 00 00 00                  PUSH  255
+ 01B0 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 01B3 83 C4 0C                        ADD ESP, 12
+ 01B6 8D 85 D0 FC FF FF               LEA EAX,[EBP-816]
+ 01BC 50                              PUSH EAX
+ 01BD B8 39 00 00 00                  MOV EAX,COT+ 57
+ 01C2 50                              PUSH EAX
+ 01C3 68 FF 00 00 00                  PUSH  255
+ 01C8 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 01CB 83 C4 0C                        ADD ESP, 12
+ 01CE 8B 7D 08                        MOV EDI,[EBP+ 8]
+ 01D1 FF 77 04                        PUSH WORD [EDI+ 4]
+ 01D4 6A 10                           PUSH  16
+ 01D6 6A 00                           PUSH  0
+ 01D8 8D 85 D0 FB FF FF               LEA EAX,[EBP-1072]
+ 01DE 50                              PUSH EAX
+ 01DF E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 01E2 83 C4 10                        ADD ESP, 16
+ 01E5 8D 85 D0 FC FF FF               LEA EAX,[EBP-816]
+ 01EB 50                              PUSH EAX
+ 01EC 8D 85 D0 FB FF FF               LEA EAX,[EBP-1072]
+ 01F2 50                              PUSH EAX
+ 01F3 68 FF 00 00 00                  PUSH  255
+ 01F8 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 01FB 83 C4 0C                        ADD ESP, 12
+ 01FE 8D 85 D0 FC FF FF               LEA EAX,[EBP-816]
+ 0204 50                              PUSH EAX
+ 0205 B8 3B 00 00 00                  MOV EAX,COT+ 59
+ 020A 50                              PUSH EAX
+ 020B 68 FF 00 00 00                  PUSH  255
+ 0210 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0213 83 C4 0C                        ADD ESP, 12
+ 0216 81 EC 00 01 00 00               SUB ESP, 256
+ 021C 89 E0                           MOV EAX,ESP
+ 021E 50                              PUSH EAX
+ 021F 8D 85 D0 FC FF FF               LEA EAX,[EBP-816]
+ 0225 50                              PUSH EAX
+ 0226 68 FF 00 00 00                  PUSH  255
+ 022B E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 022E 83 C4 0C                        ADD ESP, 12
+ 0231 E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 0234 81 C4 00 01 00 00               ADD ESP, 256
+            debugstring( procname )
+ 023A 81 EC 00 01 00 00               SUB ESP, 256
+ 0240 89 E0                           MOV EAX,ESP
+ 0242 50                              PUSH EAX
+ 0243 8D 45 E5                        LEA EAX,[EBP-27]
+ 0246 50                              PUSH EAX
+ 0247 68 FF 00 00 00                  PUSH  255
+ 024C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 024F 83 C4 0C                        ADD ESP, 12
+ 0252 E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 0255 81 C4 00 01 00 00               ADD ESP, 256
+            debugstring( "'" )
+ 025B 81 EC 00 01 00 00               SUB ESP, 256
+ 0261 89 E0                           MOV EAX,ESP
+ 0263 50                              PUSH EAX
+ 0264 B8 4A 00 00 00                  MOV EAX,COT+ 74
+ 0269 50                              PUSH EAX
+ 026A 68 FF 00 00 00                  PUSH  255
+ 026F E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0272 83 C4 0C                        ADD ESP, 12
+ 0275 E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 0278 81 C4 00 01 00 00               ADD ESP, 256
+            debugnewline
+ 027E E8 32 00                        CALL 'DEBUGNEWLINE' (EXTERN  50)
+
+            debugstring( "    events=(" )
+ 0281 81 EC 00 01 00 00               SUB ESP, 256
+ 0287 89 E0                           MOV EAX,ESP
+ 0289 50                              PUSH EAX
+ 028A B8 4C 00 00 00                  MOV EAX,COT+ 76
+ 028F 50                              PUSH EAX
+ 0290 68 FF 00 00 00                  PUSH  255
+ 0295 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0298 83 C4 0C                        ADD ESP, 12
+ 029B E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 029E 81 C4 00 01 00 00               ADD ESP, 256
+            %for i = max event - 1,-1,0 %cycle
+ 02A4 C7 45 F4 10 00 00 00            MOV WORD [EBP-12], 16
+ 02AB                      L 1006  EQU $
+ 02AB 8B 45 F4                        MOV EAX,[EBP-12]
+ 02AE 3D 00 00 00 00                  CMP EAX, 0
+ 02B3 74 00                           JE L 1007
+ 02B5 48                              DEC EAX
+ 02B6 89 45 F4                        MOV [EBP-12],EAX
+                %if (((1 << i) & events) # 0) %start
+ 02B9 8B 4D F4                        MOV ECX,[EBP-12]
+ 02BC B8 01 00 00 00                  MOV EAX, 1
+ 02C1 D3 E0                           SHL EAX,ECX
+ 02C3 23 45 F8                        AND EAX,[EBP-8]
+ 02C6 3D 00 00 00 00                  CMP EAX, 0
+ 02CB 74 00                           JE L 1008
+                    debugstring( "1" )
+ 02CD 81 EC 00 01 00 00               SUB ESP, 256
+ 02D3 89 E0                           MOV EAX,ESP
+ 02D5 50                              PUSH EAX
+ 02D6 B8 59 00 00 00                  MOV EAX,COT+ 89
+ 02DB 50                              PUSH EAX
+ 02DC 68 FF 00 00 00                  PUSH  255
+ 02E1 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 02E4 83 C4 0C                        ADD ESP, 12
+ 02E7 E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 02EA 81 C4 00 01 00 00               ADD ESP, 256
+                %else
+ 02F0 EB 00                           JMP L 1009
+ 02F2                      L 1008  EQU $
+                    debugstring( "0" )
+ 02F2 81 EC 00 01 00 00               SUB ESP, 256
+ 02F8 89 E0                           MOV EAX,ESP
+ 02FA 50                              PUSH EAX
+ 02FB B8 5B 00 00 00                  MOV EAX,COT+ 91
+ 0300 50                              PUSH EAX
+ 0301 68 FF 00 00 00                  PUSH  255
+ 0306 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0309 83 C4 0C                        ADD ESP, 12
+ 030C E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 030F 81 C4 00 01 00 00               ADD ESP, 256
+                %finish
+ 0315                      L 1009  EQU $
+            %repeat
+ 0315 EB 00                           JMP L 1006
+ 0317                      L 1007  EQU $
+            debugstring( ")" )
+ 0317 81 EC 00 01 00 00               SUB ESP, 256
+ 031D 89 E0                           MOV EAX,ESP
+ 031F 50                              PUSH EAX
+ 0320 B8 5D 00 00 00                  MOV EAX,COT+ 93
+ 0325 50                              PUSH EAX
+ 0326 68 FF 00 00 00                  PUSH  255
+ 032B E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 032E 83 C4 0C                        ADD ESP, 12
+ 0331 E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 0334 81 C4 00 01 00 00               ADD ESP, 256
+            debugstring( "    (trapep,from)=(".int2ascii(tp_trapep,16,0).",".int2ascii(tp_from,16,0).")" )
+ 033A 8B 5D 08                        MOV EBX,[EBP+ 8]
+ 033D FF 73 08                        PUSH WORD [EBX+ 8]
+ 0340 6A 10                           PUSH  16
+ 0342 6A 00                           PUSH  0
+ 0344 8D 85 D0 FC FF FF               LEA EAX,[EBP-816]
+ 034A 50                              PUSH EAX
+ 034B E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 034E 83 C4 10                        ADD ESP, 16
+ 0351 8D 85 D0 FA FF FF               LEA EAX,[EBP-1328]
+ 0357 50                              PUSH EAX
+ 0358 B8 5F 00 00 00                  MOV EAX,COT+ 95
+ 035D 50                              PUSH EAX
+ 035E 68 FF 00 00 00                  PUSH  255
+ 0363 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0366 83 C4 0C                        ADD ESP, 12
+ 0369 8D 85 D0 FA FF FF               LEA EAX,[EBP-1328]
+ 036F 50                              PUSH EAX
+ 0370 8D 85 D0 FC FF FF               LEA EAX,[EBP-816]
+ 0376 50                              PUSH EAX
+ 0377 68 FF 00 00 00                  PUSH  255
+ 037C E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 037F 83 C4 0C                        ADD ESP, 12
+ 0382 8D 85 D0 FA FF FF               LEA EAX,[EBP-1328]
+ 0388 50                              PUSH EAX
+ 0389 B8 73 00 00 00                  MOV EAX,COT+ 115
+ 038E 50                              PUSH EAX
+ 038F 68 FF 00 00 00                  PUSH  255
+ 0394 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0397 83 C4 0C                        ADD ESP, 12
+ 039A 8B 75 08                        MOV ESI,[EBP+ 8]
+ 039D FF 76 0C                        PUSH WORD [ESI+ 12]
+ 03A0 6A 10                           PUSH  16
+ 03A2 6A 00                           PUSH  0
+ 03A4 8D 85 D0 F9 FF FF               LEA EAX,[EBP-1584]
+ 03AA 50                              PUSH EAX
+ 03AB E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 03AE 83 C4 10                        ADD ESP, 16
+ 03B1 8D 85 D0 FA FF FF               LEA EAX,[EBP-1328]
+ 03B7 50                              PUSH EAX
+ 03B8 8D 85 D0 F9 FF FF               LEA EAX,[EBP-1584]
+ 03BE 50                              PUSH EAX
+ 03BF 68 FF 00 00 00                  PUSH  255
+ 03C4 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 03C7 83 C4 0C                        ADD ESP, 12
+ 03CA 8D 85 D0 FA FF FF               LEA EAX,[EBP-1328]
+ 03D0 50                              PUSH EAX
+ 03D1 B8 75 00 00 00                  MOV EAX,COT+ 117
+ 03D6 50                              PUSH EAX
+ 03D7 68 FF 00 00 00                  PUSH  255
+ 03DC E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 03DF 83 C4 0C                        ADD ESP, 12
+ 03E2 81 EC 00 01 00 00               SUB ESP, 256
+ 03E8 89 E0                           MOV EAX,ESP
+ 03EA 50                              PUSH EAX
+ 03EB 8D 85 D0 FA FF FF               LEA EAX,[EBP-1328]
+ 03F1 50                              PUSH EAX
+ 03F2 68 FF 00 00 00                  PUSH  255
+ 03F7 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 03FA 83 C4 0C                        ADD ESP, 12
+ 03FD E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 0400 81 C4 00 01 00 00               ADD ESP, 256
+        %else
+ 0406 EB 00                           JMP L 1010
+ 0408                      L 1005  EQU $
+            debugstring( "No event trap @(".int2ascii(addr(tp),16,0).")" )
+ 0408 FF 75 08                        PUSH WORD [EBP+ 8]
+ 040B 6A 10                           PUSH  16
+ 040D 6A 00                           PUSH  0
+ 040F 8D 85 D0 FA FF FF               LEA EAX,[EBP-1328]
+ 0415 50                              PUSH EAX
+ 0416 E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 0419 83 C4 10                        ADD ESP, 16
+ 041C 8D 85 D0 F8 FF FF               LEA EAX,[EBP-1840]
+ 0422 50                              PUSH EAX
+ 0423 B8 77 00 00 00                  MOV EAX,COT+ 119
+ 0428 50                              PUSH EAX
+ 0429 68 FF 00 00 00                  PUSH  255
+ 042E E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0431 83 C4 0C                        ADD ESP, 12
+ 0434 8D 85 D0 F8 FF FF               LEA EAX,[EBP-1840]
+ 043A 50                              PUSH EAX
+ 043B 8D 85 D0 FA FF FF               LEA EAX,[EBP-1328]
+ 0441 50                              PUSH EAX
+ 0442 68 FF 00 00 00                  PUSH  255
+ 0447 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 044A 83 C4 0C                        ADD ESP, 12
+ 044D 8D 85 D0 F8 FF FF               LEA EAX,[EBP-1840]
+ 0453 50                              PUSH EAX
+ 0454 B8 88 00 00 00                  MOV EAX,COT+ 136
+ 0459 50                              PUSH EAX
+ 045A 68 FF 00 00 00                  PUSH  255
+ 045F E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0462 83 C4 0C                        ADD ESP, 12
+ 0465 81 EC 00 01 00 00               SUB ESP, 256
+ 046B 89 E0                           MOV EAX,ESP
+ 046D 50                              PUSH EAX
+ 046E 8D 85 D0 F8 FF FF               LEA EAX,[EBP-1840]
+ 0474 50                              PUSH EAX
+ 0475 68 FF 00 00 00                  PUSH  255
+ 047A E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 047D 83 C4 0C                        ADD ESP, 12
+ 0480 E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 0483 81 C4 00 01 00 00               ADD ESP, 256
+            debugstring( " for (start,end)=(".int2ascii(tp_start,16,0).",".int2ascii(tp_end,16,0).") in routine '" )
+ 0489 8B 7D 08                        MOV EDI,[EBP+ 8]
+ 048C FF 37                           PUSH WORD [EDI]
+ 048E 6A 10                           PUSH  16
+ 0490 6A 00                           PUSH  0
+ 0492 8D 85 D0 F8 FF FF               LEA EAX,[EBP-1840]
+ 0498 50                              PUSH EAX
+ 0499 E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 049C 83 C4 10                        ADD ESP, 16
+ 049F 8D 85 D0 F7 FF FF               LEA EAX,[EBP-2096]
+ 04A5 50                              PUSH EAX
+ 04A6 B8 8A 00 00 00                  MOV EAX,COT+ 138
+ 04AB 50                              PUSH EAX
+ 04AC 68 FF 00 00 00                  PUSH  255
+ 04B1 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 04B4 83 C4 0C                        ADD ESP, 12
+ 04B7 8D 85 D0 F7 FF FF               LEA EAX,[EBP-2096]
+ 04BD 50                              PUSH EAX
+ 04BE 8D 85 D0 F8 FF FF               LEA EAX,[EBP-1840]
+ 04C4 50                              PUSH EAX
+ 04C5 68 FF 00 00 00                  PUSH  255
+ 04CA E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 04CD 83 C4 0C                        ADD ESP, 12
+ 04D0 8D 85 D0 F7 FF FF               LEA EAX,[EBP-2096]
+ 04D6 50                              PUSH EAX
+ 04D7 B8 9D 00 00 00                  MOV EAX,COT+ 157
+ 04DC 50                              PUSH EAX
+ 04DD 68 FF 00 00 00                  PUSH  255
+ 04E2 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 04E5 83 C4 0C                        ADD ESP, 12
+ 04E8 8B 5D 08                        MOV EBX,[EBP+ 8]
+ 04EB FF 73 04                        PUSH WORD [EBX+ 4]
+ 04EE 6A 10                           PUSH  16
+ 04F0 6A 00                           PUSH  0
+ 04F2 8D 85 D0 F6 FF FF               LEA EAX,[EBP-2352]
+ 04F8 50                              PUSH EAX
+ 04F9 E8 46 00                        CALL 'INT2ASCII' (EXTERN  70)
+ 04FC 83 C4 10                        ADD ESP, 16
+ 04FF 8D 85 D0 F7 FF FF               LEA EAX,[EBP-2096]
+ 0505 50                              PUSH EAX
+ 0506 8D 85 D0 F6 FF FF               LEA EAX,[EBP-2352]
+ 050C 50                              PUSH EAX
+ 050D 68 FF 00 00 00                  PUSH  255
+ 0512 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 0515 83 C4 0C                        ADD ESP, 12
+ 0518 8D 85 D0 F7 FF FF               LEA EAX,[EBP-2096]
+ 051E 50                              PUSH EAX
+ 051F B8 9F 00 00 00                  MOV EAX,COT+ 159
+ 0524 50                              PUSH EAX
+ 0525 68 FF 00 00 00                  PUSH  255
+ 052A E8 05 00                        CALL '_IMPSTRCAT' (EXTERN  5)
+ 052D 83 C4 0C                        ADD ESP, 12
+ 0530 81 EC 00 01 00 00               SUB ESP, 256
+ 0536 89 E0                           MOV EAX,ESP
+ 0538 50                              PUSH EAX
+ 0539 8D 85 D0 F7 FF FF               LEA EAX,[EBP-2096]
+ 053F 50                              PUSH EAX
+ 0540 68 FF 00 00 00                  PUSH  255
+ 0545 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0548 83 C4 0C                        ADD ESP, 12
+ 054B E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 054E 81 C4 00 01 00 00               ADD ESP, 256
+            debugstring( procname )
+ 0554 81 EC 00 01 00 00               SUB ESP, 256
+ 055A 89 E0                           MOV EAX,ESP
+ 055C 50                              PUSH EAX
+ 055D 8D 45 E5                        LEA EAX,[EBP-27]
+ 0560 50                              PUSH EAX
+ 0561 68 FF 00 00 00                  PUSH  255
+ 0566 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0569 83 C4 0C                        ADD ESP, 12
+ 056C E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 056F 81 C4 00 01 00 00               ADD ESP, 256
+            debugstring( "'" )
+ 0575 81 EC 00 01 00 00               SUB ESP, 256
+ 057B 89 E0                           MOV EAX,ESP
+ 057D 50                              PUSH EAX
+ 057E B8 AE 00 00 00                  MOV EAX,COT+ 174
+ 0583 50                              PUSH EAX
+ 0584 68 FF 00 00 00                  PUSH  255
+ 0589 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 058C 83 C4 0C                        ADD ESP, 12
+ 058F E8 31 00                        CALL 'DEBUGSTRING' (EXTERN  49)
+ 0592 81 C4 00 01 00 00               ADD ESP, 256
+        %finish
+ 0598                      L 1010  EQU $
+        debugnewline
+ 0598 E8 32 00                        CALL 'DEBUGNEWLINE' (EXTERN  50)
+
+    %end
+ 059B C9                              LEAVE
+ 059C C3                              RET
+
+{------------------------------------------------------------------------------}
+    %external %routine dumpalltrapinfo
+ 059D                      L 1011  EQU $
+ 059D C8 00 00 01                     ENTER 0000, 1
+        %record(imptrap)%name tp
+
+        ! We iterate over the table of trap blocks from __imptrapbase to __imptrapend.
+        tp == trapbase
+ 05A1 B8 62 00 62 00                  MOV EAX,EXTERN+ 98
+ 05A6 89 45 F8                        MOV [EBP-8],EAX
+
+        %while (addr(tp) < addr(trapend)) %cycle
+ 05A9                      L 1012  EQU $
+ 05A9 8B 45 F8                        MOV EAX,[EBP-8]
+ 05AC 3D 63 00 63 00                  CMP EAX,EXTERN+ 99
+ 05B1 7D 00                           JGE L 1013
+            dumptrapinfo( tp )
+ 05B3 FF 75 F8                        PUSH WORD [EBP-8]
+ 05B6 E8 00 00                        CALL 'DUMPTRAPINFO' (INTERNAL L 1004 )
+ 05B9 83 C4 04                        ADD ESP, 4
+
+            ! We would like to just say "tp++" here, BUT for reasons I can't
+            ! fathom, the linker puts one or more 16 byte blocks of zeroes
+            ! between the trap entries for different objects.
+            tp == record( addr(tp) + sizeof(tp) )
+ 05BC 8B 45 F8                        MOV EAX,[EBP-8]
+ 05BF 05 20 00 00 00                  ADD EAX, 32
+ 05C4 89 45 F8                        MOV [EBP-8],EAX
+        %repeat
+ 05C7 EB 00                           JMP L 1012
+ 05C9                      L 1013  EQU $
+    %end
+ 05C9 C9                              LEAVE
+ 05CA C3                              RET
+
+{------------------------------------------------------------------------------}
+    %record(imptrap) %map blockinfo( %integer address)
+ 05CB                      L 1014  EQU $
+ 05CB C8 00 00 01                     ENTER 0000, 1
+        %record(imptrap)%name tp,found
+
+        ! We search the table of trap blocks.  The compiler does NOT exbed routines,
+        ! so for a nested routine it will match the block parameters of all the
+        ! surrounding blocks too.  However, since the blocks are planted in the
+        ! order the code actually appears, the correct block to match is therefore
+        ! the LAST one we can match.
+        ! When we get to the end of the table, or we find an entry which starts
+        ! AFTER our address, we know we must have found the right one.
+        tp == trapend
+ 05CF B8 63 00 63 00                  MOV EAX,EXTERN+ 99
+ 05D4 89 45 F8                        MOV [EBP-8],EAX
+        found == noinfo
+ 05D7 B8 00 00 00 00                  MOV EAX,DATA+ 0
+ 05DC 89 45 F4                        MOV [EBP-12],EAX
+        
+        %cycle
+ 05DF                      L 1015  EQU $
+            %if ((tp_start <= address <= tp_end)) %start
+ 05DF 8B 45 08                        MOV EAX,[EBP+ 8]
+ 05E2 8B 75 F8                        MOV ESI,[EBP-8]
+ 05E5 3B 06                           CMP EAX,[ESI]
+ 05E7 7C 00                           JL L 1016
+ 05E9 8B 7D F8                        MOV EDI,[EBP-8]
+ 05EC 3B 47 04                        CMP EAX,[EDI+ 4]
+ 05EF 7F 00                           JG L 1016
+                found == tp
+ 05F1 8B 45 F8                        MOV EAX,[EBP-8]
+ 05F4 89 45 F4                        MOV [EBP-12],EAX
+                %exit
+ 05F7 EB 00                           JMP L 1017
+            %finish
+ 05F9                      L 1016  EQU $
+
+            ! JDM: Traversing the trap table in deccreasing order
+            ! So, technically we do a tp--
+            tp == record( addr(tp) - sizeof(tp) )
+ 05F9 8B 45 F8                        MOV EAX,[EBP-8]
+ 05FC 2D 20 00 00 00                  SUB EAX, 32
+ 0601 89 45 F8                        MOV [EBP-8],EAX
+
+!            %while ( (addr(tp) < addr(trapend) ) %and ( tp_start = 0) %and (tp_end = 0)) %cycle
+!                tp == record( addr(tp) + 16 )
+!            %repeat
+
+            ! Defend against reaching beyond the start of the trap table
+            %exit %if (addr(tp) < addr(trapbase))
+ 0604 8B 45 F8                        MOV EAX,[EBP-8]
+ 0607 3D 62 00 62 00                  CMP EAX,EXTERN+ 98
+ 060C 7D 00                           JGE L 1018
+ 060E EB 00                           JMP L 1017
+ 0610                      L 1018  EQU $
+
+        %repeat
+ 0610 EB 00                           JMP L 1015
+ 0612                      L 1017  EQU $
+
+        %result == found
+ 0612 8B 45 F4                        MOV EAX,[EBP-12]
+ 0615 C9                              LEAVE
+ 0616 C3                              RET
+    %end
+
+{------------------------------------------------------------------------------}
+    %external %predicate handler found ( %integer event, address )
+ 0617                      L 1019  EQU $
+ 0617 C8 00 00 01                     ENTER 0000, 1
+        %record(imptrap)%name tp
+        %integer trapbit,checkbit
+
+        tp == blockinfo( address )
+ 061B FF 75 08                        PUSH WORD [EBP+ 8]
+ 061E E8 00 00                        CALL 'BLOCKINFO' (INTERNAL L 1014 )
+ 0621 83 C4 04                        ADD ESP, 4
+ 0624 89 45 F8                        MOV [EBP-8],EAX
+
+        ! First form the event trapbits to match in the trap table
+        trapbit = 1;
+ 0627 C7 45 F4 01 00 00 00            MOV WORD [EBP-12], 1
+        %if (0 < event) %and (event < max event) %then trapbit = 1 << event
+ 062E 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 0631 3D 00 00 00 00                  CMP EAX, 0
+ 0636 7E 00                           JLE L 1020
+ 0638 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 063B 3D 10 00 00 00                  CMP EAX, 16
+ 0640 7D 00                           JGE L 1020
+ 0642 8B 4D 0C                        MOV ECX,[EBP+ 12]
+ 0645 B8 01 00 00 00                  MOV EAX, 1
+ 064A D3 E0                           SHL EAX,ECX
+ 064C 89 45 F4                        MOV [EBP-12],EAX
+ 064F                      L 1020  EQU $
+
+        ! JDM: get the trap mask
+        ! form checkbits so that event N = 2^N
+        checkbit = (tp_data(1) << 8) + tp_data(0)
+ 064F 6A 01                           PUSH  1
+ 0651 68 00 00 00 00                  PUSH COT+ 0
+ 0656 E8 09 00                        CALL '_IMPAREF' (EXTERN  9)
+ 0659 83 C4 08                        ADD ESP, 8
+ 065C 8B 5D F8                        MOV EBX,[EBP-8]
+ 065F 89 C6                           MOV ESI,EAX
+ 0661 01 DE                           ADD ESI,EBX
+ 0663 31 C0                           XOR EAX,EAX
+ 0665 8A 46 10                        MOV AL,[ESI+ 16]
+ 0668 C1 E0 08                        SHL EAX, 8
+ 066B 6A 00                           PUSH  0
+ 066D 68 00 00 00 00                  PUSH COT+ 0
+ 0672 89 45 EC                        MOV [EBP-20],EAX
+ 0675 E8 09 00                        CALL '_IMPAREF' (EXTERN  9)
+ 0678 83 C4 08                        ADD ESP, 8
+ 067B 8B 7D F8                        MOV EDI,[EBP-8]
+ 067E 89 C3                           MOV EBX,EAX
+ 0680 01 FB                           ADD EBX,EDI
+ 0682 8B 45 EC                        MOV EAX,[EBP-20]
+ 0685 8A 5B 10                        MOV BL,[EBX+ 16]
+ 0688 81 E3 FF 00 00 00               AND EBX, 255
+ 068E 01 D8                           ADD EAX,EBX
+ 0690 89 45 F0                        MOV [EBP-16],EAX
+
+        ! will this block catch the event?
+        ! JDM: We must have a match of event trapbits
+        ! and is the address inside the "defence" zone
+        %true %if ((checkbit & trapbit) # 0) %and (tp_start <= address <= tp_end)
+ 0693 8B 45 F0                        MOV EAX,[EBP-16]
+ 0696 23 45 F4                        AND EAX,[EBP-12]
+ 0699 3D 00 00 00 00                  CMP EAX, 0
+ 069E 74 00                           JE L 1021
+ 06A0 8B 45 08                        MOV EAX,[EBP+ 8]
+ 06A3 8B 75 F8                        MOV ESI,[EBP-8]
+ 06A6 3B 06                           CMP EAX,[ESI]
+ 06A8 7C 00                           JL L 1021
+ 06AA 8B 7D F8                        MOV EDI,[EBP-8]
+ 06AD 3B 47 04                        CMP EAX,[EDI+ 4]
+ 06B0 7F 00                           JG L 1021
+ 06B2 B8 FF FF FF FF                  MOV EAX,-1
+ 06B7 C9                              LEAVE
+ 06B8 C3                              RET
+ 06B9                      L 1021  EQU $
+
+        %false
+ 06B9 B8 00 00 00 00                  MOV EAX, 0
+ 06BE C9                              LEAVE
+ 06BF C3                              RET
+    %end
+
+{------------------------------------------------------------------------------}
+    %external %predicate initial entry found ( %integer address )
+ 06C0                      L 1022  EQU $
+ 06C0 C8 00 00 01                     ENTER 0000, 1
+        %record(imptrap)%name tp
+        %string(14) procname
+
+        ! beware if we get a zero address
+        %false %if (address = 0)
+ 06C4 8B 45 08                        MOV EAX,[EBP+ 8]
+ 06C7 3D 00 00 00 00                  CMP EAX, 0
+ 06CC 75 00                           JNE L 1023
+ 06CE B8 00 00 00 00                  MOV EAX, 0
+ 06D3 C9                              LEAVE
+ 06D4 C3                              RET
+ 06D5                      L 1023  EQU $
+
+        ! ok, we could look for a trap
+        tp == blockinfo( address )
+ 06D5 FF 75 08                        PUSH WORD [EBP+ 8]
+ 06D8 E8 00 00                        CALL 'BLOCKINFO' (INTERNAL L 1014 )
+ 06DB 83 C4 04                        ADD ESP, 4
+ 06DE 89 45 F8                        MOV [EBP-8],EAX
+
+        ! check we found a real trap
+        %false %if (tp == noinfo)
+ 06E1 8B 45 F8                        MOV EAX,[EBP-8]
+ 06E4 3D 00 00 00 00                  CMP EAX, 0
+ 06E9 75 00                           JNE L 1024
+ 06EB B8 00 00 00 00                  MOV EAX, 0
+ 06F0 C9                              LEAVE
+ 06F1 C3                              RET
+ 06F2                      L 1024  EQU $
+
+        ! get the routine name containing the event handler
+        procname = getprocname( tp )
+ 06F2 FF 75 F8                        PUSH WORD [EBP-8]
+ 06F5 8D 45 D8                        LEA EAX,[EBP-40]
+ 06F8 50                              PUSH EAX
+ 06F9 E8 00 00                        CALL 'GETPROCNAME' (INTERNAL L 1000 )
+ 06FC 83 C4 08                        ADD ESP, 8
+ 06FF 8D 45 E9                        LEA EAX,[EBP-23]
+ 0702 50                              PUSH EAX
+ 0703 8D 4D D8                        LEA ECX,[EBP-40]
+ 0706 51                              PUSH ECX
+ 0707 6A 0E                           PUSH  14
+ 0709 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 070C 83 C4 0C                        ADD ESP, 12
+
+!        ! Exit loop if we've reached the %begin..%end program entry point
+!        %true %if (procname = "Main Program")
+        ! Exit loop if we've reached the IMP entry point
+        %true %if (procname = "STARTIMP")
+ 070F 8D 45 E9                        LEA EAX,[EBP-23]
+ 0712 50                              PUSH EAX
+ 0713 B9 B0 00 00 00                  MOV ECX,COT+ 176
+ 0718 51                              PUSH ECX
+ 0719 89 45 D4                        MOV [EBP-44],EAX
+ 071C 89 4D D0                        MOV [EBP-48],ECX
+ 071F E8 08 00                        CALL '_IMPSTRCMP' (EXTERN  8)
+ 0722 83 C4 08                        ADD ESP, 8
+ 0725 3D 00 00 00 00                  CMP EAX, 0
+ 072A 75 00                           JNE L 1025
+ 072C B8 FF FF FF FF                  MOV EAX,-1
+ 0731 C9                              LEAVE
+ 0732 C3                              RET
+ 0733                      L 1025  EQU $
+
+        %false
+ 0733 B8 00 00 00 00                  MOV EAX, 0
+ 0738 C9                              LEAVE
+ 0739 C3                              RET
+    %end
+
+{------------------------------------------------------------------------------}
+    %external %string(14) %function handler name( %integer address )
+ 073A                      L 1026  EQU $
+ 073A C8 00 00 01                     ENTER 0000, 1
+        %record(imptrap)%name tp
+        %string(14) procname
+
+        ! find a trap table entry for this address
+        tp == blockinfo( address )
+ 073E FF 75 0C                        PUSH WORD [EBP+ 12]
+ 0741 E8 00 00                        CALL 'BLOCKINFO' (INTERNAL L 1014 )
+ 0744 83 C4 04                        ADD ESP, 4
+ 0747 89 45 F8                        MOV [EBP-8],EAX
+
+        ! get the routine name containing the event handler
+        %result = getprocname( tp )
+ 074A FF 75 F8                        PUSH WORD [EBP-8]
+ 074D 8D 45 D8                        LEA EAX,[EBP-40]
+ 0750 50                              PUSH EAX
+ 0751 E8 00 00                        CALL 'GETPROCNAME' (INTERNAL L 1000 )
+ 0754 83 C4 08                        ADD ESP, 8
+ 0757 8B 45 08                        MOV EAX,[EBP+ 8]
+ 075A 50                              PUSH EAX
+ 075B 8D 4D D8                        LEA ECX,[EBP-40]
+ 075E 51                              PUSH ECX
+ 075F 6A 0E                           PUSH  14
+ 0761 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0764 83 C4 0C                        ADD ESP, 12
+ 0767 C9                              LEAVE
+ 0768 C3                              RET
+    %end
+
+{------------------------------------------------------------------------------}
+    %external %integer %function handler entry address( %integer address )
+ 0769                      L 1027  EQU $
+ 0769 C8 00 00 01                     ENTER 0000, 1
+        %record(imptrap)%name tp
+
+        ! find a trap table entry for this address
+        tp == blockinfo( address )
+ 076D FF 75 08                        PUSH WORD [EBP+ 8]
+ 0770 E8 00 00                        CALL 'BLOCKINFO' (INTERNAL L 1014 )
+ 0773 83 C4 04                        ADD ESP, 4
+ 0776 89 45 F8                        MOV [EBP-8],EAX
+
+        ! get the routine name containing the event handler
+        %result = tp_trapep
+ 0779 8B 5D F8                        MOV EBX,[EBP-8]
+ 077C 8B 43 08                        MOV EAX,[EBX+ 8]
+ 077F C9                              LEAVE
+ 0780 C3                              RET
+    %end
+
+{------------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+ 0000 01 00                           db 01,00 ; ..
+ 0002 00 00                           db 00,00 ; ..
+ 0004 00 00                           db 00,00 ; ..
+ 0006 00 00                           db 00,00 ; ..
+ 0008 0F 00                           db 0F,00 ; ..
+ 000A 00 00                           db 00,00 ; ..
+ 000C 01 00                           db 01,00 ; ..
+ 000E 00 00                           db 00,00 ; ..
+ 0010 13 45                           db 13,45 ; .E
+ 0012 76 65                           db 76,65 ; ve
+ 0014 6E 74                           db 6E,74 ; nt
+ 0016 20 74                           db 20,74 ; .t
+ 0018 72 61                           db 72,61 ; ra
+ 001A 70 20                           db 70,20 ; p.
+ 001C 73 74                           db 73,74 ; st
+ 001E 61 72                           db 61,72 ; ar
+ 0020 74 20                           db 74,20 ; t.
+ 0022 40 28                           db 40,28 ; @(
+ 0024 01 29                           db 01,29 ; .)
+ 0026 12 20                           db 12,20 ; ..
+ 0028 66 6F                           db 66,6F ; fo
+ 002A 72 20                           db 72,20 ; r.
+ 002C 28 73                           db 28,73 ; (s
+ 002E 74 61                           db 74,61 ; ta
+ 0030 72 74                           db 72,74 ; rt
+ 0032 2C 65                           db 2C,65 ; ,e
+ 0034 6E 64                           db 6E,64 ; nd
+ 0036 29 3D                           db 29,3D ; )=
+ 0038 28 01                           db 28,01 ; (.
+ 003A 2C 0E                           db 2C,0E ; ,.
+ 003C 29 20                           db 29,20 ; ).
+ 003E 69 6E                           db 69,6E ; in
+ 0040 20 72                           db 20,72 ; .r
+ 0042 6F 75                           db 6F,75 ; ou
+ 0044 74 69                           db 74,69 ; ti
+ 0046 6E 65                           db 6E,65 ; ne
+ 0048 20 27                           db 20,27 ; .'
+ 004A 01 27                           db 01,27 ; .'
+ 004C 0C 20                           db 0C,20 ; ..
+ 004E 20 20                           db 20,20 ; ..
+ 0050 20 65                           db 20,65 ; .e
+ 0052 76 65                           db 76,65 ; ve
+ 0054 6E 74                           db 6E,74 ; nt
+ 0056 73 3D                           db 73,3D ; s=
+ 0058 28 01                           db 28,01 ; (.
+ 005A 31 01                           db 31,01 ; 1.
+ 005C 30 01                           db 30,01 ; 0.
+ 005E 29 13                           db 29,13 ; ).
+ 0060 20 20                           db 20,20 ; ..
+ 0062 20 20                           db 20,20 ; ..
+ 0064 28 74                           db 28,74 ; (t
+ 0066 72 61                           db 72,61 ; ra
+ 0068 70 65                           db 70,65 ; pe
+ 006A 70 2C                           db 70,2C ; p,
+ 006C 66 72                           db 66,72 ; fr
+ 006E 6F 6D                           db 6F,6D ; om
+ 0070 29 3D                           db 29,3D ; )=
+ 0072 28 01                           db 28,01 ; (.
+ 0074 2C 01                           db 2C,01 ; ,.
+ 0076 29 10                           db 29,10 ; ).
+ 0078 4E 6F                           db 4E,6F ; No
+ 007A 20 65                           db 20,65 ; .e
+ 007C 76 65                           db 76,65 ; ve
+ 007E 6E 74                           db 6E,74 ; nt
+ 0080 20 74                           db 20,74 ; .t
+ 0082 72 61                           db 72,61 ; ra
+ 0084 70 20                           db 70,20 ; p.
+ 0086 40 28                           db 40,28 ; @(
+ 0088 01 29                           db 01,29 ; .)
+ 008A 12 20                           db 12,20 ; ..
+ 008C 66 6F                           db 66,6F ; fo
+ 008E 72 20                           db 72,20 ; r.
+ 0090 28 73                           db 28,73 ; (s
+ 0092 74 61                           db 74,61 ; ta
+ 0094 72 74                           db 72,74 ; rt
+ 0096 2C 65                           db 2C,65 ; ,e
+ 0098 6E 64                           db 6E,64 ; nd
+ 009A 29 3D                           db 29,3D ; )=
+ 009C 28 01                           db 28,01 ; (.
+ 009E 2C 0E                           db 2C,0E ; ,.
+ 00A0 29 20                           db 29,20 ; ).
+ 00A2 69 6E                           db 69,6E ; in
+ 00A4 20 72                           db 20,72 ; .r
+ 00A6 6F 75                           db 6F,75 ; ou
+ 00A8 74 69                           db 74,69 ; ti
+ 00AA 6E 65                           db 6E,65 ; ne
+ 00AC 20 27                           db 20,27 ; .'
+ 00AE 01 27                           db 01,27 ; .'
+ 00B0 08 53                           db 08,53 ; .S
+ 00B2 54 41                           db 54,41 ; TA
+ 00B4 52 54                           db 52,54 ; RT
+ 00B6 49 4D                           db 49,4D ; IM
+ 00B8 50 00                           db 50,00 ; P.
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+ 0000 00 00                           db 00,00 ; ..
+ 0002 00 00                           db 00,00 ; ..
+ 0004 00 00                           db 00,00 ; ..
+ 0006 00 00                           db 00,00 ; ..
+ 0008 00 00                           db 00,00 ; ..
+ 000A 00 00                           db 00,00 ; ..
+ 000C 00 00                           db 00,00 ; ..
+ 000E 00 00                           db 00,00 ; ..
+ 0010 00 00                           db 00,00 ; ..
+ 0012 00 00                           db 00,00 ; ..
+ 0014 00 00                           db 00,00 ; ..
+ 0016 00 00                           db 00,00 ; ..
+ 0018 00 00                           db 00,00 ; ..
+ 001A 00 00                           db 00,00 ; ..
+ 001C 00 00                           db 00,00 ; ..
+ 001E 00 00                           db 00,00 ; ..
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

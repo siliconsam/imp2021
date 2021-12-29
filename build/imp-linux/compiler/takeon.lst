@@ -1,0 +1,767 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  %begin; !takeon: convert imp grammar 31/1/77
+   2      %constinteger grammarstream=1;                          ! in streams
+   3      %constinteger errorstream=0, tablestream=1, glist=2, dlist=3; ! out streams
+   4      %constinteger first phrase = 200
+   5      %constinteger ident=90
+   6      %owninteger charmax=0, nmax=-1, inits=0
+   7      %owninteger newname=0, outstring=-1
+   8      %integer sym,count,gmin,gmax,kmax
+   9      %byteintegerarray char(1:1400)
+   10      %ownbyteintegerarray tran(0:255)
+   11      %integerarray index(0:255)
+   12      %integerarray item,next(-1:800), atomic(130:179), phrase(200:255)
+   13      %integerarray initial,initnext(0:255)
+   14      %integerarray keydict(32:1023)
+   15  
+   16      %routine hwrite(%integer n, m)
+   17          n = n!x'FFFF0000' %if n&x'8000' # 0
+   18          write(n, m)
+   19      %end
+   20  
+   21      %routine read sym
+   22          %cycle
+   23              read symbol(sym) %until sym # ' '
+   24              %return %if sym # '&' %or nextsymbol # nl
+   25              skipsymbol
+   26          %repeat
+   27      %end
+   28  
+   29      %routine print chars(%integer p)
+   30          %integer flag
+   31          flag = outstring
+   32          %if p # 0 %start
+   33              %while char(p) # 0 %and flag # 0 %cycle
+   34                  flag = flag-1
+   35                  printsymbol(char(p)&127)
+   36                  p = p+1
+   37              %repeat
+   38          %finish
+   39      %end
+   40  
+   41      %routine print name(%integer n)
+   42          print chars(index(n&255))
+   43          %while n&x'300' # 0 %cycle
+   44              print symbol('<');  n = n-256
+   45          %repeat
+   46          %if outstring < 0 %start
+   47              printsymbol('"') %if (n&x'800' # 0 %or tran(n&255) # 0)
+   48              n = n>>16
+   49              %if n # 0 %start
+   50                  printsymbol('[');  hwrite(n, 0);  printsymbol(']')
+   51              %finish
+   52          %finish
+   53      %end
+   54  
+   55      %routine read name(%integername n)
+   56          %integer i,j,k,m
+   57          i = charmax
+   58          %cycle
+   59              i = i+1;  char(i) = sym
+   60              read symbol(sym)
+   61              %exit %unless 'A'<=sym<='Z' %or '0'<=sym<='9'
+   62          %repeat
+   63          i = i+1;  char(i) = 0
+   64          read sym %if sym = ' '
+   65          m = nmax
+   66          %while m >= 0 %cycle
+   67              j = index(m);  k = charmax+1
+   68              %while j # 0 %and char(j)&127 = char(k) %cycle
+   69                  ->ok %if char(k) = 0
+   70                  j = j+1;  k = k+1
+   71              %repeat
+   72              m = m-1
+   73          %repeat
+   74  ok:     %if newname # 0 %start
+   75              %if m >= 0 %start
+   76                  printstring("DUPLICATE: ")
+   77                  print chars(charmax+1)
+   78                  newline
+   79              %finish
+   80              index(n) = charmax+1;  charmax = i
+   81              tran(n) = 1 %and read sym %if sym = '"'
+   82              nmax = n %if nmax < n
+   83          %else
+   84              %if m < 0 %start
+   85                  printstring("UNKNOWN: ")
+   86                  print chars(charmax+1)
+   87                  newline
+   88                  m = 0
+   89              %finish
+   90              n = m
+   91          %finish
+   92      %end
+   93  
+   94      %routine read grammar
+   95          %integer i,j,k,l,p,min,max,exp,end
+   96          %integerarray converted(-200:350)
+   97          %integerarray head,tail(-200:-1)
+   98          %integerarray token,link(1:350)
+   99          %integerarray map(0:800)
+  100  
+  101          %integerfn cell(%integer h,t)
+  102              !creates a list cell, if necessary, with head h and tail t
+  103              %integer i
+  104              i = t;  i = 0 %if i > 0
+  105              %while i # min %cycle
+  106                  i = i-1
+  107                  %result = i %if head(i) = h %and tail(i) = t
+  108              %repeat
+  109              min = min-1;  head(min) = h;  tail(min) = t
+  110              converted(min) = 0
+  111              %result = min
+  112          %end
+  113  
+  114          %integerfn union(%integer x,y)
+  115              %integer hx,hy
+  116              %result = x %if x = y
+  117              hx=x %and x=y %and y=hx %if x < y
+  118              %if x >= 0 %start
+  119                  %result = cell(x,y) %if y >= 0
+  120                  hy = head(y)
+  121                  %result = cell(x,y) %if x > hy
+  122                  %result = cell(hy,union(x,tail(y))) %if x # hy
+  123                  %result = y
+  124              %finish
+  125              hx = head(x);  hy = head(y)
+  126              %result = cell(hx,union(tail(x),y)) %if hx > hy
+  127              %result = cell(hy,union(x,tail(y))) %if hx # hy
+  128              %result = cell(hx,union(tail(x),tail(y)))
+  129          %end
+  130  
+  131          %routine concatenate(%integer x,y)
+  132              %integer i,j
+  133              i = x
+  134              %cycle
+  135                  j = link(i);  link(i) = y;  i = j
+  136                  %exit %if i = x
+  137              %repeat;!   %until i = x
+  138          %end
+  139  
+  140          %routine accept exp(%integername exp,exp end)
+  141              ! inputs a regular expression
+  142              !   and creates intermediate graph representation
+  143              %integer i,string,string end,unit,unit end, n
+  144              exp = 0
+  145  s:          string = 0
+  146  u:          %if sym = '(' %start
+  147                  read sym
+  148                  accept exp(unit,unit end)
+  149                  ->err %if unit = 0 %or sym # ')'
+  150                  read sym
+  151              %else
+  152                  %if 'A' <= sym <= 'Z' %or sym = '%' %start
+  153                      read name(i)
+  154                      char(index(i)) = char(index(i))!128 %if i # 0
+  155                      i = i!tran(i)<<11
+  156                      i = i+256 %and read sym %while sym = '<'
+  157                      %if sym = '"' %start;! force transparent
+  158                          readsym
+  159                          i = i!1<<11
+  160                      %finish
+  161                      %if sym = '[' %start
+  162                          read(n);  ->err %if n>>4 # 0
+  163                          i = i+n<<16
+  164                          readsym;  ->err %if sym # ']'
+  165                          read sym
+  166                      %finish
+  167                  %else
+  168                      ->err %if sym # '+'
+  169                      i = 0
+  170                      i = i+256 %and read sym %while sym = '+'
+  171                  %finish
+  172                  max = max+1;  token(max) = i;  link(max) = max
+  173                  unit = max;  unit end = max
+  174              %finish
+  175              %if sym = '*' %or sym = '!' %start
+  176                  max = max+1;  token(max) = -1;  link(max) = max
+  177                  min = min-1;  head(min) = max;  tail(min) = unit
+  178                  concatenate(unit end,min);  unit end = max
+  179                  unit = min %if sym = '*'
+  180                  read sym
+  181              %finish
+  182              %if sym = '?' %start
+  183                  max = max+1;  token(max) = -1
+  184                  link(max) = link(unit end);  link(unit end) = max
+  185                  min = min-1;  head(min) = max;  tail(min) = unit
+  186                  unit = min
+  187                  read sym
+  188              %finish
+  189              %if string=0 %then string=unit %else concatenate(string end,unit)
+  190              string end = unit end
+  191              ->u %unless sym = ',' %or sym = ')' %or sym = nl
+  192              %if exp = 0 %start
+  193                  exp = string
+  194                  exp end = string end
+  195              %else
+  196                  exp = union(string,exp)
+  197                  i = link(exp end)
+  198                  link(exp end) = link(string end)
+  199                  link(string end) = i
+  200              %finish
+  201              %return %unless sym = ','
+  202              read sym %until sym # nl
+  203              ->s
+  204  err:        exp = 0
+  205          %end
+  206  
+  207          %routine convert
+  208              %integer i,j,k,m,n,gmax1,loopstop
+  209  
+  210              %routine tcount(%integer x)
+  211                  %integer t
+  212                  %cycle
+  213                      %return %if x = 0
+  214                      %if x < 0 %start
+  215                          tcount(tail(x))
+  216                          x = head(x)
+  217                      %finish
+  218                      t = token(x)
+  219                      %exit %if t >= 0
+  220                      %return %if t = loopstop
+  221                      token(x) = loopstop
+  222                      x = link(x)
+  223                  %repeat
+  224                  k = k-1
+  225              %end
+  226  
+  227              %routine add components(%integer x)
+  228                  %owninteger i,k,t,u
+  229                  %while x # 0 %cycle
+  230                      %if x < 0 %start
+  231                          add components(tail(x))
+  232                          x = head(x)
+  233                      %finish
+  234                      t = token(x)
+  235                      %exit %if t >= 0
+  236                      %return %if t = loopstop
+  237                      token(x) = loopstop
+  238                      x = link(x)
+  239                  %repeat
+  240                  %if x # 0 %then x = link(x) %else t = 0
+  241                  u = t&(x'F0000'+15<<11+255)
+  242                  i = gmax1
+  243                  %cycle
+  244                      i = i+1
+  245                      %exit %if i > gmax
+  246                      k = item(i)
+  247                      next(i)=union(next(i),x) %and %return %if k = t
+  248                      %if k&(x'F0000'+15<<11+255) = u %start
+  249                          print name(p) %unless p = 0
+  250                          printstring("-CLASH: ");
+  251                          print name(k);  space;  print name(t)
+  252                          newline
+  253                      %finish
+  254                      k = k&255
+  255                      %if u = ident %or (u&255<k %and k>=180) %or k = 0 %start
+  256                          %cycle i = gmax,-1,i
+  257                              item(i+1) = item(i)
+  258                              next(i+1) = next(i)
+  259                          %repeat
+  260                          %exit
+  261                      %finish
+  262                  %repeat
+  263                  gmax = gmax+1
+  264                  item(i) = t;  next(i) = x
+  265              %end
+  266  
+  267              loopstop = -1;  gmin = gmax+1
+  268              %cycle i = min,1,max
+  269                  converted(i) = 0
+  270              %repeat
+  271              n = next(0)
+  272  l1:         gmax1 = gmax
+  273              loopstop = loopstop-1
+  274              add components(n)
+  275              item(gmax) = item(gmax)+1024
+  276              %if gmax1 = 0 %start
+  277                  inits = gmax
+  278                  inits = inits-1 %while inits # 0 %and item(inits)&255 >= first phrase
+  279              %finish
+  280              converted(n) = gmax1+1
+  281              m = 0
+  282              %cycle i = gmin,1,gmax
+  283                  j = next(i)
+  284                  %if j # 0 %start
+  285                      k = converted(j)
+  286                      %if k = 0 %start
+  287                          loopstop = loopstop-1
+  288                          tcount(j)
+  289                          converted(j) = k
+  290                      %finish
+  291                      %if k < m %start
+  292                          m = k;  n = j
+  293                      %finish
+  294                  %finish
+  295              %repeat
+  296              ->l1 %if m # 0
+  297              %cycle i = gmin,1,gmax
+  298                  k = next(i)
+  299                  k = converted(k) %if k # 0
+  300                  next(i) = k
+  301              %repeat
+  302          %end;  !convert
+  303  
+  304          %routine minimize
+  305              %integer i,j,k,m,n
+  306              %integerarray stack(1:150)
+  307  
+  308              %integerfn ult map(%integer i)
+  309                  %integer j
+  310                  j=i %and i=map(i) %until i = j %or i = 0
+  311                  %result = j
+  312              %end
+  313  
+  314              %integerfn equivalent(%integer nn,mm)
+  315                  %integer i,j,k,pos1,pos2
+  316                  pos1 = 0;  pos2 = 0
+  317  l1:             %cycle
+  318                      k = item(mm)
+  319                      ->l9 %unless item(nn) = k
+  320                      i = next(nn);  j = next(mm)
+  321                      ->l9 %if (i=0 %and j#0) %or (i#0 %and j=0)
+  322                      pos1 = pos1+1;  stack(pos1) = nn;  map(nn) = mm
+  323                      nn = nn+1;  mm = mm+1
+  324                      %exit %if k&1024 # 0;                 !last alternative
+  325                  %repeat
+  326  l2:             %result = 1 %if pos2 = pos1
+  327                  pos2 = pos2+1;  i = stack(pos2)
+  328                  nn = ult map(next(i));  mm = ult map(next(map(i)))
+  329                  ->l2 %if nn = mm
+  330                  %if nn < mm %start
+  331                      i = nn;  nn = mm;  mm = i
+  332                  %finish
+  333                  ->l1 %if nn > n
+  334  l9:             %while pos1 # 0 %cycle
+  335                      i = stack(pos1);  map(i) = i
+  336                      pos1 = pos1-1
+  337                  %repeat
+  338                  %result = 0
+  339              %end
+  340  
+  341              %cycle i = 0,1,gmax
+  342                  map(i) = i
+  343              %repeat
+  344              %return %if gmin > gmax
+  345              %cycle n = gmin,1,gmax
+  346                  %if map(n) = n %start
+  347                      %if n = gmin %or item(n-1)&1024 # 0 %start
+  348                          m = 1
+  349                          %while m # n %cycle
+  350                              %exit %if map(m) = m %and equivalent(n,m) # 0
+  351                              m = m+1
+  352                          %repeat
+  353                      %finish
+  354                  %else
+  355                      map(n) = ult map(n)
+  356                  %finish
+  357              %repeat
+  358              j = gmin-1
+  359              %cycle i = gmin,1,gmax
+  360                  k = map(i)
+  361                  %if k = i %start
+  362                      j = j+1;  map(i) = j
+  363                      item(j) = item(i);  next(j) = next(i)
+  364                  %else
+  365                      map(i) = map(k)
+  366                  %finish
+  367              %repeat
+  368              gmax = j
+  369              %cycle i = gmin,1,gmax
+  370                  k = next(i)
+  371                  next(i) = map(k) %if k # 0
+  372              %repeat
+  373          %end;  !minimize
+  374  
+  375          gmax = 0
+  376  l1:     read sym %until sym # nl
+  377          ->l10 %if sym = '/'
+  378          %if sym = 'S' %and next symbol = 'S' %start
+  379              skip symbol;  p = 0
+  380          %else
+  381              read name(p);  %stop %if p = 0
+  382          %finish
+  383          min = 0;  max = 0
+  384          read sym %until sym#nl %and sym#'-' %and sym#'>'
+  385          accept exp(exp,end)
+  386          ->l9 %if exp = 0 %or sym # nl
+  387          concatenate(end,0)
+  388          item(0) = 2047;  next(0) = exp
+  389          convert
+  390          i = gmin
+  391          minimize
+  392          i = map(gmin)
+  393          %if p = 0 %start;                      !ss
+  394  !!!          j = item(i);!  k = next(i)
+  395  !!!             k = k-inits;!  %stop %if k <= 0
+  396  !!!          %if i <= inits %start
+  397  !!!             ->l99 %if l >= first phrase
+  398  !!!             %signal 0,25 %if initial(l) # 0
+  399  !!!          %else
+  400  !!!          %finish
+  401  !!!       gmax = gmax-inits
+  402              %cycle i = 1, 1, inits
+  403                  l = item(i)&255
+  404                  %continue %if l >= 200
+  405                  l = atomic(l) %if 130 <= l < 180
+  406                  %signal 0,25 %if initial(l) # 0
+  407                  initial(l) = i;  initnext(l) = item(i)
+  408              %repeat
+  409              select output(glist)
+  410              newline
+  411          %else
+  412              phrase(p) = i
+  413              select output(glist)
+  414              newline
+  415              print name(p);  printstring(" =>")
+  416              hwrite(i,1)
+  417          %finish
+  418          k = 1024
+  419          %cycle i = gmin,1,gmax
+  420              %if k&1024 # 0 %start
+  421                  newline;  hwrite(i,3);  j = 0
+  422              %finish
+  423              j = j+1
+  424              %if j > 5 %start
+  425                  newline;  spaces(4);  j = 1
+  426              %finish
+  427              spaces(3)
+  428              k = item(i)
+  429              %if k&255 # 0 %start
+  430                  print name(k)
+  431              %else
+  432                  printstring("*E")
+  433                  print symbol('+') %and k=k-256 %while k&x'300' # 0
+  434              %finish
+  435              hwrite(next(i),1)
+  436          %repeat
+  437          select output(errorstream)
+  438          ->l1
+  439  l9:     printstring("WRONG FORMAT AT: ")
+  440          %while sym # nl %cycle
+  441              print symbol(sym);  read sym
+  442          %repeat
+  443          newline
+  444          ->l1
+  445          !deal with initial phrase
+  446          !assumes exactly one (imp)
+  447  l10:    %if inits = 1 %start;    ! not imp!!!
+  448              selectoutput(errorstream)
+  449              printstring("NOT AN IMP GRAMMAR");  newline
+  450              %return
+  451          %finish
+  452          p = phrase(item(inits+1)&255)
+  453          %signal 0,26 %if p = 0
+  454          %cycle
+  455              j = item(p);  k = j&255
+  456              %signal 0,27 %if k >= 160
+  457              k = atomic(k) %if k >= 120
+  458              %signal 0,28 %if initial(k) # 0
+  459              initial(k) = p!x'8000';  initnext(k) = j
+  460              %exit %if j&1024 # 0
+  461              p = p+1
+  462          %repeat
+  463          initial(0) = initial(182);      !%decl
+  464          select output(glist)
+  465          newlines(2)
+  466          %cycle i = 0,1,119
+  467              k = initial(i)
+  468              %if k # 0 %start
+  469                  hwrite(i,2);  printstring(":  ")
+  470                  print name(initnext(i))
+  471                  hwrite(k&255, 3)
+  472                  printsymbol('`') %if k < 0
+  473                  newline
+  474              %finish
+  475          %repeat
+  476          select output(errorstream)
+  477      %end;  !read grammar
+  478  
+  479      %routine read atoms
+  480          %integer i,j,k,dict,dmax,code,class,sub
+  481          %integerarray char,cont,alt(0:1000)
+  482  
+  483          %routine read code
+  484              %integer n
+  485              code = next symbol;  sub = 0
+  486              %if code # ',' %and code # nl %start
+  487                  skip symbol
+  488                  %if code = '$' %start
+  489                      read(code);  %return
+  490                  %finish
+  491                  %return %unless code = '('
+  492                  read(sub)
+  493                  %while nextsymbol = '+' %cycle
+  494                      skipsymbol;  read(n);  sub = sub+n
+  495                  %repeat
+  496                  skip symbol
+  497              %finish
+  498              code = class+128
+  499          %end
+  500  
+  501          %routine insert in(%integername x)
+  502              %cycle
+  503                  %while char(x) < code %cycle
+  504                      cont(x) = sub %if cont(x) = 0
+  505                      x == alt(x)
+  506                  %repeat
+  507                  %if char(x) # code %start
+  508                      dmax = dmax+1;  char(dmax) = code
+  509                      cont(dmax) = 0;  alt(dmax) = x;  x = dmax
+  510                  %finish
+  511                  %exit %if code&128 # 0
+  512                  read code
+  513                  x == cont(x)
+  514              %repeat
+  515              sub = cont(alt(x)) %if sub = 0 %and alt(x) # 0
+  516              cont(x) = sub
+  517          %end
+  518  
+  519          %routine store(%integer x)
+  520              %integer m,n,v, mm, q
+  521              %cycle
+  522                  kmax = kmax+1;  n = kmax
+  523                  m = alt(x);  mm = m
+  524                  store(m) %and m=x'8000' %if m # 0
+  525                  v = char(x);  x = cont(x)
+  526                  %exit %if v&128 # 0
+  527                  %if m = 0 %start;  !no alternatives
+  528                      %if alt(x) = 0 %and char(x)&128 = 0 %start
+  529                          v = char(x)<<7+v;  x = cont(x)
+  530                      %finish
+  531                  %else
+  532                      q = kmax-n+1
+  533                      %if q>>7 # 0 %start
+  534                          selectoutput(errorstream)
+  535                          printstring("Keydict overflow!");  newline
+  536                          %signal 15,15
+  537                          %stop
+?access
+  538                      %finish
+  539                      v = q<<7+v!x'8000'
+  540                  %finish
+  541                  keydict(n) = v
+  542              %repeat
+  543              %if mm = 0 %start
+  544                  kmax = kmax+1;  keydict(kmax) = 0
+  545              %else
+  546                  kmax = kmax-1
+  547              %finish
+  548  			keydict(n) = m + x'4000' + (keydict(n+1)&127)<<7 + v&127
+  549              keydict(n+1) = x
+  550          %end
+  551  
+  552          %routine display(%integer i,s)
+  553              %integer j
+  554  
+  555              %routine show(%integer sym)
+  556                  sym = '$' %if sym = nl
+  557                  printsymbol(sym)
+  558              %end
+  559  
+  560  			%cycle
+  561  				j = keydict(i)
+  562  				%if j&x'4000' = 0 %start
+  563  					show(j&127)
+  564  					%if j&x'8000' = 0 %start
+  565  						j = j>>7
+  566  						show(j) %and s=s+1 %if j # 0
+  567  						space
+  568  						i = i+1;  s = s+2
+  569  					%else
+  570  						space
+  571  						display(j>>7&127+i,s+2)
+  572  						%exit %if j>>15 = 0
+  573  						spaces(s);  i = i+1
+  574  					%finish
+  575  				%else
+  576  					print symbol(':');  print name(j&127)
+  577  					space %and print name(j>>7&127) %unless j>>7&127 = 0
+  578  					j = keydict(i+1)&x'3FFF'
+  579  					hwrite(j, 4) %unless j = 0
+  580  					newline
+  581  					%exit
+  582  				%finish
+  583  			%repeat
+  584  		%end
+  585  
+  586          dict = 0;  dmax = 0;  char(0) = 999
+  587  l1:     %cycle
+  588              sym = next symbol
+  589              %exit %unless sym = '[' %or sym = nl
+  590              read symbol(sym) %until sym = nl
+  591          %repeat
+  592          ->l10 %if sym = '/'
+  593          read(class)
+  594          newname = 1
+  595          read sym;  read name(class)
+  596          newname = 0
+  597          %if class < 130 %start
+  598              %if sym # '[' %start
+  599                  read(sym) %if sym = '$'
+  600                  %cycle
+  601                      code = sym;  insert in(dict)
+  602                      read symbol(sym)
+  603                      %exit %if sym # ','
+  604                      read symbol(sym) %until sym # ' ' %and sym # nl
+  605                  %repeat
+  606              %finish
+  607          %else
+  608              %if class <= first phrase %and sym = '=' %start
+  609                  read sym;  read name(atomic(class))
+  610              %finish
+  611          %finish
+  612          read symbol(sym) %while sym # nl
+  613          ->l1
+  614  
+  615  l10:    select output(dlist);  newlines(2)
+  616          kmax = 126;  keydict(32) = 0
+  617          %cycle i = 33,1,126
+  618              print symbol(i);  space
+  619              %if char(dict) = i %start
+  620                  j = (kmax+1)<<2
+  621                  store(cont(dict))
+  622                  dict = alt(dict)
+  623                  display(j>>2,2)
+  624              %else
+  625                  print symbol('?');  newline
+  626                  j = 32<<2
+  627              %finish
+  628              !let:0  dig:1  term:2  other:3 
+  629              j = j+3 %unless 'A'<=i<='Z'
+  630              j = j-2 %if '0'<=i<='9'
+  631              j = j-1 %if i = ';'
+  632              keydict(i) = j
+  633          %repeat
+  634  ! WTF! Following assignment blocks the use of ~ eg ~=
+  635  ! So, assignment commented out.
+  636  !        keydict('~') = keydict('^')
+  637          newlines(2)
+  638          select output(errorstream)
+  639      %end
+?K unused
+  640  
+  641      %integerfn packed(%integer j,k)
+  642          j = (j&1024)<<5 + (j&x'0300')<<4 + (j>>3&x'0100')<<6 + (j>>8&x'F00')
+  643          %result = j+k&255
+  644      %end
+  645  
+  646      %integer i,j,k
+  647      charmax = 0
+  648  
+  649      %for i = -1, 1, 800 %cycle
+  650          item(i) = 0
+  651          next(i) = 0
+  652      %repeat
+  653  
+  654      %for i = 0, 1, 255 %cycle
+  655          index(i) = 0
+  656          initnext(i) = 0
+  657          initial(i) = 0
+  658      %repeat
+  659  
+  660      %for i = 130, 1, 179 %cycle
+  661          atomic(i) = i
+  662      %repeat
+  663  
+  664      %for i = first phrase, 1, 255 %cycle
+  665          phrase(i) = 0
+  666      %repeat
+  667  
+  668      select input( grammarstream )
+  669      select output( errorstream )
+  670      read symbol(i) %until i = '/'
+  671      read symbol(i) %until i = nl
+  672  
+  673      read atoms
+  674      read symbol(i) %until i = nl
+  675      read grammar
+  676  
+  677      !write required values
+  678      select output(tablestream)
+  679      printstring("   %endoflist");  newline
+  680  
+  681      %constinteger names per line = 8
+  682      printstring("%conststring(8)%array text(0:255) = %c"); newline
+  683      printstring("""Z"",")
+  684      ! we have just output the first name already
+  685      ! so initialise k with good value
+  686      k = names per line - 1;  outstring = 8
+  687      %cycle j = 1, 1, 255
+  688          printsymbol('"');  print name(j);  printsymbol('"')
+  689          printsymbol(',') %unless j = 255
+  690          k = k-1;  k = names per line %and newline %if k <= 0
+  691      %repeat
+  692      newline
+  693      outstring = -1
+  694      printstring("%constinteger gmax1=");  hwrite(gmax,0); newline
+  695      printstring("%owninteger gmax=");  hwrite(gmax,0);  newline
+  696      printstring("%constinteger imp phrase =");  hwrite(inits+1, 0); newlines(2)
+  697  
+  698      printstring("!  FLAG<1> 0<1> SS<2> 0<3> T<1> LINK<8>");  newline
+  699      printstring("%constshortintegerarray initial(0:119) = %c")
+  700      %cycle i = 0,1,119
+  701          newline %if i&7 = 0
+  702          hwrite(initial(i), 7)
+  703          print symbol(',') %unless i = 119
+  704      %repeat
+  705      newlines(2)
+  706  
+  707      printstring("%constbyteintegerarray atomic(130:179) = %c")
+  708      k = 0
+  709      %cycle i = 130,1,179
+  710          newline %if k&7 = 0
+  711          k = k+1
+  712          hwrite(atomic(i),3)
+  713          print symbol(',') %unless i = 179
+  714      %repeat
+  715      newlines(2)
+  716  
+  717      printstring("%ownshortintegerarray phrase(200:255) = %C")
+  718      %for i = 200, 1, 255 %cycle
+  719          newline %if i&7 = 0
+  720          hwrite(phrase(i),3)
+  721          print symbol(',') %unless i = 255
+  722      %repeat
+  723      newlines(2)
+  724  
+  725      printstring("!  MORE<1> 0<1> ORDER<2> TYPE<4> CLASS<8>");  newline
+  726      printstring("%ownshortintegerarray gram(0:max grammar) = %c")
+  727      %cycle i = 0,1,gmax
+  728          newline %if i&7 = 0
+  729          k = 0
+  730          k = packed(item(i)!!1024,item(i)) %if i # 0
+  731          hwrite(k,7)
+  732          print symbol(',')
+  733      %repeat
+  734      newline;
+  735      printstring("0(max grammar-gmax1)")
+  736      newlines(2)
+  737      printstring("%ownshortintegerarray glink(0:max grammar) = %c")
+  738      %cycle i = 0, 1, gmax
+  739          newline %if i&7 = 0
+  740          hwrite(next(i), 7)
+  741          printsymbol(',')
+  742      %repeat
+  743      newline;
+  744      printstring("0(max grammar-gmax1)")
+  745      newlines(2)
+  746  
+  747      printstring("%constshortinteger max kdict = ");  hwrite(kmax,0); newline
+  748      printstring("%constshortintegerarray kdict(32:max kdict) = %c");
+  749      %cycle i = 32,1,kmax
+  750          newline %if i&7 = 0
+  751          hwrite(keydict(i),7)
+  752          print symbol(',') %unless i = kmax
+  753      %repeat
+  754      newline
+  755      printstring("   %list");  newline
+  756      printstring("%endoffile");  newline
+  757  
+  758      selectoutput(errorstream)
+  759      printstring("Grammar complete");  newline
+  760  %endofprogram
+?COUNT unused
+
+  800 Statements compiled

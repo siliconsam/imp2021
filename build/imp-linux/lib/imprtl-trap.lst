@@ -1,0 +1,190 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  
+   2      %recordformat imptrap( %integer start,end,trapep,from, %byte %array data(0:15) )
+   3  
+   4      %own %record(imptrap) noinfo
+   5  
+   6      %external %record(imptrap)   %spec trapbase %alias "_imptrapbase"
+   7      %external %record(imptrap)   %spec trapend %alias "_imptrapend"
+   8  
+   9  {------------------------------------------------------------------------------}
+   10      %string(14) %function getprocname( %record(imptrap)%name tp )
+   11          %string(14) procname
+   12          %integer i
+   13  
+   14          length(procname) = 0
+   15          %for i= 1,1,14 %cycle
+   16              %if (tp_data(i+1) # 0) %start
+   17                  length(procname) = length(procname) + 1
+   18                  charno(procname,i) = tp_data(i+1)
+   19              %finish
+   20          %repeat
+   21  
+   22          %result = procname
+   23      %end
+   24  
+   25  {------------------------------------------------------------------------------}
+   26      %routine dumptrapinfo( %record(imptrap)%name tp )
+   27          %integer events,i
+   28          %string(14) procname
+   29  
+   30          events = (tp_data(1) << 8) + tp_data(0)
+   31          procname = getprocname( tp )
+   32  
+   33          %if (events # 0) %start
+   34              debugstring( "Event trap start @(".int2ascii(addr(tp),16,0).")" )
+   35              debugstring( " for (start,end)=(".int2ascii(tp_start,16,0).",".int2ascii(tp_end,16,0).") in routine '" )
+   36              debugstring( procname )
+   37              debugstring( "'" )
+   38              debugnewline
+   39  
+   40              debugstring( "    events=(" )
+   41              %for i = max event - 1,-1,0 %cycle
+   42                  %if (((1 << i) & events) # 0) %start
+   43                      debugstring( "1" )
+   44                  %else
+   45                      debugstring( "0" )
+   46                  %finish
+   47              %repeat
+   48              debugstring( ")" )
+   49              debugstring( "    (trapep,from)=(".int2ascii(tp_trapep,16,0).",".int2ascii(tp_from,16,0).")" )
+   50          %else
+   51              debugstring( "No event trap @(".int2ascii(addr(tp),16,0).")" )
+   52              debugstring( " for (start,end)=(".int2ascii(tp_start,16,0).",".int2ascii(tp_end,16,0).") in routine '" )
+   53              debugstring( procname )
+   54              debugstring( "'" )
+   55          %finish
+   56          debugnewline
+   57  
+   58      %end
+   59  
+   60  {------------------------------------------------------------------------------}
+   61      %external %routine dumpalltrapinfo
+   62          %record(imptrap)%name tp
+   63  
+   64          ! We iterate over the table of trap blocks from __imptrapbase to __imptrapend.
+   65          tp == trapbase
+   66  
+   67          %while (addr(tp) < addr(trapend)) %cycle
+   68              dumptrapinfo( tp )
+   69  
+   70              ! We would like to just say "tp++" here, BUT for reasons I can't
+   71              ! fathom, the linker puts one or more 16 byte blocks of zeroes
+   72              ! between the trap entries for different objects.
+   73              tp == record( addr(tp) + sizeof(tp) )
+   74          %repeat
+   75      %end
+   76  
+   77  {------------------------------------------------------------------------------}
+   78      %record(imptrap) %map blockinfo( %integer address)
+   79          %record(imptrap)%name tp,found
+   80  
+   81          ! We search the table of trap blocks.  The compiler does NOT exbed routines,
+   82          ! so for a nested routine it will match the block parameters of all the
+   83          ! surrounding blocks too.  However, since the blocks are planted in the
+   84          ! order the code actually appears, the correct block to match is therefore
+   85          ! the LAST one we can match.
+   86          ! When we get to the end of the table, or we find an entry which starts
+   87          ! AFTER our address, we know we must have found the right one.
+   88          tp == trapend
+   89          found == noinfo
+   90          
+   91          %cycle
+   92              %if ((tp_start <= address <= tp_end)) %start
+   93                  found == tp
+   94                  %exit
+   95              %finish
+   96  
+   97              ! JDM: Traversing the trap table in deccreasing order
+   98              ! So, technically we do a tp--
+   99              tp == record( addr(tp) - sizeof(tp) )
+  100  
+  101  !            %while ( (addr(tp) < addr(trapend) ) %and ( tp_start = 0) %and (tp_end = 0)) %cycle
+  102  !                tp == record( addr(tp) + 16 )
+  103  !            %repeat
+  104  
+  105              ! Defend against reaching beyond the start of the trap table
+  106              %exit %if (addr(tp) < addr(trapbase))
+  107  
+  108          %repeat
+  109  
+  110          %result == found
+  111      %end
+  112  
+  113  {------------------------------------------------------------------------------}
+  114      %external %predicate handler found ( %integer event, address )
+  115          %record(imptrap)%name tp
+  116          %integer trapbit,checkbit
+  117  
+  118          tp == blockinfo( address )
+  119  
+  120          ! First form the event trapbits to match in the trap table
+  121          trapbit = 1;
+  122          %if (0 < event) %and (event < max event) %then trapbit = 1 << event
+  123  
+  124          ! JDM: get the trap mask
+  125          ! form checkbits so that event N = 2^N
+  126          checkbit = (tp_data(1) << 8) + tp_data(0)
+  127  
+  128          ! will this block catch the event?
+  129          ! JDM: We must have a match of event trapbits
+  130          ! and is the address inside the "defence" zone
+  131          %true %if ((checkbit & trapbit) # 0) %and (tp_start <= address <= tp_end)
+  132  
+  133          %false
+  134      %end
+  135  
+  136  {------------------------------------------------------------------------------}
+  137      %external %predicate initial entry found ( %integer address )
+  138          %record(imptrap)%name tp
+  139          %string(14) procname
+  140  
+  141          ! beware if we get a zero address
+  142          %false %if (address = 0)
+  143  
+  144          ! ok, we could look for a trap
+  145          tp == blockinfo( address )
+  146  
+  147          ! check we found a real trap
+  148          %false %if (tp == noinfo)
+  149  
+  150          ! get the routine name containing the event handler
+  151          procname = getprocname( tp )
+  152  
+  153  !        ! Exit loop if we've reached the %begin..%end program entry point
+  154  !        %true %if (procname = "Main Program")
+  155          ! Exit loop if we've reached the IMP entry point
+  156          %true %if (procname = "STARTIMP")
+  157  
+  158          %false
+  159      %end
+  160  
+  161  {------------------------------------------------------------------------------}
+  162      %external %string(14) %function handler name( %integer address )
+  163          %record(imptrap)%name tp
+  164          %string(14) procname
+  165  
+  166          ! find a trap table entry for this address
+  167          tp == blockinfo( address )
+  168  
+  169          ! get the routine name containing the event handler
+  170          %result = getprocname( tp )
+  171      %end
+?PROCNAME unused
+  172  
+  173  {------------------------------------------------------------------------------}
+  174      %external %integer %function handler entry address( %integer address )
+  175          %record(imptrap)%name tp
+  176  
+  177          ! find a trap table entry for this address
+  178          tp == blockinfo( address )
+  179  
+  180          ! get the routine name containing the event handler
+  181          %result = tp_trapep
+  182      %end
+  183  
+  184  {------------------------------------------------------------------------------}
+  185  %endoffile
+
+   99 Statements compiled

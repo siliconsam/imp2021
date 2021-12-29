@@ -1,0 +1,777 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  
+   2      %include "inc.386.registers"
+ &  1  %endoflist
+ & 10  %endoffile
+   3  
+   4      ! Assign the constant values (MUST match values in prim-rtl-file.h)
+   5      %constant %integer max stream = 8
+   6      %constant %integer std null handle = 0
+   7      %constant %integer std err handle  = 1
+   8      %constant %integer std in handle   = 2
+   9      %constant %integer std out handle  = 3
+   10      %constant %integer IS INPUT = 0 << 0
+   11      %constant %integer IS OUTPUT = 1 << 0
+   12      %constant %integer IS TEXT = 0 << 1
+   13      %constant %integer IS BINARY = 1 << 1
+   14  
+   15      %constant %integer FILE IN = 1
+   16      %constant %integer FILE OUT = 2
+   17  
+   18      %constant %integer uninitialised = 0
+   19      %constant %integer initialised = 1
+   20  
+   21      %record %format impstream ( %integer lookahead, flags, %string(255) file name, %integer handle )
+   22      %record %format impio ( %integer current stream, 
+   23+                             %record(impstream) %array streams(0:max stream) )
+   24  
+   25      %own %record (impio) in
+   26      %own %record (impio) out
+   27      %own %record (impstream) null stream
+   28      %own %record (impstream) error stream
+   29  
+   30      %own %integer initialised state = uninitialised
+   31      %external %integer fileerror %alias "_errno"
+   32  
+   33      ! This converts an IMP string in-situ to become a C string
+   34      ! We just need the address of the IMP string
+   35      %routine imptocstring( %string(*) %name impstring )
+   36          %integer len,i
+   37          %byte %integer %name src
+   38  
+   39          %if addr( impstring ) # 0 %start
+   40              ! Find the length of the IMP format string
+   41              len = length( impstring )
+   42  
+   43              ! Convert to a C format string
+   44              ! We do this in one step 0..len-1
+   45              ! copying from impstring(i+1) to impstring(i)
+   46              ! lastly, store 0 in impstring(len)
+   47              %for i = 0,1,len - 1 %cycle
+   48                  src == byteinteger( addr( impstring ) + i + 1)
+   49                  charno( impstring, i ) = src
+   50              %repeat
+   51              charno( impstring, len ) = 0
+   52          %finish
+   53      %end
+   54  
+   55      %external %predicate need to initialise
+   56          %true %if (initialised state = uninitialised)
+   57          %false
+   58      %end
+   59  
+   60      %external %integer %function get max stream
+   61          %result = MAX STREAM
+   62      %end
+   63  
+   64      %routine initialise stream( %record(impstream) %name s )
+   65          s_handle = 0
+   66          length(s_file name) = 0
+   67          s_flags = 0
+   68          s_lookahead = -1
+   69      %end
+   70  
+   71      %routine finalise stream( %record(impstream) %name s )
+   72          %if (s_handle # 0) %then close( s_handle)
+   73  
+   74          initialise stream( s )
+   75      %end
+   76  
+   77      %external %routine initialise io
+   78          %integer i
+   79  
+   80          in_current stream = 0
+   81          out_current stream = 0
+   82  
+   83          %for i = 0,1,max stream %cycle
+   84              initialise stream( in_streams(i) )
+   85              initialise stream( out_streams(i) )
+   86          %repeat
+   87          initialise stream( error stream )
+   88  
+   89          null stream_handle = 0
+   90          null stream_file name = "null"
+   91          error stream_handle = get std err handle
+   92          error stream_file name = "stderr"
+   93          in_streams(0)_handle = get std in handle
+   94          in_streams(0)_file name = "stdin" 
+   95          out_streams(0)_handle = get std out handle
+   96          out_streams(0)_file name = "stdout"
+   97  
+   98          initialised state = initialised
+   99      %end
+  100  
+  101      %external %routine terminate io
+  102          %integer i
+  103  
+  104          in_current stream = -1
+  105          out_current stream = -1
+  106  
+  107          %for i = 1,1,max stream %cycle
+  108              finalise stream( in_streams(i) )
+  109              finalise stream( out_streams(i) )
+  110          %repeat
+  111  
+  112          initialised state = uninitialised
+  113      %end
+  114  
+  115      %external %routine debug symbol( %integer c )
+  116          %if need to initialise %then initialise io
+  117  
+  118          %if (error stream_handle # 0) %then put char( error stream_handle, c )
+  119      %end
+  120  
+  121      %external %routine debug real( %long %real d )
+  122          %if need to initialise %then initialise io
+  123  
+  124          %if (error stream_handle # 0) %then put double( error stream_handle, d )
+  125      %end
+  126  
+  127      %constant %integer  intgr  = 1
+  128      %constant %integer  float  = 2
+  129      %constant %integer  strng  = 3
+  130      %constant %integer  byte   = 6
+  131      %constant %integer  double = 8
+  132  
+  133      %external %integer %function readbuffer( %name ptr, %integer count )
+  134  
+  135          %integer i,actualcount
+  136  
+  137          %integer framep
+  138          %integer %name dvp
+  139          %integer dim, itemsz, intsz
+  140          %integer lb, ub
+  141  
+  142          ! assume we are reading data into a byte array (or string)
+  143          itemsz = 1
+  144  
+  145  %if ((DEBUGMODE & dbgio) # 0) %start
+  146  debug string("READBUFFER: address(ptr)=".int2ascii(addr(ptr),16,0) ); debug newline
+  147  debug string("READBUFFER:  sizeof(ptr)=".int2ascii(sizeof(ptr),16,0) ); debug newline
+  148  debug string("READBUFFER:  typeof(ptr)=".int2ascii(typeof(ptr),16,0) ); debug newline
+  149  debug string("READBUFFER: count=".itos(count,0) ); debug newline
+  150  %finish
+  151  
+  152          %if (0 <= sizeof( ptr ) <= 255) %start
+  153              ! Ok, it should be a primitive type
+  154              ! We need to adjust itemsz to type size
+  155              ! NB strings/byte arrays have itemsz = 1
+  156              ! So only need to adjust for integer,float or double
+  157              %if (typeof(ptr) = intgr) %then itemsz = 4
+  158              %if (typeof(ptr) = float) %then itemsz = 4
+  159              %if (typeof(ptr) = double) %then itemsz = 8
+  160          %else
+  161              ! Ok,This seems to be an array/record
+  162              ! Get the Base/Frame Pointer
+  163              *mov_ framep,ebp
+  164  
+  165              ! Now get the expected 3 parameters
+  166  %if ((DEBUGMODE & dbgio) # 0) %start
+  167  debug string("READBUFFER: [framep +  8]=".itos(integer( framep + 8 ),0) ); debug newline
+  168  debug string("READBUFFER: [framep + 12]=".int2ascii(integer( framep + 12 ),16,0) ); debug newline
+  169  debug string("READBUFFER: [framep + 16]=".int2ascii(integer( framep + 16 ),16,0) ); debug newline
+  170  %finish
+  171  
+  172              dvp == integer( framep + 16 )
+  173              dim = integer( dvp )
+  174              intsz = sizeof(dim); ! get the size of a 32-bit integer
+  175              ! pick up the element size...
+  176              itemsz = integer( dvp + sizeof(dim)*(2*dim + 1) )
+  177  
+  178  %if ((DEBUGMODE & dbgio) # 0) %start
+  179  debugstring("READBUFFER: IMPADEF:     dim: dvp[0]='".itos(dim,0)."'"); debugnewline
+  180  %finish
+  181              %for i=1,1,dim %cycle
+  182                  lb = integer( dvp + sizeof(dim)*(2*i - 1) )
+  183                  ub = integer( dvp + sizeof(dim)*(2*i) )
+  184  
+  185  %if ((DEBUGMODE & dbgio) # 0) %start
+  186  debugstring("READBUFFER: IMPADEF: lb['".itos(i,0)."']: dvp[".itos(2*i-1,0)."]='".itos(lb,0)."'"); debug newline
+  187  debugstring("READBUFFER: IMPADEF: ub['".itos(i,0)."']: dvp[".itos(2*i,0)."]='".itos(ub,0)."'");   debug newline
+  188  %finish
+  189  
+  190              %repeat
+  191  
+  192  %if ((DEBUGMODE & dbgio) # 0) %start
+  193  debugstring("READBUFFER: IMPADEF:      sz: dvp[".itos((2*dim)+ 1,0)."]='".itos(itemsz,0)."'"); debug newline
+  194  debugstring("READBUFFER: IMPADEF:   intsz:   ='".itos(sizeof(dim),0)."'"); debug newline
+  195  %finish
+  196  
+  197          %finish
+  198  
+  199          %if need to initialise %then initialise io
+  200  
+  201          ! can't select an invalid stream id (not stdin)
+  202          %signal 9, 9 %unless (0 < in_current stream <= MAXSTREAM)
+  203          ! can't select a closed file
+  204          %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+  205  
+  206          ! We actually load the buffer as an array of bytes
+  207          ! We need the stream handle, count of items space, item size, buffer address
+  208          ! Where, count * itemsz = size in bytes of buffer storage
+  209          actualcount = readbytes( in_streams( in_current stream )_handle, count, itemsz, byteinteger( addr(ptr) ) )
+  210  
+  211          ! If we are storing in an IMP string then we need to convert the stored buffer
+  212          ! from C string format (zero start index)  to IMP string format
+  213          %if (0 <= sizeof( ptr ) <= 255) %and (typeof(ptr) = strng) %start
+  214              ! It is a string!!
+  215              ! Therefore we need to move the chars from n to n+1 location
+  216              ! Thus, we can store the IMP string length in location 0 (its expected location)
+  217              ! Use actualcount as number of chars in the string
+  218              ! JDM should check that actualcount < count else buffer overflow
+  219              %for i=actualcount-1,-1,0 %cycle
+  220                  charno( string(addr(ptr)), i + 1 ) = charno( string(addr(ptr)), i )
+  221              %repeat
+  222              charno( string(addr(ptr)),0 ) = actualcount
+  223          %finish
+  224  
+  225          %result = actualcount
+  226      %end
+  227  
+  228      %external %integer %function writebuffer( %name ptr, %integer count )
+  229          %integer i
+  230          %integer framep
+  231          %integer %name dvp
+  232          %integer dim, itemsz, intsz
+  233          %integer lb, ub
+  234  
+  235          itemsz = 1
+  236  
+  237  %if ((DEBUGMODE & dbgio) # 0) %start
+  238  debug string("WRITEBUFFER: address(ptr)=".int2ascii(addr(ptr),16,0) ); debug newline
+  239  debug string("WRITEBUFFER:  sizeof(ptr)=".int2ascii(sizeof(ptr),16,0) ); debug newline
+  240  debug string("WRITEBUFFER:  typeof(ptr)=".int2ascii(typeof(ptr),16,0) ); debug newline
+  241  debug string("WRITEBUFFER: count=".itos(count,0) ); debug newline
+  242  %finish
+  243  
+  244          %if (0 <= sizeof( ptr ) <= 255) %start
+  245              ! Ok, it should be a primitive type
+  246              ! We need to adjust itemsz to type size
+  247              ! NB strings/byte arrays have itemsz = 1
+  248              ! So only need to adjust for integer,float or double
+  249              %if (typeof(ptr) = intgr) %then itemsz = 4
+  250              %if (typeof(ptr) = float) %then itemsz = 4
+  251              %if (typeof(ptr) = double) %then itemsz = 8
+  252          %else
+  253              ! Ok,This seems to be an array/record
+  254              ! Get the Base/Frame Pointer
+  255              *mov_ framep,ebp
+  256  
+  257              ! Now show the expected 3 parameters
+  258  %if ((DEBUGMODE & dbgio) # 0) %start
+  259  debug string("WRITEBUFFER: [framep +  8]=".itos(integer( framep + 8 ),0) ); debug newline
+  260  debug string("WRITEBUFFER: [framep + 12]=".int2ascii(integer( framep + 12 ),16,0) ); debug newline
+  261  debug string("WRITEBUFFER: [framep + 16]=".int2ascii(integer( framep + 16 ),16,0) ); debug newline
+  262  %finish
+  263  
+  264              dvp == integer( framep + 16 )
+  265              dim = integer( dvp )
+  266              intsz = sizeof(dim); ! get the size of a 32-bit integer
+  267              ! pick up the element size...
+  268              itemsz = integer( dvp + sizeof(dim)*(2*dim + 1) )
+  269  
+  270  %if ((DEBUGMODE & dbgio) # 0) %start
+  271  debugstring("WRITEBUFFER: IMPADEF:     dim: dvp[0]='".itos(dim,0)."'"); debugnewline
+  272  %finish
+  273  
+  274              %for i=1,1,dim %cycle
+  275                  lb = integer( dvp + sizeof(dim)*(2*i - 1) )
+  276                  ub = integer( dvp + sizeof(dim)*(2*i) )
+  277  
+  278  %if ((DEBUGMODE & dbgio) # 0) %start
+  279  debugstring("WRITEBUFFER: IMPADEF: lb['".itos(i,0)."']: dvp[".itos(2*i-1,0)."]='".itos(lb,0)."'"); debug newline
+  280  debugstring("WRITEBUFFER: IMPADEF: ub['".itos(i,0)."']: dvp[".itos(2*i,0)."]='".itos(ub,0)."'");   debug newline
+  281  %finish
+  282              %repeat
+  283  %if ((DEBUGMODE & dbgio) # 0) %start
+  284  debugstring("WRITEBUFFER: IMPADEF:      sz: dvp[".itos((2*dim)+ 1,0)."]='".itos(itemsz,0)."'"); debug newline
+  285  debugstring("WRITEBUFFER: IMPADEF:   intsz:   ='".itos(sizeof(dim),0)."'"); debug newline
+  286  %finish
+  287  
+  288          %finish
+  289  
+  290          %if need to initialise %then initialise io
+  291  
+  292          ! can't select an invalid stream id (not stdout)
+  293          %signal 9, 9 %unless (0 < out_currentstream <= MAXSTREAM)
+  294          ! can't select a closed file
+  295          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  296  
+  297          ! We actually load the buffer as an array of bytes
+  298          ! We need the stream handle, count of items space, item size, buffer address
+  299          ! Where, count * itemsz = size in bytes of buffer storage
+  300          %result = writebytes( out_streams( out_current stream )_handle, count, itemsz, byteinteger( addr(ptr) ) )
+  301      %end
+  302  
+  303      %external %integer %function input stream
+  304  
+  305          %if need to initialise %then initialise io
+  306  
+  307          %result = in_current stream
+  308      %end
+  309  
+  310      %external %integer %function output stream
+  311  
+  312          %if need to initialise %then initialise io
+  313  
+  314          %result = out_current stream
+  315      %end
+  316  
+  317      %external %routine reset input
+  318  
+  319          %if need to initialise %then initialise io
+  320  
+  321          ! can't select an invalid stream id (not stdin)
+  322          %signal 9, 9 %unless (0 < in_current stream <= MAXSTREAM)
+  323          ! can't select a closed file
+  324          %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+  325  
+  326          file rewind( in_streams(in_currentstream)_handle )
+  327      %end
+  328  
+  329      %external %routine reset output
+  330  
+  331          %if need to initialise %then initialise io
+  332  
+  333          ! can't select an invalid stream id (not stdout)
+  334          %signal 9, 9 %unless (0 < out_currentstream <= MAXSTREAM)
+  335          ! can't select a closed file
+  336          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  337  
+  338          file rewind( out_streams(out_currentstream)_handle )
+  339      %end
+  340  
+  341      %external %routine seek input( %integer displacement, pos )
+  342  
+  343          %if need to initialise %then initialise io
+  344  
+  345          ! can't select an invalid stream id (not stdin)
+  346          %signal 9, 9 %unless (0 < in_current stream <= MAXSTREAM)
+  347          ! can't select a closed file
+  348          %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+  349  
+  350          %if (0 <= pos <= 2) %then file seek( in_streams( in_current stream)_handle, displacement, pos )
+  351      %end
+  352  
+  353      %external %routine seek output( %integer displacement, pos )
+  354  
+  355          %if need to initialise %then initialise io
+  356  
+  357          ! can't select an invalid stream id (not stdout)
+  358          %signal 9, 9 %unless (0 < out_currentstream <= MAXSTREAM)
+  359          ! can't select a closed file
+  360          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  361  
+  362          %if (0 <= pos <= 2) %then file seek( out_streams( out_current stream)_handle, displacement, pos )
+  363      %end
+  364  
+  365      %external %integer %function tell input
+  366  
+  367          %if need to initialise %then initialise io
+  368  
+  369          ! can't select an invalid stream id (not stdin)
+  370          %signal 9, 9 %unless (0 < in_current stream <= MAXSTREAM)
+  371          ! can't select a closed file
+  372          %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+  373  
+  374          %result = tell( in_streams( in_current stream )_handle )
+  375      %end
+  376  
+  377      %external %integer %function tell output
+  378  
+  379          %if need to initialise %then initialise io
+  380  
+  381          ! can't select an invalid stream id (not stdout)
+  382          %signal 9, 9 %unless (0 < out_currentstream <= MAXSTREAM)
+  383          ! can't select a closed file
+  384          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  385  
+  386          %result = tell( out_streams( out_current stream )_handle )
+  387      %end
+  388  
+  389      %external %string(255) %function input name
+  390          %string(255) name
+  391  
+  392          %if need to initialise %then initialise io
+  393  
+  394          ! can't select an invalid stream id
+  395          %signal 9, 9 %unless (0 <= in_current stream <= MAXSTREAM)
+  396          ! can't select a closed file
+  397          %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+  398  
+  399          name = in_streams( in_current stream )_file name
+  400  
+  401          %result = name
+  402      %end
+  403  
+  404      %external %string(255) %function output name
+  405          %if need to initialise %then initialise io
+  406  
+  407          ! can't select an invalid stream id
+  408          %signal 9, 9 %unless (0 <= out_current stream <= MAXSTREAM)
+  409          ! can't select a closed file
+  410          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  411  
+  412          %result = out_streams( out_current stream )_file name
+  413      %end
+  414  
+  415      %external %routine select input( %integer stream id )
+  416          %if need to initialise %then initialise io
+  417  
+  418          ! can't select an invalid stream id
+  419          %signal 9, 9 %unless (0 <= stream id <= MAXSTREAM)
+  420          ! can't select a closed file
+  421          %signal 9, 4, stream id %unless (in_streams( stream id )_handle # 0)
+  422  
+  423          in_current stream = stream id;
+  424      %end
+  425  
+  426      %external %routine select output( %integer stream id )
+  427          %if need to initialise %then initialise io
+  428  
+  429          ! can't select an invalid stream id
+  430          %signal 9, 9 %unless (0 <= stream id <= MAXSTREAM)
+  431  
+  432          ! can't select a closed file
+  433          %signal 9, 5, stream id %unless (out_streams( stream id )_handle # 0)
+  434  
+  435          out_current stream = stream id;
+  436      %end
+  437  
+  438      %external %routine close input
+  439          %if need to initialise %then initialise io
+  440  
+  441          ! can't close terminal input
+  442          ! can't close an already closed file
+  443          %if (0 < in_current stream <= MAXSTREAM ) %and (in_streams( in_current stream )_handle # 0) %start
+  444              close( in_streams( in_current stream )_handle )
+  445              initialise stream( in_streams( in_current stream ) )
+  446          %finish
+  447      %end
+  448  
+  449      %external %routine close output
+  450          %if need to initialise %then initialise io
+  451  
+  452          ! can't close terminal output
+  453          ! can't close an already closed file
+  454          %if (0 < out_current stream <= MAXSTREAM ) %and (out_streams( out_current stream )_handle # 0) %start
+  455              close( out_streams( out_current stream )_handle )
+  456              initialise stream( out_streams( out_current stream ) )
+  457          %finish
+  458      %end
+  459  
+  460      %external %routine open input( %integer stream  id, %string(255) file name )
+  461          %integer handle
+  462          %integer flags = IS INPUT ! IS TEXT
+  463          %string(4) mode = "r"
+  464          %string(255) xxx
+  465          %string(4) yyy
+  466  
+  467          xxx = filename
+  468          yyy = mode
+  469  
+  470          ! Tweak xxx,yyy to be C strings
+  471          ! Why? because we are sending them to a C function expecting C strings
+  472          imptocstring( xxx )
+  473          imptocstring( yyy )
+  474  
+  475          %if need to initialise %then initialise io
+  476  
+  477          ! Error out if streamid not in legal range
+  478          %signal 9, 9, stream id %unless (0 < stream id <= MAXSTREAM )
+  479  
+  480          ! If file not open
+  481          %if (in_streams( stream id )_handle = 0) %start
+  482              handle = openfile( addr(yyy), addr(xxx) )
+  483  
+  484              %if (handle = 0) %start
+  485  
+  486  %if ((DEBUGMODE & dbgio) # 0) %start
+  487  debugstring("OPENINPUT: filename='".filename."' was unable to open for stream(".itos(stream id,0).")")
+  488  debugnewline
+  489  %finish
+  490                  %signal 9, 2, get error
+  491              %else
+  492  
+  493  %if ((DEBUGMODE & dbgio) # 0) %start
+  494  debugstring("OPENINPUT: filename='".filename."' now open for stream(".itos(stream id,0).")")
+  495  debugnewline
+  496  %finish
+  497                  in_streams( stream id )_handle = handle
+  498                  in_streams( stream id )_file name = file name
+  499                  in_streams( stream id )_flags = flags
+  500              %finish
+  501          %finish
+  502      %end
+  503  
+  504      %external %routine open binary input( %integer stream  id, %string(255) file name )
+  505          %integer handle
+  506          %integer flags = IS INPUT ! IS BINARY
+  507          %string(4) mode = "rb"
+  508          %string(255) xxx
+  509          %string(4) yyy
+  510  
+  511          xxx = filename
+  512          yyy = mode
+  513  
+  514          ! Tweak xxx,yyy to be C strings
+  515          ! Why? because we are sending them to a C function expecting C strings
+  516          imptocstring( xxx )
+  517          imptocstring( yyy )
+  518  
+  519          %if need to initialise %then initialise io
+  520  
+  521          %signal 9, 9, stream id %unless (0 < stream id <= MAXSTREAM )
+  522  
+  523          ! If file not open
+  524          %if (in_streams( stream id )_handle = 0) %start
+  525              handle = openfile( addr(yyy), addr(xxx) )
+  526  
+  527              %if (handle = 0) %start
+  528  
+  529  %if ((DEBUGMODE & dbgio) # 0) %start
+  530  debugstring("OPENBINARYINPUT: filename='".filename."' was unable to open for stream(".itos(stream id,0).")")
+  531  debugnewline
+  532  %finish
+  533                  %signal 9, 2, get error
+  534              %else
+  535  
+  536  %if ((DEBUGMODE & dbgio) # 0) %start
+  537  debugstring("OPENBINARYINPUT: filename='".filename."' now open for stream(".itos(stream id,0).")")
+  538  debugnewline
+  539  %finish
+  540                  in_streams( stream id )_handle = handle
+  541                  in_streams( stream id )_file name = file name
+  542                  in_streams( stream id )_flags = flags
+  543              %finish
+  544          %finish
+  545      %end
+  546  
+  547      %external %routine open output( %integer stream  id, %string(255) file name )
+  548          %integer handle
+  549          %integer flags = IS OUTPUT ! IS TEXT
+  550          %string(4) mode = "w"
+  551          %string(255) xxx
+  552          %string(4) yyy
+  553  
+  554          xxx = filename
+  555          yyy = mode
+  556  
+  557          ! Tweak xxx,yyy to be C strings
+  558          ! Why? because we are sending them to a C function expecting C strings
+  559          imptocstring( xxx )
+  560          imptocstring( yyy )
+  561  
+  562          %if need to initialise %then initialise io
+  563  
+  564          ! Error out if streamid not in legal range
+  565          %signal 9, 9, stream id %unless (0 < stream id <= MAXSTREAM )
+  566  
+  567          ! If file not open
+  568          %if (out_streams( stream id )_handle = 0) %start
+  569              handle = openfile( addr(yyy), addr(xxx) )
+  570  
+  571              %if (handle = 0) %start
+  572  
+  573  %if ((DEBUGMODE & dbgio) # 0) %start
+  574  debugstring("OPENOUTPUT: filename='".filename."' was unable to open for stream(".itos(stream id,0).")")
+  575  debugnewline
+  576  %finish
+  577                  %signal 9, 2, get error
+  578              %else
+  579  
+  580  %if ((DEBUGMODE & dbgio) # 0) %start
+  581  debugstring("OPENOUTPUT: filename='".filename."' now open for stream(".itos(stream id,0).")")
+  582  debugnewline
+  583  %finish
+  584                  out_streams( stream id )_handle = handle
+  585                  out_streams( stream id )_file name = file name
+  586                  out_streams( stream id )_flags = flags
+  587              %finish
+  588          %finish
+  589      %end
+  590  
+  591      %external %routine open binary output( %integer stream  id, %string(255) file name )
+  592          %integer handle
+  593          %integer flags = IS OUTPUT ! IS BINARY
+  594          %string(4) mode = "wb"
+  595          %string(255) xxx
+  596          %string(4) yyy
+  597  
+  598          xxx = filename
+  599          yyy = mode
+  600  
+  601          ! Tweak xxx,yyy to be C strings
+  602          ! Why? because we are sending them to a C function expecting C strings
+  603          imptocstring( xxx )
+  604          imptocstring( yyy )
+  605  
+  606          %if need to initialise %then initialise io
+  607          %signal 9, 9, stream id %unless (0 < stream id <= MAXSTREAM )
+  608  
+  609          ! If file not open
+  610          %if (out_streams( stream id )_handle = 0) %start
+  611              handle = openfile( addr(yyy), addr(xxx) )
+  612  
+  613              %if (handle = 0) %start
+  614  
+  615  %if ((DEBUGMODE & dbgio) # 0) %start
+  616  debugstring("OPENBINARYOUTPUT: filename='".filename."' was unable to open for stream(".itos(stream id,0).")")
+  617  debugnewline
+  618  %finish
+  619                  %signal 9, 2, get error
+  620              %else
+  621  
+  622  %if ((DEBUGMODE & dbgio) # 0) %start
+  623  debugstring("OPENBINARYOUTPUT: filename='".filename."' now open for stream(".itos(stream id,0).")")
+  624  debugnewline
+  625  %finish
+  626                  out_streams( stream id )_handle = handle
+  627                  out_streams( stream id )_file name = file name
+  628                  out_streams( stream id )_flags = flags
+  629              %finish
+  630          %finish
+  631      %end
+  632  
+  633      %external %routine flush output
+  634  
+  635          %if need to initialise %then initialise io
+  636          ! only interrogate actual opened files (including stdout)
+  637          %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
+  638          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  639  
+  640          flush( out_streams( out_current stream )_handle )
+  641      %end
+  642  
+  643      %own %string(31) prompt = "prompt ->"
+  644      %own %integer tty needs a prompt = 1
+  645  
+  646      %external %routine set prompt( %string(31) s )
+  647          prompt = s
+  648      %end
+  649  
+  650      %external %integer %function next symbol
+  651          %integer ch
+  652          %integer i
+  653  
+  654          %if need to initialise %then initialise io
+  655          %signal 9, 9, in_current stream %unless (0 <= in_current stream <= MAXSTREAM )
+  656          %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+  657  
+  658          ! Check to see if we already have a lookahead char (actually integer)
+  659          %if (in_streams( in_current stream )_lookahead < 0) %start
+  660              %if (in_current stream = 0) %start
+  661                  %if (tty needs a prompt # 0) %start
+  662                      tty needs a prompt = 0;
+  663  
+  664                      %for i = 1,1,length( prompt ) %cycle
+  665                          put char( error stream_handle, charno( prompt, i ) )
+  666                      %repeat
+  667  
+  668                  %finish
+  669              %finish
+  670  
+  671              ch = get char ( in_streams( in_current stream )_handle )
+  672              ! remember ch for future use
+  673              in_streams( in_current stream )_lookahead = ch
+  674  
+  675              ! NL => we should prompt next time
+  676              %if (in_current stream = 0) %and (ch = nl) %then tty needs a prompt = 1;
+  677          %finish
+  678          
+  679          %result = in_streams( in_current stream )_lookahead
+  680      %end
+  681  
+  682      %external %routine read symbol( %integer %name s )
+  683          %if need to initialise %then initialise io
+  684  
+  685          s = next symbol
+  686          in_streams( in_current stream )_lookahead = -1
+  687      %end
+  688  
+  689      %external %routine print symbol( %integer c )
+  690          %if need to initialise %then initialise io
+  691  
+  692          %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
+  693          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  694  
+  695          ! Not sure what the official IMP behaviour is for output on a closed file.
+  696          ! We choose to silently ignore it...
+  697          ! check file open before writing?
+  698          %if (out_streams( out_current stream )_handle # 0) %start
+  699              put char( out_streams( out_current stream )_handle, c)
+  700              %if (c = nl) %then flush output 
+  701          %finish
+  702      %end
+  703  
+  704      %external %routine print real( %long %real d )
+  705          %if need to initialise %then initialise io
+  706  
+  707          %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
+  708          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  709  
+  710          ! Not sure what the official IMP behaviour is for output on a closed file.
+  711          ! We choose to silently ignore it...
+  712          ! check file open before writing?
+  713          %if (out_streams( out_current stream )_handle # 0) %then put double( out_streams( out_current stream )_handle, d)
+  714      %end
+  715  
+  716      %routine parse list( %string(255) list, %integer direction)
+  717          %string(255) x,a,c,mode,file
+  718          %integer streamid
+  719  
+  720          x = list
+  721          streamid = 1
+  722          %while length(x) > 0 %cycle
+  723  
+  724              %exit %unless (streamid <= get max stream)
+  725  
+  726              ! split the comma separated list
+  727              length(a) = 0
+  728              length(c) = 0
+  729              x->a.(",").c
+  730  
+  731              %exit %unless length(a) > 0
+  732  
+  733              file = a
+  734              length(mode) = 0
+  735              %if (charno(a,length(a)) = 'b') %and (charno(a,length(a) - 1 ) = ':') %start
+  736                  length(file) = length(file) - 2
+  737                  mode = ":b"
+  738              %finish
+  739  
+  740              %exit %unless length( file ) > 0
+  741  
+  742              %if length(mode) = 0 %start
+  743                  %if (direction = FILE IN) %then open input( streamid, file )
+  744                  %if (direction = FILE OUT) %then open output( streamid, file )
+  745              %finish %else %start
+  746                  %if (direction = FILE IN) %then open binary input( streamid, file )
+  747                  %if (direction = FILE OUT) %then open binary output( streamid, file )
+  748              %finish
+  749                  
+  750              x = c
+  751              streamid = streamid + 1
+  752          %repeat
+  753      %end
+  754  
+  755      %external %integer %function split io list ( %string(255) io list )
+  756          %string(255) s,a,b,c
+  757  
+  758          s = io list
+  759          length(a) = 0
+  760          b = tostring(FILE SEP)
+  761          length(c) = 0
+  762  
+  763          s -> a.(b).c
+  764  
+  765          %if length( a ) > 0 %then parse list( a, FILE IN )
+  766          %if length( c ) > 0 %then parse list( c, FILE OUT )
+  767  
+  768          %result = 0
+  769      %end
+  770  
+  771  %endoffile
+
+  527 Statements compiled

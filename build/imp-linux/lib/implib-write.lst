@@ -1,0 +1,70 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {----------------------------------------------------------------------------}
+   2      ! Write an integer on the current output stream, to
+   3      ! occupy PLACES character spaces on the page.
+   4      ! Nominally based on PrintString(I to S(n, places))
+   5      ! This version doesn't use strings though, and is
+   6      ! therefore smaller and quicker.  It builds the
+   7      ! characters "backwards" in an array
+   8      %external %routine Write(%integer n, places)
+   9          %string(32) ch;      ! Enough room for a 32 bit integer, plus sign
+   10          %integer new, digit, sign, i
+   11  
+   12          length(ch) = 0
+   13          ! First collect the digits
+   14          %if n = 0 %start
+   15              length(ch) = length(ch) + 1
+   16              charno(ch,length(ch)) = '0'
+   17              sign = 0
+   18          %else
+   19              sign = 1
+   20              ! we make everything negative to avoid the -ve MaxInt wrap problem
+   21              %if n > 0 %start
+   22                  sign = 0
+   23                  n = -n
+   24              %finish
+   25  
+   26              %while n # 0 %cycle
+   27                  new = n // 10
+   28                  digit = (new * 10) - n
+   29                  length(ch) = length(ch) + 1
+   30                  charno(ch,length(ch)) = digit+'0'
+   31                  n = new
+   32              %repeat
+   33          %finish
+   34  
+   35          ! Now deal with the sign, taking into account the slightly
+   36          ! idiosyncratic behaviour on positive numbers
+   37          %if sign # 0 %start
+   38              length(ch) = length(ch) + 1
+   39              charno(ch,length(ch)) = '-'
+   40          %else
+   41              %if places > 0 %start
+   42                  length(ch) = length(ch) + 1
+   43                  charno(ch,length(ch)) = ' '
+   44              %finish
+   45          %finish
+   46  
+   47          ! Now we adjust Places, also slightly mysteriously
+   48          %if places <= 0 %then places = -places %else places = places + 1
+   49  
+   50          ! The array at CH now contains the characters (backwards)
+   51          ! and the character count is in NEXT
+   52  
+   53          %while places > length(ch) %cycle
+   54              length(ch) = length(ch) + 1
+   55              charno(ch,length(ch)) = ' '
+   56              places = places - 1
+   57          %repeat
+   58  
+   59          %for i=length(ch),-1,1 %cycle
+   60              print symbol( charno(ch,i))
+   61          %repeat
+   62  
+   63      %end
+   64  
+   65  {----------------------------------------------------------------------------}
+   66  %endoffile
+
+   42 Statements compiled

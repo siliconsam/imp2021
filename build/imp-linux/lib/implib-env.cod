@@ -1,0 +1,393 @@
+
+    %constant %integer BYTESIZE = 1
+    %constant %integer WORDSIZE = 4
+
+    ! This returns the pointer to the array of pointers to the environment variables 
+    %external %integer %name %function %spec getenvironment
+
+    %external %integer %function getenvcount
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %integer %name arr
+        %integer count
+
+        arr == getenvironment
+ 0004 E8 62 00                        CALL 'GETENVIRONMENT' (EXTERN  98)
+ 0007 89 45 F8                        MOV [EBP-8],EAX
+
+        count = 0
+ 000A C7 45 F4 00 00 00 00            MOV WORD [EBP-12], 0
+        ! Find the count of environment variables
+        ! We treat an address as a 4-byte unsigned value
+        ! In this case we are only concerned about zero v non-zero values
+        %while integer( addr( arr ) + WORDSIZE*count ) # 0 %cycle
+ 0011                      L 1001  EQU $
+ 0011 8B 45 F4                        MOV EAX,[EBP-12]
+ 0014 C1 E0 02                        SHL EAX, 2
+ 0017 03 45 F8                        ADD EAX,[EBP-8]
+ 001A 8B 00                           MOV EAX,[EAX]
+ 001C 3D 00 00 00 00                  CMP EAX, 0
+ 0021 74 00                           JE L 1002
+            count = count + 1
+ 0023 FF 45 F4                        INC WORD [EBP-12]
+        %repeat
+ 0026 EB 00                           JMP L 1001
+ 0028                      L 1002  EQU $
+
+        %result = count
+ 0028 8B 45 F4                        MOV EAX,[EBP-12]
+ 002B C9                              LEAVE
+ 002C C3                              RET
+    %end
+
+    %external %string(255) %function getenvname( %integer index )
+ 002D                      L 1003  EQU $
+ 002D C8 00 00 01                     ENTER 0000, 1
+        %integer i,eqpos,len
+        %byte %name b,src
+        %string(255) s
+
+        length(s) = 0
+ 0031 C6 85 E8 FE FF FF 00            MOV BYTE [EBP-280], 0
+
+        %if (0 < index <= getenvcount) %start
+ 0038 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 003B 3D 00 00 00 00                  CMP EAX, 0
+ 0040 7E 00                           JLE L 1004
+ 0042 89 85 E4 FE FF FF               MOV [EBP-284],EAX
+ 0048 E8 00 00                        CALL 'GETENVCOUNT' (INTERNAL L 1000 )
+ 004B 8B 8D E4 FE FF FF               MOV ECX,[EBP-284]
+ 0051 39 C1                           CMP ECX,EAX
+ 0053 7F 00                           JG L 1004
+            ! get the pointer (aka "name") to the C-style char array
+            b == byteinteger( integer( addr(getenvironment) + WORDSIZE*(index-1) ) )
+ 0055 E8 62 00                        CALL 'GETENVIRONMENT' (EXTERN  98)
+ 0058 8B 4D 0C                        MOV ECX,[EBP+ 12]
+ 005B 49                              DEC ECX
+ 005C C1 E1 02                        SHL ECX, 2
+ 005F 01 C1                           ADD ECX,EAX
+ 0061 8B 09                           MOV ECX,[ECX]
+ 0063 89 4D EC                        MOV [EBP-20],ECX
+
+            ! I ass-u-me that a C string has a length
+            ! in the range 0..MAXINT - 1, where MAXINT is 2^31
+            ! and each "char" is stored in a byte
+            !
+            ! Also, I should use len as a 32-bit UNSIGNED integer
+            ! and defend against negative values!!
+            len = 0
+ 0066 C7 45 F0 00 00 00 00            MOV WORD [EBP-16], 0
+            %while byteinteger( addr( b ) + len ) # 0 %cycle
+ 006D                      L 1005  EQU $
+ 006D 8B 45 EC                        MOV EAX,[EBP-20]
+ 0070 03 45 F0                        ADD EAX,[EBP-16]
+ 0073 8A 00                           MOV AL,[EAX]
+ 0075 25 FF 00 00 00                  AND EAX, 255
+ 007A 3D 00 00 00 00                  CMP EAX, 0
+ 007F 74 00                           JE L 1006
+                len = len + BYTESIZE
+ 0081 FF 45 F0                        INC WORD [EBP-16]
+
+                ! Defend against negative lengths
+                %if (len = -1) %start
+ 0084 8B 45 F0                        MOV EAX,[EBP-16]
+ 0087 3D FF FF FF FF                  CMP EAX,-1
+ 008C 75 00                           JNE L 1007
+                    len = 0
+ 008E C7 45 F0 00 00 00 00            MOV WORD [EBP-16], 0
+                    %exit
+ 0095 EB 00                           JMP L 1006
+                %finish
+ 0097                      L 1007  EQU $
+   	        %repeat
+ 0097 EB 00                           JMP L 1005
+ 0099                      L 1006  EQU $
+
+            ! Now obtain the actual C string
+            ! Beware! IMP is restricted to 255 characters at most
+            !   An IMP string has a byte prefix indicating string length
+            !   So length = 0..255
+            ! C strings can be any length, terminated by 0 byte
+            eqpos = 0
+ 0099 C7 45 F4 00 00 00 00            MOV WORD [EBP-12], 0
+            %for i = 1,1,len %cycle
+ 00A0 8B 45 F0                        MOV EAX,[EBP-16]
+ 00A3 89 85 E0 FE FF FF               MOV [EBP-288],EAX
+ 00A9 C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
+ 00B0                      L 1008  EQU $
+ 00B0 8B 45 F8                        MOV EAX,[EBP-8]
+ 00B3 3B 85 E0 FE FF FF               CMP EAX,[EBP-288]
+ 00B9 74 00                           JE L 1009
+ 00BB 40                              INC EAX
+ 00BC 89 45 F8                        MOV [EBP-8],EAX
+                src == byteinteger( addr( b ) + BYTESIZE*(i - 1) )
+ 00BF 8B 45 F8                        MOV EAX,[EBP-8]
+ 00C2 48                              DEC EAX
+ 00C3 03 45 EC                        ADD EAX,[EBP-20]
+ 00C6 89 45 E8                        MOV [EBP-24],EAX
+                ! have we found the '=' char
+                %if (src = '=') %and (eqpos = 0) %then eqpos = i
+ 00C9 8B 75 E8                        MOV ESI,[EBP-24]
+ 00CC 31 C0                           XOR EAX,EAX
+ 00CE 8A 06                           MOV AL,[ESI]
+ 00D0 3D 3D 00 00 00                  CMP EAX, 61
+ 00D5 75 00                           JNE L 1010
+ 00D7 8B 45 F4                        MOV EAX,[EBP-12]
+ 00DA 3D 00 00 00 00                  CMP EAX, 0
+ 00DF 75 00                           JNE L 1010
+ 00E1 8B 45 F8                        MOV EAX,[EBP-8]
+ 00E4 89 45 F4                        MOV [EBP-12],EAX
+ 00E7                      L 1010  EQU $
+
+                ! 1) are we before the '=' char
+                ! 2) will the length(string before '=') < 256
+                %if (eqpos = 0) %and (length(s) < 256) %start
+ 00E7 8B 45 F4                        MOV EAX,[EBP-12]
+ 00EA 3D 00 00 00 00                  CMP EAX, 0
+ 00EF 75 00                           JNE L 1011
+ 00F1 31 C0                           XOR EAX,EAX
+ 00F3 8A 85 E8 FE FF FF               MOV AL,[EBP-280]
+ 00F9 3D 00 01 00 00                  CMP EAX, 256
+ 00FE 7D 00                           JGE L 1011
+                    ! yes to both conditions met so append the current char
+                    length(s) = length(s) + 1
+ 0100 FE 85 E8 FE FF FF               INC BYTE [EBP-280]
+                    charno( s, length(s) ) = src
+ 0106 8D 85 E8 FE FF FF               LEA EAX,[EBP-280]
+ 010C 31 C9                           XOR ECX,ECX
+ 010E 8A 8D E8 FE FF FF               MOV CL,[EBP-280]
+ 0114 01 C8                           ADD EAX,ECX
+ 0116 8B 7D E8                        MOV EDI,[EBP-24]
+ 0119 8A 0F                           MOV CL,[EDI]
+ 011B 88 08                           MOV [EAX],CL
+                %finish
+ 011D                      L 1011  EQU $
+            %repeat
+ 011D EB 00                           JMP L 1008
+ 011F                      L 1009  EQU $
+
+        %finish
+ 011F                      L 1004  EQU $
+
+        %result = s
+ 011F 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0122 50                              PUSH EAX
+ 0123 8D 8D E8 FE FF FF               LEA ECX,[EBP-280]
+ 0129 51                              PUSH ECX
+ 012A 68 FF 00 00 00                  PUSH  255
+ 012F E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 0132 83 C4 0C                        ADD ESP, 12
+ 0135 C9                              LEAVE
+ 0136 C3                              RET
+    %end
+
+    %external %string(255) %function getenv( %integer index )
+ 0137                      L 1012  EQU $
+ 0137 C8 00 00 01                     ENTER 0000, 1
+        %integer i,eqpos,len
+        %byte %name b,src
+        %string(255) s
+
+        length(s) = 0
+ 013B C6 85 E8 FE FF FF 00            MOV BYTE [EBP-280], 0
+
+        %if (0 < index <= getenvcount) %start
+ 0142 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 0145 3D 00 00 00 00                  CMP EAX, 0
+ 014A 7E 00                           JLE L 1013
+ 014C 89 85 E4 FE FF FF               MOV [EBP-284],EAX
+ 0152 E8 00 00                        CALL 'GETENVCOUNT' (INTERNAL L 1000 )
+ 0155 8B 8D E4 FE FF FF               MOV ECX,[EBP-284]
+ 015B 39 C1                           CMP ECX,EAX
+ 015D 7F 00                           JG L 1013
+            ! get the pointer (aka "name") to the C-style char array 
+            b == byteinteger( integer( addr(getenvironment) + WORDSIZE*(index-1) ) )
+ 015F E8 62 00                        CALL 'GETENVIRONMENT' (EXTERN  98)
+ 0162 8B 4D 0C                        MOV ECX,[EBP+ 12]
+ 0165 49                              DEC ECX
+ 0166 C1 E1 02                        SHL ECX, 2
+ 0169 01 C1                           ADD ECX,EAX
+ 016B 8B 09                           MOV ECX,[ECX]
+ 016D 89 4D EC                        MOV [EBP-20],ECX
+
+            ! I ass-u-me that a C string has a length
+            ! in the range 0..MAXINT - 1, where MAXINT is 2^31
+            ! and each "char" is stored in a byte
+            !
+            ! Also, I should use len as a 32-bit UNSIGNED integer
+            ! and defend against negative values!!
+            len = 0
+ 0170 C7 45 F0 00 00 00 00            MOV WORD [EBP-16], 0
+            %while byteinteger( addr( b ) + len ) # 0 %cycle
+ 0177                      L 1014  EQU $
+ 0177 8B 45 EC                        MOV EAX,[EBP-20]
+ 017A 03 45 F0                        ADD EAX,[EBP-16]
+ 017D 8A 00                           MOV AL,[EAX]
+ 017F 25 FF 00 00 00                  AND EAX, 255
+ 0184 3D 00 00 00 00                  CMP EAX, 0
+ 0189 74 00                           JE L 1015
+                len = len + BYTESIZE
+ 018B FF 45 F0                        INC WORD [EBP-16]
+
+                ! Defend against negative lengths
+                %if (len = -1) %start
+ 018E 8B 45 F0                        MOV EAX,[EBP-16]
+ 0191 3D FF FF FF FF                  CMP EAX,-1
+ 0196 75 00                           JNE L 1016
+                    len = 0
+ 0198 C7 45 F0 00 00 00 00            MOV WORD [EBP-16], 0
+                    %exit
+ 019F EB 00                           JMP L 1015
+                %finish
+ 01A1                      L 1016  EQU $
+            %repeat
+ 01A1 EB 00                           JMP L 1014
+ 01A3                      L 1015  EQU $
+
+            ! Now obtain the actual C string
+            ! Beware! IMP is restricted to 255 characters at most
+            !   An IMP string has a byte prefix indicating string length
+            !   So length = 0..255
+            ! C strings can be any length, terminated by 0 byte
+            eqpos = 0
+ 01A3 C7 45 F4 00 00 00 00            MOV WORD [EBP-12], 0
+            %for i = 1,1,len %cycle
+ 01AA 8B 45 F0                        MOV EAX,[EBP-16]
+ 01AD 89 85 E0 FE FF FF               MOV [EBP-288],EAX
+ 01B3 C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
+ 01BA                      L 1017  EQU $
+ 01BA 8B 45 F8                        MOV EAX,[EBP-8]
+ 01BD 3B 85 E0 FE FF FF               CMP EAX,[EBP-288]
+ 01C3 74 00                           JE L 1018
+ 01C5 40                              INC EAX
+ 01C6 89 45 F8                        MOV [EBP-8],EAX
+                src == byteinteger( addr( b ) + BYTESIZE*(i - 1) )
+ 01C9 8B 45 F8                        MOV EAX,[EBP-8]
+ 01CC 48                              DEC EAX
+ 01CD 03 45 EC                        ADD EAX,[EBP-20]
+ 01D0 89 45 E8                        MOV [EBP-24],EAX
+
+                ! 1) have we found the '=' char
+                ! 2) will the length(string AFTER '=') < 256
+                %if (eqpos # 0) %and ((len - eqpos) < 256) %start
+ 01D3 8B 45 F4                        MOV EAX,[EBP-12]
+ 01D6 3D 00 00 00 00                  CMP EAX, 0
+ 01DB 74 00                           JE L 1019
+ 01DD 8B 45 F0                        MOV EAX,[EBP-16]
+ 01E0 2B 45 F4                        SUB EAX,[EBP-12]
+ 01E3 3D 00 01 00 00                  CMP EAX, 256
+ 01E8 7D 00                           JGE L 1019
+                    ! yes both conditions met so append the current char
+                    length(s) = length(s) + 1
+ 01EA FE 85 E8 FE FF FF               INC BYTE [EBP-280]
+                    charno( s, length(s) ) = src
+ 01F0 8D 85 E8 FE FF FF               LEA EAX,[EBP-280]
+ 01F6 31 C9                           XOR ECX,ECX
+ 01F8 8A 8D E8 FE FF FF               MOV CL,[EBP-280]
+ 01FE 01 C8                           ADD EAX,ECX
+ 0200 8B 5D E8                        MOV EBX,[EBP-24]
+ 0203 8A 0B                           MOV CL,[EBX]
+ 0205 88 08                           MOV [EAX],CL
+                %finish
+ 0207                      L 1019  EQU $
+
+                ! have we found the '=' char
+                %if (src = '=') %and (eqpos = 0) %then eqpos = i
+ 0207 8B 75 E8                        MOV ESI,[EBP-24]
+ 020A 31 C0                           XOR EAX,EAX
+ 020C 8A 06                           MOV AL,[ESI]
+ 020E 3D 3D 00 00 00                  CMP EAX, 61
+ 0213 75 00                           JNE L 1020
+ 0215 8B 45 F4                        MOV EAX,[EBP-12]
+ 0218 3D 00 00 00 00                  CMP EAX, 0
+ 021D 75 00                           JNE L 1020
+ 021F 8B 45 F8                        MOV EAX,[EBP-8]
+ 0222 89 45 F4                        MOV [EBP-12],EAX
+ 0225                      L 1020  EQU $
+            %repeat
+ 0225 EB 00                           JMP L 1017
+ 0227                      L 1018  EQU $
+
+        %finish
+ 0227                      L 1013  EQU $
+
+        %result = s
+ 0227 8B 45 08                        MOV EAX,[EBP+ 8]
+ 022A 50                              PUSH EAX
+ 022B 8D 8D E8 FE FF FF               LEA ECX,[EBP-280]
+ 0231 51                              PUSH ECX
+ 0232 68 FF 00 00 00                  PUSH  255
+ 0237 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
+ 023A 83 C4 0C                        ADD ESP, 12
+ 023D C9                              LEAVE
+ 023E C3                              RET
+    %end
+
+    %external %integer %function getenvindex( %string(255) varname )
+ 023F                      L 1021  EQU $
+ 023F C8 00 00 01                     ENTER 0000, 1
+        %integer i,count,index
+
+        index = 0
+ 0243 C7 45 F0 00 00 00 00            MOV WORD [EBP-16], 0
+
+        count = getenvcount
+ 024A E8 00 00                        CALL 'GETENVCOUNT' (INTERNAL L 1000 )
+ 024D 89 45 F4                        MOV [EBP-12],EAX
+        i = 1
+ 0250 C7 45 F8 01 00 00 00            MOV WORD [EBP-8], 1
+        %cycle
+ 0257                      L 1022  EQU $
+            %if (varname = getenvname( i )) %start
+ 0257 FF 75 F8                        PUSH WORD [EBP-8]
+ 025A 8D 85 F0 FE FF FF               LEA EAX,[EBP-272]
+ 0260 50                              PUSH EAX
+ 0261 E8 00 00                        CALL 'GETENVNAME' (INTERNAL L 1003 )
+ 0264 83 C4 08                        ADD ESP, 8
+ 0267 8D 45 08                        LEA EAX,[EBP+ 8]
+ 026A 50                              PUSH EAX
+ 026B 8D 8D F0 FE FF FF               LEA ECX,[EBP-272]
+ 0271 51                              PUSH ECX
+ 0272 89 85 EC FE FF FF               MOV [EBP-276],EAX
+ 0278 89 8D E8 FE FF FF               MOV [EBP-280],ECX
+ 027E E8 08 00                        CALL '_IMPSTRCMP' (EXTERN  8)
+ 0281 83 C4 08                        ADD ESP, 8
+ 0284 3D 00 00 00 00                  CMP EAX, 0
+ 0289 75 00                           JNE L 1023
+                index = i
+ 028B 8B 45 F8                        MOV EAX,[EBP-8]
+ 028E 89 45 F0                        MOV [EBP-16],EAX
+            %else
+ 0291 EB 00                           JMP L 1024
+ 0293                      L 1023  EQU $
+                i = i + 1
+ 0293 FF 45 F8                        INC WORD [EBP-8]
+            %finish
+ 0296                      L 1024  EQU $
+        %repeat %until (index # 0) %or (i > count)
+ 0296 8B 45 F0                        MOV EAX,[EBP-16]
+ 0299 3D 00 00 00 00                  CMP EAX, 0
+ 029E 75 00                           JNE L 1025
+ 02A0 8B 45 F8                        MOV EAX,[EBP-8]
+ 02A3 3B 45 F4                        CMP EAX,[EBP-12]
+ 02A6 7F 00                           JG L 1025
+ 02A8 EB 00                           JMP L 1022
+ 02AA                      L 1025  EQU $
+
+        %result = index
+ 02AA 8B 45 F0                        MOV EAX,[EBP-16]
+ 02AD C9                              LEAVE
+ 02AE C3                              RET
+    %end
+
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

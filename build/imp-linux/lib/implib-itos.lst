@@ -1,0 +1,15 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {----------------------------------------------------------------------------}
+   2      %external %string(255) %function I to S(%integer n, places)
+   3          %string(255) s
+   4  	
+   5          s = int2ascii( n, 10, places )
+   6  
+   7          %result = s
+   8      %end
+   9  
+   10  {----------------------------------------------------------------------------}
+   11  %endoffile
+
+   6 Statements compiled

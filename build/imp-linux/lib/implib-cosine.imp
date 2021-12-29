@@ -1,0 +1,18 @@
+{----------------------------------------------------------------------------}
+    ! Simple trig library functions to demonstrate
+    ! how to cross-link with the C library functions
+    ! Copyright 2002 NB Information Limited
+    !
+    ! Declare useful trignometry functions
+    !
+    %external %long %real %function cosine(%longreal r)
+
+        %external %long %real %fn %spec C Lib Cos %alias "cos" ( %longreal r)
+
+        %if |r| > 30000 %then %signal 10,1,5
+
+        %result = C Lib Cos(r)
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

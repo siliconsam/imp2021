@@ -1,0 +1,36 @@
+{----------------------------------------------------------------------------}
+    !
+    ! NEW/DISPOSE routines used to acquire/free heap variables
+    ! NEW/DISPOSE routines based on C library malloc/free routines
+    !
+    ! declare heap access routines
+    !
+    %external %routine Dispose ( %name Template )
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %external %routine %spec impfree %alias "free" ( %integer templateaddr )
+
+        %integer Where = Addr( Template )
+ 0004 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0007 89 45 F8                        MOV [EBP-8],EAX
+
+        impfree( Where )
+ 000A FF 75 F8                        PUSH WORD [EBP-8]
+ 000D E8 62 00                        CALL 'IMPFREE' (EXTERN  98)
+ 0010 83 C4 04                        ADD ESP, 4
+    %end
+ 0013 C9                              LEAVE
+ 0014 C3                              RET
+
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

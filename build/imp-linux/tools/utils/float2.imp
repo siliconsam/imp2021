@@ -1,0 +1,109 @@
+%begin
+
+
+    %routine printfloat( %longreal f )
+        %recordformat  floatfm( ( %longreal f %or %byteintegerarray xx(0:7) ) )
+        %record(floatfm) n
+        %integer i
+        %shortinteger sign, exponent
+        %longintegerarray mantissa(0:1)
+        %shortintegerarray shortmantissa(0:3)
+        %byteintegerarray bytemantissa(0:7)
+        %integer miss
+
+        n_f = f
+
+        sign = (n_xx(7) >> 7) & 16_01
+        exponent = ((n_xx(7) & 16_7f) << 4) + (n_xx(6) >> 4) - 1023
+        %if exponent = 1024 %start
+            printstring("Exponent out of range! Suspect negative exponent given for real number"); newline
+            miss = 1
+        %else
+            bytemantissa(0) = ((n_xx(0) & 16_0f) <<4)
+            bytemantissa(1) = ((n_xx(1) & 16_0f) <<4) + (n_xx(0) >> 4)
+            bytemantissa(2) = ((n_xx(2) & 16_0f) <<4) + (n_xx(1) >> 4)
+            bytemantissa(3) = ((n_xx(3) & 16_0f) <<4) + (n_xx(2) >> 4)
+            bytemantissa(4) = ((n_xx(4) & 16_0f) <<4) + (n_xx(3) >> 4)
+            bytemantissa(5) = ((n_xx(5) & 16_0f) <<4) + (n_xx(4) >> 4)
+            bytemantissa(6) = ((n_xx(6) & 16_0f) <<4) + (n_xx(5) >> 4)
+            bytemantissa(7) = 1
+
+            shortmantissa(0) = (bytemantissa(1) << 8) + bytemantissa(0)
+            shortmantissa(1) = (bytemantissa(3) << 8) + bytemantissa(2)
+            shortmantissa(2) = (bytemantissa(5) << 8) + bytemantissa(4)
+            shortmantissa(3) = (bytemantissa(7) << 8) + bytemantissa(6)
+
+            mantissa(0) = (shortmantissa(1) << 16) + shortmantissa(0)
+            mantissa(1) = (shortmantissa(3) << 16) + shortmantissa(2)
+
+            spaces(10); printstring("Float=")
+            print( f, 15 )
+            newline
+
+            printstring("Binary float=")
+            printstring( itos( n_xx(7), 3)); printstring( "," )
+            printstring( itos( n_xx(6), 3)); printstring( "," )
+            printstring( itos( n_xx(5), 3)); printstring( "," )
+            printstring( itos( n_xx(4), 3)); printstring( "," )
+            printstring( itos( n_xx(3), 3)); printstring( "," )
+            printstring( itos( n_xx(2), 3)); printstring( "," )
+            printstring( itos( n_xx(1), 3)); printstring( "," )
+            printstring( itos( n_xx(0), 3)); newline
+
+            %if sign = 1 %start
+                printstring("sign is -")
+            %else
+                printstring("sign is +")
+            %finish
+            newline
+
+            printstring("ByteMantissa=");
+            printstring( itos( bytemantissa(7), 4) ); printstring( "," )
+            printstring( itos( bytemantissa(6), 4) ); printstring( "," )
+            printstring( itos( bytemantissa(5), 4) ); printstring( "," )
+            printstring( itos( bytemantissa(4), 4) ); printstring( "," )
+            printstring( itos( bytemantissa(3), 4) ); printstring( "," )
+            printstring( itos( bytemantissa(2), 4) ); printstring( "," )
+            printstring( itos( bytemantissa(1), 4) ); printstring( "," )
+            printstring( itos( bytemantissa(0), 4) ); newline
+
+            printstring("ShortMantissa=");
+            printstring( itos( shortmantissa(3), 6) ); printstring( "," )
+            printstring( itos( shortmantissa(2), 6) ); printstring( "," )
+            printstring( itos( shortmantissa(1), 6) ); printstring( "," )
+            printstring( itos( shortmantissa(0), 6) ); newline
+
+            printstring("Mantissa=");
+            printstring( itos( mantissa(1), 12) ); printstring( "," );
+            printstring( itos( mantissa(0), 12) ); newline 
+
+            printstring("Exponent="); printstring( itos( exponent, 6) ); newline
+            newline
+        %finish
+
+    %end
+
+    %const %longreal pi = 3.1415926 
+    printfloat( -0.5 )
+    printfloat( 0.5 )
+    printfloat( -1.5 )
+    printfloat( 1.5 )
+    printfloat( 1.0 )
+    printfloat( -1.0 )
+    printfloat( 2.0@4 )
+    printfloat( -2.0@4 )
+    printfloat( 2.5@1 )
+    printfloat( -2.5@1 )
+
+    printfloat( pi )
+    printfloat( 0.031415926 )
+    printfloat( pi / 100 )
+    printfloat( 1.5/100 )
+    printfloat( 15.0/1000 )
+ 
+    ! 3 Tests to validate negative exponents
+    printfloat( 3.1415926@-2 )
+    printfloat( 15.0@-3 )
+    printfloat( 1500.0@-3 )
+
+%endofprogram

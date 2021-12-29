@@ -1,0 +1,136 @@
+
+    %include "inc.386.registers"
+
+{------------------------------------------------------------------------------}
+    ! Given a dope vector calculate the offset (in bytes) of the
+    ! highest element, and also the offset from A(0,...,0) of
+    ! the first element - the size of the store to allocate is
+    ! therefore the difference.  We return the two 32 bit answers
+    ! with one result => "high" answer is in DX, "low" answer
+    ! is in AX.  Thus DX contains the top, AX the A(0) offset
+    ! The way we achieve this is compiler dependent, so we declare
+    ! this as VOID and then do the return in-line
+    %external %routine impadef ( %integer %name dvp )
+ 0000                      L 1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000, 1
+        %integer dim, sz
+        %integer lb, ub, row
+        %integer i, base, limit
+
+        dim = dvp
+ 0004 8B 75 08                        MOV ESI,[EBP+ 8]
+ 0007 8B 06                           MOV EAX,[ESI]
+ 0009 89 45 F8                        MOV [EBP-8],EAX
+        sz = integer( addr(dvp) + 4*(2*dim + 1) )
+ 000C 8B 45 F8                        MOV EAX,[EBP-8]
+ 000F D1 E0                           SHL EAX, 1
+ 0011 40                              INC EAX
+ 0012 C1 E0 02                        SHL EAX, 2
+ 0015 03 45 08                        ADD EAX,[EBP+ 8]
+ 0018 8B 00                           MOV EAX,[EAX]
+ 001A 89 45 F4                        MOV [EBP-12],EAX
+        ! initialise the base "address" and limit "address"
+        base = 0
+ 001D C7 45 E0 00 00 00 00            MOV WORD [EBP-32], 0
+        limit = 0
+ 0024 C7 45 DC 00 00 00 00            MOV WORD [EBP-36], 0
+
+        %for i=0,1,dim - 1 %cycle
+ 002B 8B 45 F8                        MOV EAX,[EBP-8]
+ 002E 48                              DEC EAX
+ 002F 89 45 D8                        MOV [EBP-40],EAX
+ 0032 C7 45 E4 FF FF FF FF            MOV WORD [EBP-28],-1
+ 0039                      L 1001  EQU $
+ 0039 8B 45 E4                        MOV EAX,[EBP-28]
+ 003C 3B 45 D8                        CMP EAX,[EBP-40]
+ 003F 74 00                           JE L 1002
+ 0041 40                              INC EAX
+ 0042 89 45 E4                        MOV [EBP-28],EAX
+
+            ! General case iterates backwards toward first dimension
+            lb = integer( addr(dvp) + 4*(2*dim - 2*i - 1));  ! at i=0, point to the rightmost lower bound
+ 0045 8B 45 F8                        MOV EAX,[EBP-8]
+ 0048 D1 E0                           SHL EAX, 1
+ 004A 8B 4D E4                        MOV ECX,[EBP-28]
+ 004D D1 E1                           SHL ECX, 1
+ 004F 29 C8                           SUB EAX,ECX
+ 0051 48                              DEC EAX
+ 0052 C1 E0 02                        SHL EAX, 2
+ 0055 03 45 08                        ADD EAX,[EBP+ 8]
+ 0058 8B 00                           MOV EAX,[EAX]
+ 005A 89 45 F0                        MOV [EBP-16],EAX
+            ub = integer( addr(dvp) + 4*(2*dim - 2*i)    );  ! at i=0, point to the rightmost upper bound
+ 005D 8B 45 F8                        MOV EAX,[EBP-8]
+ 0060 D1 E0                           SHL EAX, 1
+ 0062 8B 4D E4                        MOV ECX,[EBP-28]
+ 0065 D1 E1                           SHL ECX, 1
+ 0067 29 C8                           SUB EAX,ECX
+ 0069 C1 E0 02                        SHL EAX, 2
+ 006C 03 45 08                        ADD EAX,[EBP+ 8]
+ 006F 8B 00                           MOV EAX,[EAX]
+ 0071 89 45 EC                        MOV [EBP-20],EAX
+
+            %signal 5, 3, 0 %unless lb <= ub; ! we declare array bounds so that lb <= ub
+ 0074 8B 45 F0                        MOV EAX,[EBP-16]
+ 0077 3B 45 EC                        CMP EAX,[EBP-20]
+ 007A 7E 00                           JLE L 1003
+ 007C B8 05 00 00 00                  MOV EAX, 5
+ 0081 50                              PUSH EAX
+ 0082 31 C0                           XOR EAX,EAX
+ 0084 50                              PUSH EAX
+ 0085 B8 03 00 00 00                  MOV EAX, 3
+ 008A 50                              PUSH EAX
+ 008B E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
+ 008E 83 C4 0C                        ADD ESP, 12
+ 0091                      L 1003  EQU $
+            row   = (ub - lb) + 1;               ! Number of objects in a row
+ 0091 8B 45 EC                        MOV EAX,[EBP-20]
+ 0094 2B 45 F0                        SUB EAX,[EBP-16]
+ 0097 40                              INC EAX
+ 0098 89 45 E8                        MOV [EBP-24],EAX
+            base  = base * row + lb
+ 009B 8B 45 E0                        MOV EAX,[EBP-32]
+ 009E F7 6D E8                        IMUL WORD [EBP-24]
+ 00A1 03 45 F0                        ADD EAX,[EBP-16]
+ 00A4 89 45 E0                        MOV [EBP-32],EAX
+            limit = limit * row + ub
+ 00A7 8B 45 DC                        MOV EAX,[EBP-36]
+ 00AA F7 6D E8                        IMUL WORD [EBP-24]
+ 00AD 03 45 EC                        ADD EAX,[EBP-20]
+ 00B0 89 45 DC                        MOV [EBP-36],EAX
+        %repeat
+ 00B3 EB 00                           JMP L 1001
+ 00B5                      L 1002  EQU $
+
+        base = base * sz
+ 00B5 8B 45 E0                        MOV EAX,[EBP-32]
+ 00B8 F7 6D F4                        IMUL WORD [EBP-12]
+ 00BB 89 45 E0                        MOV [EBP-32],EAX
+        limit = (limit + 1) * sz
+ 00BE 8B 45 DC                        MOV EAX,[EBP-36]
+ 00C1 40                              INC EAX
+ 00C2 F7 6D F4                        IMUL WORD [EBP-12]
+ 00C5 89 45 DC                        MOV [EBP-36],EAX
+
+        *mov_ edx,limit
+ 00C8 8B 55 DC                        MOV EDX,[EBP-36]
+        *mov_ eax,base
+ 00CB 8B 45 E0                        MOV EAX,[EBP-32]
+
+        %return
+ 00CE C9                              LEAVE
+ 00CF C3                              RET
+    %end
+
+{------------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

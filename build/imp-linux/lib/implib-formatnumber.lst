@@ -1,0 +1,30 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {----------------------------------------------------------------------------}
+   2      ! format the number to the given number base
+   3      ! and prefix by the number base expressed in base 10
+   4      %external %string(255) %function formatNumber( %integer n,base,places)
+   5          %string(255) s,x
+   6          %integer i
+   7  
+   8          %if base = 10 %start
+   9              x = int2ascii( n, base, places)
+   10          %else
+   11              s = int2ascii( n, base, 0)
+   12              x = int2ascii( base, 10, places - length(s)  - 1 )
+   13  
+   14              length(x) = length(x) + 1
+   15              charno(x,length(x)) = '_'
+   16              %for i = 1,1,length(s) %cycle
+   17                  length(x) = length(x) + 1
+   18                  charno(x,length(x)) = charno(s,i)
+   19              %repeat
+   20          %finish
+   21  
+   22          %result = x
+   23      %end
+   24  
+   25  {----------------------------------------------------------------------------}
+   26  %endoffile
+
+   18 Statements compiled

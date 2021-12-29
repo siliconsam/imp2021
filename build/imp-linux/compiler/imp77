@@ -1,0 +1,94 @@
+#!/bin/sh
+# Simple IMP compiler shell wrapper
+
+SOURCEDIR=/home/johnmcmullin/projects/imp-linux
+RELEASEDIR=/usr/local
+
+PROGNAME=`basename $0`
+DOLIST=false
+DOCODE=false
+DOLINK=true
+TESTMODE=false
+TIDYMODE=true
+LISTFILE=/dev/null
+CODEFILE=/dev/null
+
+# Parse the arguments...
+MORETODO=true
+while ${MORETODO} ; do
+   case X"$1" in
+   X-c)
+	DOLINK=false
+	;;
+   X-Fc)
+	DOCODE=true
+	;;
+   X-Fs)
+	DOLIST=true
+	;;
+   X-e)
+	TESTMODE=true
+	;;
+   X-Fi)
+	TIDYMODE=false
+	;;
+   *)
+	MORETODO=false
+	;;
+   esac
+   ${MORETODO} && shift
+done
+
+if [ $# -ne 1 ]; then
+	echo "${PROGNAME}: No source file?" 1>&2
+	exit 1
+fi
+
+# try to be ambivalent about which extension is used
+SRCNAME=`basename $1 .imp`
+SRCNAME=`basename $SRCNAME .i`
+# and now check that there was one (and it's been removed)
+if [ X"$SRCNAME" = X"$1" ]; then
+	echo "${PROGNAME}: Source must be .imp or .i" 1>&2
+	exit 1
+fi
+
+if ${TESTMODE}; then
+  INCDIR=${SOURCEDIR}/lib
+  BINDIR=${SOURCEDIR}/compiler
+  IMPLIB=${SOURCEDIR}/lib/libimp77.a
+else
+  INCDIR=${RELEASEDIR}/include
+  BINDIR=${RELEASEDIR}/bin
+  IMPLIB=${RELEASEDIR}/lib/libimp77.a
+fi
+
+if ${DOLIST}; then
+	LISTFILE=$SRCNAME.lst
+fi
+
+if ${DOCODE}; then
+	CODEFILE=$SRCNAME.cod
+fi
+
+${BINDIR}/pass1 $1,$INCDIR/stdperm.imp=$SRCNAME.icd,$LISTFILE
+if [ $? -ne 0 ] ; then
+	exit 1
+fi
+
+${BINDIR}/pass2 $SRCNAME.icd,$1=$SRCNAME.ibj,$CODEFILE
+if ${TIDYMODE}; then
+	rm $SRCNAME.icd
+fi
+
+${BINDIR}/pass3elf $SRCNAME.ibj $SRCNAME.o
+if ${TIDYMODE}; then
+	rm $SRCNAME.ibj
+fi
+
+if ${DOLINK}; then
+	gcc -m32 -o $SRCNAME $SRCNAME.o ${IMPLIB} -lm -T $BINDIR/ld.i77.script
+	if ${TIDYMODE}; then
+		rm $SRCNAME.o
+	fi
+fi

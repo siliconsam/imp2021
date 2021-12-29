@@ -1,0 +1,33 @@
+{------------------------------------------------------------------------------}
+    %external %routine impstrjcat ( %byte %name dst,src, %integer len )
+        %integer i
+        %integer count
+        %byte dlen,slen
+        %byte %name srcx,dstx
+
+        %if (len = 0) %then len = MAXLENIMPSTRING; ! string(*)name - comes from general %name's etc
+
+        dlen = dst;   ! pick up existing destination length
+        slen = src;   ! fetch the source length
+
+        %if ((dlen + slen) > len) %start { force the length to fit }
+            count = len - dlen
+        %else
+            count = slen
+        %finish
+        dlen = dlen + count
+
+        ! update the destination count
+        dstx == byteinteger( addr( dst) ); ! get the address
+        dstx = dlen;                       ! set the new length
+
+        ! copy across the source chars
+        %for i = 1,1,count %cycle
+            srcx == byteinteger( addr(src) + i )
+            dstx == byteinteger( addr(dst) + (dlen - count) + i )
+            dstx = srcx
+        %repeat
+    %end
+
+{------------------------------------------------------------------------------}
+%endoffile
