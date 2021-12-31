@@ -2059,13 +2059,13 @@ break:
 
         i = 0
         %while i < cotp-7 %cycle
-            %if contable(i)   = byteinteger(addr(double))   %and %c
-                contable(i+1) = byteinteger(addr(double)+1) %and %c
-                contable(i+2) = byteinteger(addr(double)+2) %and %c
-                contable(i+3) = byteinteger(addr(double)+3) %and %c
-                contable(i+4) = byteinteger(addr(double)+4) %and %c
-                contable(i+5) = byteinteger(addr(double)+5) %and %c
-                contable(i+6) = byteinteger(addr(double)+6) %and %c
+            %if contable(i)   = byteinteger(addr(double))   %and
+                contable(i+1) = byteinteger(addr(double)+1) %and
+                contable(i+2) = byteinteger(addr(double)+2) %and
+                contable(i+3) = byteinteger(addr(double)+3) %and
+                contable(i+4) = byteinteger(addr(double)+4) %and
+                contable(i+5) = byteinteger(addr(double)+5) %and
+                contable(i+6) = byteinteger(addr(double)+6) %and
                 contable(i+7) = byteinteger(addr(double)+7) %then %result = i + cotoffset
             i = i + 4
         %repeat

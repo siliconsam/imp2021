@@ -225,7 +225,7 @@ err:        exp = 0
             %end
 
             %routine add components(%integer x)
-                %owninteger i,k,t,u
+                %owninteger i,j,k,t,u
                 %while x # 0 %cycle
                     %if x < 0 %start
                         add components(tail(x))
@@ -253,9 +253,9 @@ err:        exp = 0
                     %finish
                     k = k&255
                     %if u = ident %or (u&255<k %and k>=180) %or k = 0 %start
-                        %cycle i = gmax,-1,i
-                            item(i+1) = item(i)
-                            next(i+1) = next(i)
+                        %cycle j = gmax,-1,i
+                            item(j+1) = item(j)
+                            next(j+1) = next(j)
                         %repeat
                         %exit
                     %finish
@@ -679,7 +679,7 @@ l10:    select output(dlist);  newlines(2)
     printstring("   %endoflist");  newline
 
     %constinteger names per line = 8
-    printstring("%conststring(8)%array text(0:255) = %c"); newline
+    printstring("%conststring(8)%array text(0:255) ="); newline
     printstring("""Z"",")
     ! we have just output the first name already
     ! so initialise k with good value
@@ -696,7 +696,7 @@ l10:    select output(dlist);  newlines(2)
     printstring("%constinteger imp phrase =");  hwrite(inits+1, 0); newlines(2)
 
     printstring("!  FLAG<1> 0<1> SS<2> 0<3> T<1> LINK<8>");  newline
-    printstring("%constshortintegerarray initial(0:119) = %c")
+    printstring("%constshortintegerarray initial(0:119) =")
     %cycle i = 0,1,119
         newline %if i&7 = 0
         hwrite(initial(i), 7)
@@ -704,7 +704,7 @@ l10:    select output(dlist);  newlines(2)
     %repeat
     newlines(2)
 
-    printstring("%constbyteintegerarray atomic(130:179) = %c")
+    printstring("%constbyteintegerarray atomic(130:179) =")
     k = 0
     %cycle i = 130,1,179
         newline %if k&7 = 0
@@ -714,7 +714,7 @@ l10:    select output(dlist);  newlines(2)
     %repeat
     newlines(2)
 
-    printstring("%ownshortintegerarray phrase(200:255) = %C")
+    printstring("%ownshortintegerarray phrase(200:255) =")
     %for i = 200, 1, 255 %cycle
         newline %if i&7 = 0
         hwrite(phrase(i),3)
@@ -723,7 +723,7 @@ l10:    select output(dlist);  newlines(2)
     newlines(2)
 
     printstring("!  MORE<1> 0<1> ORDER<2> TYPE<4> CLASS<8>");  newline
-    printstring("%ownshortintegerarray gram(0:max grammar) = %c")
+    printstring("%ownshortintegerarray gram(0:max grammar) =")
     %cycle i = 0,1,gmax
         newline %if i&7 = 0
         k = 0
@@ -734,7 +734,7 @@ l10:    select output(dlist);  newlines(2)
     newline;
     printstring("0(max grammar-gmax1)")
     newlines(2)
-    printstring("%ownshortintegerarray glink(0:max grammar) = %c")
+    printstring("%ownshortintegerarray glink(0:max grammar) =")
     %cycle i = 0, 1, gmax
         newline %if i&7 = 0
         hwrite(next(i), 7)
@@ -745,7 +745,7 @@ l10:    select output(dlist);  newlines(2)
     newlines(2)
 
     printstring("%constshortinteger max kdict = ");  hwrite(kmax,0); newline
-    printstring("%constshortintegerarray kdict(32:max kdict) = %c");
+    printstring("%constshortintegerarray kdict(32:max kdict) =");
     %cycle i = 32,1,kmax
         newline %if i&7 = 0
         hwrite(keydict(i),7)
