@@ -21,10 +21,16 @@ all: pass1 pass2 pass3
 # We need to build pass1,pass2 from their .o files (created by the cross build script make.bat)
 # Also build pass3 completely from source
 bootstrap: pass3 $(IMPLIB) ld.i77.script
-# Linux version of takeon gets upset with DOS line-endings
+# Just in case convert source files to have Linux line-endings
 > dos2unix i77.grammar
+> dos2unix pass1.imp
+> dos2unix pass2.imp
+> dos2unix takeon.imp
 # Also, just in case tweak the ld.i77.script
+> dos2unix imp77
+> dos2unix imp77link
 > dos2unix ld.i77.script
+# Now build the programs
 > $(CC) -o pass1 pass1.o $(IMPLIB) $(LIBOPT)
 > $(CC) -o pass2 pass2.o $(IMPLIB) $(LIBOPT)
 > $(CC) -o takeon takeon.o $(IMPLIB) $(LIBOPT)
