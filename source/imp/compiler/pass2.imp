@@ -2059,14 +2059,15 @@ break:
 
         i = 0
         %while i < cotp-7 %cycle
-            %if contable(i)   = byteinteger(addr(double))   %and
-                contable(i+1) = byteinteger(addr(double)+1) %and
-                contable(i+2) = byteinteger(addr(double)+2) %and
-                contable(i+3) = byteinteger(addr(double)+3) %and
-                contable(i+4) = byteinteger(addr(double)+4) %and
-                contable(i+5) = byteinteger(addr(double)+5) %and
-                contable(i+6) = byteinteger(addr(double)+6) %and
-                contable(i+7) = byteinteger(addr(double)+7) %then %result = i + cotoffset
+            %if      contable(i)   = byteinteger(addr(double))   %c
+                %and contable(i+1) = byteinteger(addr(double)+1) %c
+                %and contable(i+2) = byteinteger(addr(double)+2) %c
+                %and contable(i+3) = byteinteger(addr(double)+3) %c
+                %and contable(i+4) = byteinteger(addr(double)+4) %c
+                %and contable(i+5) = byteinteger(addr(double)+5) %c
+                %and contable(i+6) = byteinteger(addr(double)+6) %c
+                %and contable(i+7) = byteinteger(addr(double)+7) %c
+            %then %result = i + cotoffset
             i = i + 4
         %repeat
 
@@ -6593,7 +6594,7 @@ c('p'):		assign(-1);							%continue;	! Pass a parameter
 c('q'):		DoubleOp( SUBx);					%continue;	!--
 c('r'):		resolve( ReadTag );					%continue
 c('s'):		perm(stop, 0);						%continue;	! %stop
-c('t'):		Jump Forward( ReadTag, JNE );		%continue;	! Branch on TRUE (# 0)
+c('t'):		Jump Forward( ReadTag, TT );		%continue;	! Branch on TRUE (# 0)
 c('u'):		DoubleOp( ADDx );					%continue;	!++
 c('v'):		Operation(ABSx);					%continue
 c('w'):		MachineCode(Get Ascii( ';' ));	    %continue;	! JDM: allowed call to Machine code
