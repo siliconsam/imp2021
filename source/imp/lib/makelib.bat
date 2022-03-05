@@ -37,6 +37,7 @@
 @call :%driver% imprtl-trap
 @call :%driver% impcore-adef
 @call :%driver% impcore-aref
+@call :%driver% impcore-asiz
 @call :%driver% impcore-fexp
 @call :%driver% impcore-iexp
 @call :%driver% impcore-signal
@@ -70,6 +71,7 @@
 @call :%driver% implib-tolower
 @call :%driver% implib-toupper
 @call :%driver% implib-trim
+@call :%driver% implib-typename
 
 @rem Ensure we have a clean library
 @if exist libimp.lib del libimp.lib
@@ -86,6 +88,7 @@
 @lib /nologo /out:libimp.lib libimp.lib imprtl-trap.obj
 @lib /nologo /out:libimp.lib libimp.lib impcore-adef.obj
 @lib /nologo /out:libimp.lib libimp.lib impcore-aref.obj
+@lib /nologo /out:libimp.lib libimp.lib impcore-asiz.obj
 @lib /nologo /out:libimp.lib libimp.lib impcore-fexp.obj
 @lib /nologo /out:libimp.lib libimp.lib impcore-iexp.obj
 @lib /nologo /out:libimp.lib libimp.lib impcore-signal.obj
@@ -119,6 +122,7 @@
 @lib /nologo /out:libimp.lib libimp.lib implib-tolower.obj
 @lib /nologo /out:libimp.lib libimp.lib implib-toupper.obj
 @lib /nologo /out:libimp.lib libimp.lib implib-trim.obj
+@lib /nologo /out:libimp.lib libimp.lib implib-typename.obj
 
 @rem Create the library which allows command line to specify the file I/O
 @if exist libi77.lib del libi77.lib

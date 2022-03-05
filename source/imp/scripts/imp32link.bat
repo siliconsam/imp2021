@@ -28,8 +28,8 @@ for %%x in (%*) do (
 @echo.
 
 @set LIB_HOME=%IMP_INSTALL_HOME%\lib
-@link /nologo /SUBSYSTEM:CONSOLE /stack:0x800000,0x800000 /MAPINFO:EXPORTS /MAP:%1.map /OUT:%1.exe /DEFAULTLIB:%LIB_HOME%\libi77.lib %objlist% %LIB_HOME%\libi77.lib
-@rem link /nologo /SUBSYSTEM:CONSOLE /stack:0x800000,0x800000 /heap:0x800000,0x800000 /OUT:%1.exe /DEFAULTLIB:%LIB_HOME%\libi77.lib %objlist% %LIB_HOME%\libi77.lib
+@rem link /nologo /SUBSYSTEM:CONSOLE /stack:0x800000,0x800000                         /MAPINFO:EXPORTS /MAP:%1.map /OUT:%1.exe /DEFAULTLIB:%LIB_HOME%\libi77.lib %objlist% %LIB_HOME%\libi77.lib
+@link     /nologo /SUBSYSTEM:CONSOLE /stack:0x800000,0x800000 /heap:0x800000,0x800000 /MAPINFO:EXPORTS /MAP:%1.map /OUT:%1.exe /DEFAULTLIB:%LIB_HOME%\libi77.lib %objlist% %LIB_HOME%\libi77.lib
 @echo.
 @endlocal
 exit/b
