@@ -1,5 +1,7 @@
 ! PRIMS must NOT be changed in order...
 ! These are internal MACRO's within the pass2 phase of the compiler
+! NB %prim 0 is regarded as the unknown/illegal macro
+! NB Warning! only 15 %prim functions/routines are allowed at present!
 %prim     %integer       %fn  %spec		rem( %integer p,q )
 %prim     %real          %fn  %spec		float( %integer n )
 %prim     %string(1)     %fn  %spec		tostring( %integer c )
@@ -12,6 +14,9 @@
 %prim     %long %real    %map %spec		longreal( %integer n )
 %prim     %byte %integer %map %spec		length( %string(255) s )
 %prim     %byte %integer %map %spec		charno( %string(255) s,%integer n )
+! Danger Will Robinson!!
+! For an array, typeof only works in the same scope as the array's declaration
+! Simple types give the correct typeof value
 %prim     %integer       %fn  %spec		typeof( %name n )
 %prim     %integer       %fn  %spec		sizeof( %name n )
 %prim     %integer       %fn  %spec		int( %longreal r )
@@ -20,15 +25,11 @@
 
 ! Event handler routines
 %const    %integer                      max event = 16
-%external %integer       %fn  %spec 	event
-%external %integer       %fn  %spec 	subevent
-%external %integer       %fn  %spec 	eventinfo
+%recordformat event fm(%integer event,sub,info, %string(255) message)
+%external %record(event fm) %map %spec event
 
-! Event handler routines (implemented in Imp)
-%external %integer       %fn  %spec 	get event
-%external %integer       %fn  %spec 	get eventsub
-%external %integer       %fn  %spec 	get eventinfo
-%external %routine            %spec     get eventmessage( %string(*) %name message )
+! Routine to map result of "typeof" function to a string
+%external %string(255)   %fn  %spec     typeName( %integer t )
 
 ! Starting point for Seek Input, Seek Output random access routines
 %const    %integer from start   = 0
@@ -49,7 +50,7 @@
 %external %routine            %spec		Read Symbol( %integername p )
 %external %integer       %fn  %spec		Next Symbol
 %external %integer       %fn  %spec     Read Buffer( %name ptr, %integer count )
-%external %routine            %spec		Set Prompt( %string(31) S )
+%external %routine            %spec		Prompt( %string(31) S )
 
 ! Output routines
 %external %integer       %fn  %spec		Output Stream
