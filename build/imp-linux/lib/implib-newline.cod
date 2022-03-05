@@ -1,11 +1,11 @@
 {----------------------------------------------------------------------------}
     %external %routine newline
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
         printsymbol(nl)
- 0004 6A 0A                           PUSH  10
- 0006 E8 2A 00                        CALL 'PRINTSYMBOL' (EXTERN  42)
- 0009 83 C4 04                        ADD ESP, 4
+ 0004 6A 0A                           PUSH 10
+ 0006 E8 25 00                        CALL 'PRINTSYMBOL' (EXTERN 37)
+ 0009 83 C4 04                        ADD ESP,4
     %end
  000C C9                              LEAVE
  000D C3                              RET

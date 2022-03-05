@@ -932,7 +932,7 @@ void initcoff(FILE * output)
     // Now assemble the main file header
     filehead.f_magic    = 0x014C;
     filehead.f_nscns    = ncoffsections;
-    filehead.f_timdat   = (time(NULL) && 0xffffffff);
+    filehead.f_timdat   = (time(NULL) & 0xffffffff);
     filehead.f_symptr   = symtaboffset;
     filehead.f_nsyms    = nsymdefs + nspecs + (ncoffsections*2) + filesyms + 1;
     filehead.f_opthdr   = 0;

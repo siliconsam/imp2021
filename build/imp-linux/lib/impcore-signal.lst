@@ -94,7 +94,7 @@
    90              %cycle
    91                  messageFormatB( mybp_xret )
    92  
-   93                  ! have we gone too far, and found the enty point's trap handler?
+   93                  ! have we gone too far, and found the entry point's trap handler?
    94                  %exit %if initial entry found ( mybp_xret )
    95  
    96                  mybp == mybp_xebp  { previous stack frame }

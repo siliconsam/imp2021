@@ -16,34 +16,34 @@
 
 {------------------------------------------------------------------------------}
     %routine impexit( %integer status )
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
         terminateio
- 0004 E8 62 00                        CALL 'TERMINATEIO' (EXTERN  98)
+ 0004 E8 5D 00                        CALL 'TERMINATEIO' (EXTERN 93)
         exit( status )
- 0007 FF 75 08                        PUSH WORD [EBP+ 8]
- 000A E8 61 00                        CALL 'EXIT' (EXTERN  97)
- 000D 83 C4 04                        ADD ESP, 4
+ 0007 FF 75 08                        PUSH WORD [EBP+8]
+ 000A E8 5C 00                        CALL 'EXIT' (EXTERN 92)
+ 000D 83 C4 04                        ADD ESP,4
     %end
  0010 C9                              LEAVE
  0011 C3                              RET
 
 {------------------------------------------------------------------------------}
     %external %routine impstop
- 0012                      L 1001  EQU $
- 0012 C8 00 00 01                     ENTER 0000, 1
+ 0012                      L1001  EQU $
+ 0012 C8 00 00 01                     ENTER 0000,1
         impexit(1)
- 0016 6A 01                           PUSH  1
- 0018 E8 00 00                        CALL 'IMPEXIT' (INTERNAL L 1000 )
- 001B 83 C4 04                        ADD ESP, 4
+ 0016 6A 01                           PUSH 1
+ 0018 E8 00 00                        CALL 'IMPEXIT' (INTERNAL L1000 )
+ 001B 83 C4 04                        ADD ESP,4
     %end
  001E C9                              LEAVE
  001F C3                              RET
 
 {------------------------------------------------------------------------------}
     %external %routine impsignal ( %integer event,extra,sub )
- 0020                      L 1002  EQU $
- 0020 C8 00 00 01                     ENTER 0000, 1
+ 0020                      L1002  EQU $
+ 0020 C8 00 00 01                     ENTER 0000,1
         %integer status
         %record(impframe) %name mybp,chainbp
         %integer panic
@@ -52,19 +52,19 @@
         ! Uncomment when debugging the run-time code
         ! Do NOT delete from this source code
         %if (debugmode = dbgtrap) %then dumpalltrapinfo
- 0024 E8 44 00                        CALL 'DEBUGMODE' (EXTERN  68)
- 0027 3D 80 00 00 00                  CMP EAX, 128
- 002C 75 00                           JNE L 1003
- 002E E8 66 00                        CALL 'DUMPALLTRAPINFO' (EXTERN  102)
- 0031                      L 1003  EQU $
+ 0024 E8 3F 00                        CALL 'DEBUGMODE' (EXTERN 63)
+ 0027 3D 80 00 00 00                  CMP EAX,128
+ 002C 75 00                           JNE L1003
+ 002E E8 61 00                        CALL 'DUMPALLTRAPINFO' (EXTERN 97)
+ 0031                      L1003  EQU $
 
         ! Remember the event data and form the event message
         save event( event, sub, extra )
- 0031 FF 75 10                        PUSH WORD [EBP+ 16]
- 0034 FF 75 08                        PUSH WORD [EBP+ 8]
- 0037 FF 75 0C                        PUSH WORD [EBP+ 12]
- 003A E8 63 00                        CALL 'SAVEEVENT' (EXTERN  99)
- 003D 83 C4 0C                        ADD ESP, 12
+ 0031 FF 75 10                        PUSH WORD [EBP+16]
+ 0034 FF 75 08                        PUSH WORD [EBP+8]
+ 0037 FF 75 0C                        PUSH WORD [EBP+12]
+ 003A E8 5E 00                        CALL 'SAVEEVENT' (EXTERN 94)
+ 003D 83 C4 0C                        ADD ESP,12
 
         ! try to find our own base pointer...
         ! We have to use embedded machine code to read the Frame Pointer/Base Pointer
@@ -81,20 +81,20 @@
         ! or we've been nested too deeply (i.e. panic cout)
         ! or we reach the IMP program entry point
         panic = 0
- 0049 C7 45 EC 00 00 00 00            MOV WORD [EBP-20], 0
+ 0049 C7 45 EC 00 00 00 00            MOV WORD [EBP-20],0
         %cycle
- 0050                      L 1004  EQU $
+ 0050                      L1004  EQU $
             ! Can we find a handler to catch the event?
             ! JDM: We must match the event trapbits
             ! and the address inside the "defence" zone
             %if handler found ( event, chainbp_xret ) %start
- 0050 FF 75 10                        PUSH WORD [EBP+ 16]
+ 0050 FF 75 10                        PUSH WORD [EBP+16]
  0053 8B 75 F0                        MOV ESI,[EBP-16]
- 0056 FF 76 04                        PUSH WORD [ESI+ 4]
- 0059 E8 67 00                        CALL 'HANDLERFOUND' (EXTERN  103)
- 005C 83 C4 08                        ADD ESP, 8
- 005F 3D 00 00 00 00                  CMP EAX, 0
- 0064 74 00                           JE L 1005
+ 0056 FF 76 04                        PUSH WORD [ESI+4]
+ 0059 E8 62 00                        CALL 'HANDLERFOUND' (EXTERN 98)
+ 005C 83 C4 08                        ADD ESP,8
+ 005F 3D 00 00 00 00                  CMP EAX,0
+ 0064 74 00                           JE L1005
 
                 ! Yes, so overwrite the Frame Pointer and return address
                 mybp_xebp == chainbp_xebp                         { set my return BP to the trappers BP }
@@ -104,27 +104,27 @@
  006E 89 07                           MOV [EDI],EAX
                 mybp_xret = handler entry address( chainbp_xret ) { and my return location is the trap }
  0070 8B 75 F0                        MOV ESI,[EBP-16]
- 0073 FF 76 04                        PUSH WORD [ESI+ 4]
- 0076 E8 69 00                        CALL 'HANDLERENTRYADDRESS' (EXTERN  105)
- 0079 83 C4 04                        ADD ESP, 4
+ 0073 FF 76 04                        PUSH WORD [ESI+4]
+ 0076 E8 64 00                        CALL 'HANDLERENTRYADDRESS' (EXTERN 100)
+ 0079 83 C4 04                        ADD ESP,4
  007C 8B 7D F4                        MOV EDI,[EBP-12]
- 007F 89 47 04                        MOV [EDI+ 4],EAX
+ 007F 89 47 04                        MOV [EDI+4],EAX
 
                 %return                    { kazzam! }
  0082 C9                              LEAVE
  0083 C3                              RET
             %finish
- 0084                      L 1005  EQU $
+ 0084                      L1005  EQU $
 
             %exit %if initial entry found ( chainbp_xret )
  0084 8B 5D F0                        MOV EBX,[EBP-16]
- 0087 FF 73 04                        PUSH WORD [EBX+ 4]
- 008A E8 68 00                        CALL 'INITIALENTRYFOUND' (EXTERN  104)
- 008D 83 C4 04                        ADD ESP, 4
- 0090 3D 00 00 00 00                  CMP EAX, 0
- 0095 74 00                           JE L 1006
- 0097 EB 00                           JMP L 1007
- 0099                      L 1006  EQU $
+ 0087 FF 73 04                        PUSH WORD [EBX+4]
+ 008A E8 63 00                        CALL 'INITIALENTRYFOUND' (EXTERN 99)
+ 008D 83 C4 04                        ADD ESP,4
+ 0090 3D 00 00 00 00                  CMP EAX,0
+ 0095 74 00                           JE L1006
+ 0097 EB 00                           JMP L1007
+ 0099                      L1006  EQU $
 
             chainbp == chainbp_xebp  { previous stack frame }
  0099 8B 75 F0                        MOV ESI,[EBP-16]
@@ -136,62 +136,62 @@
             ! Set up various loop exit tests
             %exit %if (panic > 20)       ;! We've been looking too many times
  00A4 8B 45 EC                        MOV EAX,[EBP-20]
- 00A7 3D 14 00 00 00                  CMP EAX, 20
- 00AC 7E 00                           JLE L 1008
- 00AE EB 00                           JMP L 1007
- 00B0                      L 1008  EQU $
+ 00A7 3D 14 00 00 00                  CMP EAX,20
+ 00AC 7E 00                           JLE L1008
+ 00AE EB 00                           JMP L1007
+ 00B0                      L1008  EQU $
             %exit %if (chainbp_xret = 0) ;! We've gone too far down the chain
  00B0 8B 7D F0                        MOV EDI,[EBP-16]
- 00B3 8B 47 04                        MOV EAX,[EDI+ 4]
- 00B6 3D 00 00 00 00                  CMP EAX, 0
- 00BB 75 00                           JNE L 1009
- 00BD EB 00                           JMP L 1007
- 00BF                      L 1009  EQU $
+ 00B3 8B 47 04                        MOV EAX,[EDI+4]
+ 00B6 3D 00 00 00 00                  CMP EAX,0
+ 00BB 75 00                           JNE L1009
+ 00BD EB 00                           JMP L1007
+ 00BF                      L1009  EQU $
         %repeat
- 00BF EB 00                           JMP L 1004
- 00C1                      L 1007  EQU $
+ 00BF EB 00                           JMP L1004
+ 00C1                      L1007  EQU $
 
         ! If we get here, we didn't find a willing catcher,
         ! so instead we'll print a diagnostic stack dump and then exit
         %if (event # 0) %start { Don't report a normal %stop }
- 00C1 8B 45 10                        MOV EAX,[EBP+ 16]
- 00C4 3D 00 00 00 00                  CMP EAX, 0
- 00C9 74 00                           JE L 1010
+ 00C1 8B 45 10                        MOV EAX,[EBP+16]
+ 00C4 3D 00 00 00 00                  CMP EAX,0
+ 00C9 74 00                           JE L1010
 
             messageFormatA( 1 )
- 00CB 6A 01                           PUSH  1
- 00CD E8 64 00                        CALL 'MESSAGEFORMATA' (EXTERN  100)
- 00D0 83 C4 04                        ADD ESP, 4
+ 00CB 6A 01                           PUSH 1
+ 00CD E8 5F 00                        CALL 'MESSAGEFORMATA' (EXTERN 95)
+ 00D0 83 C4 04                        ADD ESP,4
 
             ! We've already initialised our stack traceback to look for
             ! trap blocks, so now we re-run the trace with some printout
             panic = 0
- 00D3 C7 45 EC 00 00 00 00            MOV WORD [EBP-20], 0
+ 00D3 C7 45 EC 00 00 00 00            MOV WORD [EBP-20],0
 
             messageFormatA( 2 )
- 00DA 6A 02                           PUSH  2
- 00DC E8 64 00                        CALL 'MESSAGEFORMATA' (EXTERN  100)
- 00DF 83 C4 04                        ADD ESP, 4
+ 00DA 6A 02                           PUSH 2
+ 00DC E8 5F 00                        CALL 'MESSAGEFORMATA' (EXTERN 95)
+ 00DF 83 C4 04                        ADD ESP,4
 
             ! loop back through the stack
             %cycle
- 00E2                      L 1011  EQU $
+ 00E2                      L1011  EQU $
                 messageFormatB( mybp_xret )
  00E2 8B 5D F4                        MOV EBX,[EBP-12]
- 00E5 FF 73 04                        PUSH WORD [EBX+ 4]
- 00E8 E8 65 00                        CALL 'MESSAGEFORMATB' (EXTERN  101)
- 00EB 83 C4 04                        ADD ESP, 4
+ 00E5 FF 73 04                        PUSH WORD [EBX+4]
+ 00E8 E8 60 00                        CALL 'MESSAGEFORMATB' (EXTERN 96)
+ 00EB 83 C4 04                        ADD ESP,4
 
-                ! have we gone too far, and found the enty point's trap handler?
+                ! have we gone too far, and found the entry point's trap handler?
                 %exit %if initial entry found ( mybp_xret )
  00EE 8B 75 F4                        MOV ESI,[EBP-12]
- 00F1 FF 76 04                        PUSH WORD [ESI+ 4]
- 00F4 E8 68 00                        CALL 'INITIALENTRYFOUND' (EXTERN  104)
- 00F7 83 C4 04                        ADD ESP, 4
- 00FA 3D 00 00 00 00                  CMP EAX, 0
- 00FF 74 00                           JE L 1012
- 0101 EB 00                           JMP L 1013
- 0103                      L 1012  EQU $
+ 00F1 FF 76 04                        PUSH WORD [ESI+4]
+ 00F4 E8 63 00                        CALL 'INITIALENTRYFOUND' (EXTERN 99)
+ 00F7 83 C4 04                        ADD ESP,4
+ 00FA 3D 00 00 00 00                  CMP EAX,0
+ 00FF 74 00                           JE L1012
+ 0101 EB 00                           JMP L1013
+ 0103                      L1012  EQU $
 
                 mybp == mybp_xebp  { previous stack frame }
  0103 8B 7D F4                        MOV EDI,[EBP-12]
@@ -202,75 +202,75 @@
 
                 %if (panic > 20) %or (mybp_xret = 0) %start
  010E 8B 45 EC                        MOV EAX,[EBP-20]
- 0111 3D 14 00 00 00                  CMP EAX, 20
- 0116 7F 00                           JG L 1014
+ 0111 3D 14 00 00 00                  CMP EAX,20
+ 0116 7F 00                           JG L1014
  0118 8B 5D F4                        MOV EBX,[EBP-12]
- 011B 8B 43 04                        MOV EAX,[EBX+ 4]
- 011E 3D 00 00 00 00                  CMP EAX, 0
- 0123 75 00                           JNE L 1015
- 0125                      L 1014  EQU $
+ 011B 8B 43 04                        MOV EAX,[EBX+4]
+ 011E 3D 00 00 00 00                  CMP EAX,0
+ 0123 75 00                           JNE L1015
+ 0125                      L1014  EQU $
 
                     messageFormatA( 4 )
- 0125 6A 04                           PUSH  4
- 0127 E8 64 00                        CALL 'MESSAGEFORMATA' (EXTERN  100)
- 012A 83 C4 04                        ADD ESP, 4
+ 0125 6A 04                           PUSH 4
+ 0127 E8 5F 00                        CALL 'MESSAGEFORMATA' (EXTERN 95)
+ 012A 83 C4 04                        ADD ESP,4
 
                     %exit
- 012D EB 00                           JMP L 1013
+ 012D EB 00                           JMP L1013
                 %finish
- 012F                      L 1015  EQU $
+ 012F                      L1015  EQU $
             %repeat
- 012F EB 00                           JMP L 1011
- 0131                      L 1013  EQU $
+ 012F EB 00                           JMP L1011
+ 0131                      L1013  EQU $
 
             messageFormatA( 5 )
- 0131 6A 05                           PUSH  5
- 0133 E8 64 00                        CALL 'MESSAGEFORMATA' (EXTERN  100)
- 0136 83 C4 04                        ADD ESP, 4
+ 0131 6A 05                           PUSH 5
+ 0133 E8 5F 00                        CALL 'MESSAGEFORMATA' (EXTERN 95)
+ 0136 83 C4 04                        ADD ESP,4
             messageFormatA( 3 )
- 0139 6A 03                           PUSH  3
- 013B E8 64 00                        CALL 'MESSAGEFORMATA' (EXTERN  100)
- 013E 83 C4 04                        ADD ESP, 4
+ 0139 6A 03                           PUSH 3
+ 013B E8 5F 00                        CALL 'MESSAGEFORMATA' (EXTERN 95)
+ 013E 83 C4 04                        ADD ESP,4
 
             status = 1
- 0141 C7 45 F8 01 00 00 00            MOV WORD [EBP-8], 1
+ 0141 C7 45 F8 01 00 00 00            MOV WORD [EBP-8],1
         %finish %else %start
- 0148 EB 00                           JMP L 1016
- 014A                      L 1010  EQU $
+ 0148 EB 00                           JMP L1016
+ 014A                      L1010  EQU $
             status = sub
- 014A 8B 45 08                        MOV EAX,[EBP+ 8]
+ 014A 8B 45 08                        MOV EAX,[EBP+8]
  014D 89 45 F8                        MOV [EBP-8],EAX
 
             %if (extra = 0) %start
- 0150 8B 45 0C                        MOV EAX,[EBP+ 12]
- 0153 3D 00 00 00 00                  CMP EAX, 0
- 0158 75 00                           JNE L 1017
+ 0150 8B 45 0C                        MOV EAX,[EBP+12]
+ 0153 3D 00 00 00 00                  CMP EAX,0
+ 0158 75 00                           JNE L1017
                 ! %signal 0,0,n  == %stop with exit status == n
                 %if ((DEBUGMODE & dbgcore) # 0) %then messageFormatA( 6 )
- 015A E8 44 00                        CALL 'DEBUGMODE' (EXTERN  68)
- 015D 25 20 00 00 00                  AND EAX, 32
- 0162 3D 00 00 00 00                  CMP EAX, 0
- 0167 74 00                           JE L 1018
- 0169 6A 06                           PUSH  6
- 016B E8 64 00                        CALL 'MESSAGEFORMATA' (EXTERN  100)
- 016E 83 C4 04                        ADD ESP, 4
- 0171                      L 1018  EQU $
+ 015A E8 3F 00                        CALL 'DEBUGMODE' (EXTERN 63)
+ 015D 25 20 00 00 00                  AND EAX,32
+ 0162 3D 00 00 00 00                  CMP EAX,0
+ 0167 74 00                           JE L1018
+ 0169 6A 06                           PUSH 6
+ 016B E8 5F 00                        CALL 'MESSAGEFORMATA' (EXTERN 95)
+ 016E 83 C4 04                        ADD ESP,4
+ 0171                      L1018  EQU $
             %finish %else %start
- 0171 EB 00                           JMP L 1019
- 0173                      L 1017  EQU $
+ 0171 EB 00                           JMP L1019
+ 0173                      L1017  EQU $
                 messageFormatA( 3 )
- 0173 6A 03                           PUSH  3
- 0175 E8 64 00                        CALL 'MESSAGEFORMATA' (EXTERN  100)
- 0178 83 C4 04                        ADD ESP, 4
+ 0173 6A 03                           PUSH 3
+ 0175 E8 5F 00                        CALL 'MESSAGEFORMATA' (EXTERN 95)
+ 0178 83 C4 04                        ADD ESP,4
             %finish
- 017B                      L 1019  EQU $
+ 017B                      L1019  EQU $
         %finish
- 017B                      L 1016  EQU $
+ 017B                      L1016  EQU $
 
         impexit( status )
  017B FF 75 F8                        PUSH WORD [EBP-8]
- 017E E8 00 00                        CALL 'IMPEXIT' (INTERNAL L 1000 )
- 0181 83 C4 04                        ADD ESP, 4
+ 017E E8 00 00                        CALL 'IMPEXIT' (INTERNAL L1000 )
+ 0181 83 C4 04                        ADD ESP,4
     %end
  0184 C9                              LEAVE
  0185 C3                              RET

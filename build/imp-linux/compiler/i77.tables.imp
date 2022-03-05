@@ -1,5 +1,5 @@
    %endoflist
-%conststring(8)%array text(0:255) = %c
+%conststring(8)%array text(0:255) =
 "Z","VDEC","OWNVDEC","EXTVSPEC","ADEC","OWNADEC","EXTASPEC","PROC",
 "PROCSPEC","FORMDEC","SWDEC","LDEC","FORMSPEC","","","",
 "","","OPTION","COMMA","T","COLON","COMMENT","LB",
@@ -38,7 +38,7 @@
 %constinteger imp phrase =25
 
 !  FLAG<1> 0<1> SS<2> 0<3> T<1> LINK<8>
-%constshortintegerarray initial(0:119) = %c
+%constshortintegerarray initial(0:119) =
     24,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    23,    0,    0,    0,    0,    0,
@@ -55,7 +55,7 @@
     1,    2,    0, -32556,    0, -32555,    0,    0,
     0,    0,    0,    0,    0,    0,    0,    0
 
-%constbyteintegerarray atomic(130:179) = %c
+%constbyteintegerarray atomic(130:179) =
   90,  90,  90,  90,  90,  48,  48,  19,
   19,  19,  19,  25,  25,  25,  25,  25,
   25,  25,  23, 104, 104, 105,  30,  20,
@@ -64,7 +64,7 @@
   93,  23,  25,  57,  25,  90, 176, 177,
  178, 179
 
-%ownshortintegerarray phrase(200:255) = %C
+%ownshortintegerarray phrase(200:255) =
   0, 564, 565, 567, 569, 571, 573, 562,
  614, 203, 200, 602, 478, 480, 624, 298,
  206, 308, 318, 433, 426, 437, 444, 458,
@@ -74,7 +74,7 @@
  167,  0,  0,  0, 640, 693, 701, 709
 
 !  MORE<1> 0<1> ORDER<2> TYPE<4> CLASS<8>
-%ownshortintegerarray gram(0:max grammar) = %c
+%ownshortintegerarray gram(0:max grammar) =
     0, -28523, -28521, -28602, -32706, -28509, -28603, -24502,
  -24503, -20405, -20404, -28595, -32697, -32709, -16323, -28600,
  -32704, -28587, -28589, -32681, -16344, -28586, -28588, -12270,
@@ -167,7 +167,7 @@
    191, -32677, -32676, -32662, -32661, -32660,   109,   198,
 0(max grammar-gmax1)
 
-%ownshortintegerarray glink(0:max grammar) = %c
+%ownshortintegerarray glink(0:max grammar) =
    -1,    71,    72,    38,    46,    47,    67,    67,
     75,    67,    0,    67,    51,    76,    79,    53,
     55,    80,    67,    81,    82,    83,    67,    84,
@@ -261,7 +261,7 @@
 0(max grammar-gmax1)
 
 %constshortinteger max kdict = 618
-%constshortintegerarray kdict(32:max kdict) = %c
+%constshortintegerarray kdict(32:max kdict) =
     0,   511,   131,   531,   131,   551,   559,   131,
    567,   575,   583,   603,   623,   631,   663,   671,
    129,   129,   129,   129,   129,   129,   129,   129,

@@ -1,0 +1,31 @@
+{----------------------------------------------------------------------------}
+    { This function decodes the return value of the typeof function to }
+    { a string value                                                   }
+    %external %string(255) %function typeName( %integer t )
+        %string(255) s
+        %switch sw(0:15)
+
+        s = ""
+
+        -> sw(t&15)
+        ! type value given in the document "THE IMP LANGUAGE - A Reference Manual"
+        ! as output values from typeof.
+        sw(0):  s = "unknown";                  -> esac
+        sw(1):  s = "integer";                  -> esac
+        sw(2):  s = "real";                     -> esac
+        sw(3):  s = "string";                   -> esac
+        sw(4):  s = "record";                   -> esac
+        sw(5):  s = "byte";                     -> esac
+        sw(6):  s = "shortinteger";             -> esac
+        sw(7):  s = "longinteger";              -> esac
+        sw(8):  s = "longreal";                 -> esac
+        sw(9):  s = "array";                    -> esac
+        sw(10): s = "label";                    -> esac
+
+        sw(*):  s = "illegal(".itos(t&15,0).")"; -> esac
+    esac:
+        %result = s
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile

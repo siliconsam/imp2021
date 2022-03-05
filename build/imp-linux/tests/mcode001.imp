@@ -1,7 +1,7 @@
 
 %include "inc.386.registers"
 
-constant %integer pass2 = 2<<14
+%constant %integer pass2 = 2<<14
 %constant %integer flags = 16_7
 
 %diagnose pass2 + flags;

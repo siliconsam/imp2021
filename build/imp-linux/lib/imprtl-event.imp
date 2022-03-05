@@ -1,37 +1,23 @@
 
     %include "inc.386.registers"
 
-    %recordformat impevent( %integer event,sub,extra, %string(255) message )
-
-    %own %record(impevent) lastevent
+    %own %record(event fm) lastevent
 
     %external %string(14) %function %spec handler name( %integer address )
 
 {------------------------------------------------------------------------------}
-    %external %integer %function get event
-        %result = lastevent_event
+    %external %record(event fm) %map event
+        %result == lastevent
     %end
 
-    %external %integer %function get eventsub
-        %result = lastevent_sub
-    %end
-
-    %external %integer %function get eventinfo
-        %result = lastevent_extra
-    %end
-
-    %external %routine get eventmessage( %string(*) %name message )
-        message = lastevent_message
-    %end
-
-    %external %routine save event( %integer event, sub, extra )
+    %external %routine save event( %integer event, sub, info )
         %switch esw(0:max event - 1)
         %string(16) e,s,x
         %string(255) msg,eventmsg
 
         e = itos(event,0)
         s = itos(sub,0)
-        x = itos(extra,0)
+        x = itos(info,0)
 
         eventmsg = "(".e.",".s.",".x.")"
 
@@ -74,8 +60,8 @@
         %begin
             %switch ssw(0:15)
             -> ssw(sub&16_f)
-        ssw(1): msg = "Data error - Symbol '".tostring(extra&16_ff)."' (".x.")"; -> es
-        ssw(*): msg = "Data error ".eventmsg                                   ; -> es
+        ssw(1): msg = "Data error - Symbol '".tostring(info&16_ff)."' (".x.")"; -> es
+        ssw(*): msg = "Data error ".eventmsg                                  ; -> es
         es:
         %end
         -> esac
@@ -106,8 +92,8 @@
             %switch ssw(0:15)
             -> ssw(sub&16_f)
         ssw(1): msg = "Capacity exceeded"
-                %if (extra = 1) %then msg = msg." (String copy overflow)"
-                %if (extra = 2) %then msg = msg." (String append overflow)"
+                %if (info = 1) %then msg = msg." (String copy overflow)"
+                %if (info = 2) %then msg = msg." (String append overflow)"
                 msg=msg."."                                                          ; -> es
         ssw(2): msg = "Array bound fault - Index = ".x                               ; -> es
         ssw(3): msg = "Switch bound fault = ".x                                      ; -> es
@@ -142,6 +128,7 @@
         %begin
             %switch ssw(0:15)
             -> ssw(sub&16_f)
+        ssw(0):  msg = "End of input"                           ; -> es
         ssw(1):  msg = "Unexpected end of input"                ; -> es
         ssw(2):  msg = "Couldn't open file. Error Code '".x."'" ; -> es
         ssw(3):  msg = "File system error '".x."'"              ; -> es
@@ -168,8 +155,9 @@
 
         lastevent_event = event
         lastevent_sub = sub
-        lastevent_extra = extra
+        lastevent_info = info
         lastevent_message = msg
+
     %end
 
     %external %routine messageFormatA( %integer message id )
@@ -178,7 +166,7 @@
 
         evt = itos(lastevent_event,0)
         sub = itos(lastevent_sub,0)
-        xtr = itos(lastevent_extra,0)
+        xtr = itos(lastevent_info,0)
 
         selectoutput(0)
         newline

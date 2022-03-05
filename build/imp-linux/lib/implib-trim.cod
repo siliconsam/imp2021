@@ -1,41 +1,45 @@
 {----------------------------------------------------------------------------}
     %external %string(255) %function trim(%string(255) s, %integer max)
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
 
         ! Do some defensive error checking first
         %signal 6, 2, max %if max < 0
- 0004 8B 45 0C                        MOV EAX,[EBP+ 12]
- 0007 3D 00 00 00 00                  CMP EAX, 0
- 000C 7D 00                           JGE L 1001
- 000E B8 06 00 00 00                  MOV EAX, 6
+ 0004 8B 45 0C                        MOV EAX,[EBP+12]
+ 0007 3D 00 00 00 00                  CMP EAX,0
+ 000C 7D 00                           JGE L1001
+ 000E B8 06 00 00 00                  MOV EAX,6
  0013 50                              PUSH EAX
- 0014 8B 45 0C                        MOV EAX,[EBP+ 12]
+ 0014 8B 45 0C                        MOV EAX,[EBP+12]
  0017 50                              PUSH EAX
- 0018 B8 02 00 00 00                  MOV EAX, 2
+ 0018 B8 02 00 00 00                  MOV EAX,2
  001D 50                              PUSH EAX
- 001E E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 0021 83 C4 0C                        ADD ESP, 12
- 0024                      L 1001  EQU $
+ 001E E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 0021 83 C4 0C                        ADD ESP,12
+ 0024                      L1001  EQU $
 
         ! tweak our parameter and return it
         %if length(s) > max %then length(s) = max
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
  0024 31 C0                           XOR EAX,EAX
- 0026 8A 45 10                        MOV AL,[EBP+ 16]
- 0029 3B 45 0C                        CMP EAX,[EBP+ 12]
- 002C 7E 00                           JLE L 1002
- 002E 8B 45 0C                        MOV EAX,[EBP+ 12]
- 0031 88 45 10                        MOV [EBP+ 16],AL
- 0034                      L 1002  EQU $
+ 0026 8A 45 10                        MOV AL,[EBP+16]
+ 0029 3B 45 0C                        CMP EAX,[EBP+12]
+ 002C 7E 00                           JLE L1002
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
+ 002E 8B 45 0C                        MOV EAX,[EBP+12]
+ 0031 88 45 10                        MOV [EBP+16],AL
+ 0034                      L1002  EQU $
 
         %result = s
- 0034 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0034 8B 45 08                        MOV EAX,[EBP+8]
  0037 50                              PUSH EAX
- 0038 8D 4D 10                        LEA ECX,[EBP+ 16]
+ 0038 8D 4D 10                        LEA ECX,[EBP+16]
  003B 51                              PUSH ECX
- 003C 68 FF 00 00 00                  PUSH  255
- 0041 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
- 0044 83 C4 0C                        ADD ESP, 12
+ 003C 68 FF 00 00 00                  PUSH 255
+ 0041 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 0044 83 C4 0C                        ADD ESP,12
  0047 C9                              LEAVE
  0048 C3                              RET
     %end

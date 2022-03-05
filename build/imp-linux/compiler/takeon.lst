@@ -227,7 +227,7 @@
   225              %end
   226  
   227              %routine add components(%integer x)
-  228                  %owninteger i,k,t,u
+  228                  %owninteger i,j,k,t,u
   229                  %while x # 0 %cycle
   230                      %if x < 0 %start
   231                          add components(tail(x))
@@ -255,9 +255,9 @@
   253                      %finish
   254                      k = k&255
   255                      %if u = ident %or (u&255<k %and k>=180) %or k = 0 %start
-  256                          %cycle i = gmax,-1,i
-  257                              item(i+1) = item(i)
-  258                              next(i+1) = next(i)
+  256                          %cycle j = gmax,-1,i
+  257                              item(j+1) = item(j)
+  258                              next(j+1) = next(j)
   259                          %repeat
   260                          %exit
   261                      %finish
@@ -683,7 +683,7 @@
   679      printstring("   %endoflist");  newline
   680  
   681      %constinteger names per line = 8
-  682      printstring("%conststring(8)%array text(0:255) = %c"); newline
+  682      printstring("%conststring(8)%array text(0:255) ="); newline
   683      printstring("""Z"",")
   684      ! we have just output the first name already
   685      ! so initialise k with good value
@@ -700,7 +700,7 @@
   696      printstring("%constinteger imp phrase =");  hwrite(inits+1, 0); newlines(2)
   697  
   698      printstring("!  FLAG<1> 0<1> SS<2> 0<3> T<1> LINK<8>");  newline
-  699      printstring("%constshortintegerarray initial(0:119) = %c")
+  699      printstring("%constshortintegerarray initial(0:119) =")
   700      %cycle i = 0,1,119
   701          newline %if i&7 = 0
   702          hwrite(initial(i), 7)
@@ -708,7 +708,7 @@
   704      %repeat
   705      newlines(2)
   706  
-  707      printstring("%constbyteintegerarray atomic(130:179) = %c")
+  707      printstring("%constbyteintegerarray atomic(130:179) =")
   708      k = 0
   709      %cycle i = 130,1,179
   710          newline %if k&7 = 0
@@ -718,7 +718,7 @@
   714      %repeat
   715      newlines(2)
   716  
-  717      printstring("%ownshortintegerarray phrase(200:255) = %C")
+  717      printstring("%ownshortintegerarray phrase(200:255) =")
   718      %for i = 200, 1, 255 %cycle
   719          newline %if i&7 = 0
   720          hwrite(phrase(i),3)
@@ -727,7 +727,7 @@
   723      newlines(2)
   724  
   725      printstring("!  MORE<1> 0<1> ORDER<2> TYPE<4> CLASS<8>");  newline
-  726      printstring("%ownshortintegerarray gram(0:max grammar) = %c")
+  726      printstring("%ownshortintegerarray gram(0:max grammar) =")
   727      %cycle i = 0,1,gmax
   728          newline %if i&7 = 0
   729          k = 0
@@ -738,7 +738,7 @@
   734      newline;
   735      printstring("0(max grammar-gmax1)")
   736      newlines(2)
-  737      printstring("%ownshortintegerarray glink(0:max grammar) = %c")
+  737      printstring("%ownshortintegerarray glink(0:max grammar) =")
   738      %cycle i = 0, 1, gmax
   739          newline %if i&7 = 0
   740          hwrite(next(i), 7)
@@ -749,7 +749,7 @@
   745      newlines(2)
   746  
   747      printstring("%constshortinteger max kdict = ");  hwrite(kmax,0); newline
-  748      printstring("%constshortintegerarray kdict(32:max kdict) = %c");
+  748      printstring("%constshortintegerarray kdict(32:max kdict) =");
   749      %cycle i = 32,1,kmax
   750          newline %if i&7 = 0
   751          hwrite(keydict(i),7)

@@ -1,40 +1,44 @@
 {----------------------------------------------------------------------------}
     %external %routine To Lower(%string(*)%name s)
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
         %integer i
         %byte %name p
 
         %for i=1,1,length(s) %cycle
- 0004 8B 45 08                        MOV EAX,[EBP+ 8]
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+ 0004 8B 45 08                        MOV EAX,[EBP+8]
+                                      CALL 'LENGTH' (MACRO 11)
  0007 8A 00                           MOV AL,[EAX]
- 0009 25 FF 00 00 00                  AND EAX, 255
+ 0009 25 FF 00 00 00                  AND EAX,255
  000E 89 45 F0                        MOV [EBP-16],EAX
- 0011 C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
- 0018                      L 1001  EQU $
+ 0011 C7 45 F8 00 00 00 00            MOV WORD [EBP-8],0
+ 0018                      L1001  EQU $
  0018 8B 45 F8                        MOV EAX,[EBP-8]
  001B 3B 45 F0                        CMP EAX,[EBP-16]
- 001E 74 00                           JE L 1002
+ 001E 74 00                           JE L1002
  0020 40                              INC EAX
  0021 89 45 F8                        MOV [EBP-8],EAX
             p == charno(s,i)
- 0024 8B 45 08                        MOV EAX,[EBP+ 8]
+                                      Generating CODE for 'CHARNO' (MACRO 12)
+ 0024 8B 45 08                        MOV EAX,[EBP+8]
  0027 03 45 F8                        ADD EAX,[EBP-8]
+                                      CALL 'CHARNO' (MACRO 12)
  002A 89 45 F4                        MOV [EBP-12],EAX
             %if 'A' <= p <= 'Z' %then p = p + ('a'-'A')
  002D 8B 75 F4                        MOV ESI,[EBP-12]
  0030 31 C0                           XOR EAX,EAX
  0032 8A 06                           MOV AL,[ESI]
- 0034 3D 41 00 00 00                  CMP EAX, 65
- 0039 7C 00                           JL L 1003
- 003B 3D 5A 00 00 00                  CMP EAX, 90
- 0040 7F 00                           JG L 1003
+ 0034 3D 41 00 00 00                  CMP EAX,65
+ 0039 7C 00                           JL L1003
+ 003B 3D 5A 00 00 00                  CMP EAX,90
+ 0040 7F 00                           JG L1003
  0042 8B 7D F4                        MOV EDI,[EBP-12]
- 0045 80 07 20                        ADD BYTE [EDI], 32
- 0048                      L 1003  EQU $
+ 0045 80 07 20                        ADD BYTE [EDI],32
+ 0048                      L1003  EQU $
         %repeat
- 0048 EB 00                           JMP L 1001
- 004A                      L 1002  EQU $
+ 0048 EB 00                           JMP L1001
+ 004A                      L1002  EQU $
     %end
  004A C9                              LEAVE
  004B C3                              RET

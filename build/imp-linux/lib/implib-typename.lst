@@ -1,0 +1,35 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {----------------------------------------------------------------------------}
+   2      { This function decodes the return value of the typeof function to }
+   3      { a string value                                                   }
+   4      %external %string(255) %function typeName( %integer t )
+   5          %string(255) s
+   6          %switch sw(0:15)
+   7  
+   8          s = ""
+   9  
+   10          -> sw(t&15)
+   11          ! type value given in the document "THE IMP LANGUAGE - A Reference Manual"
+   12          ! as output values from typeof.
+   13          sw(0):  s = "unknown";                  -> esac
+   14          sw(1):  s = "integer";                  -> esac
+   15          sw(2):  s = "real";                     -> esac
+   16          sw(3):  s = "string";                   -> esac
+   17          sw(4):  s = "record";                   -> esac
+   18          sw(5):  s = "byte";                     -> esac
+   19          sw(6):  s = "shortinteger";             -> esac
+   20          sw(7):  s = "longinteger";              -> esac
+   21          sw(8):  s = "longreal";                 -> esac
+   22          sw(9):  s = "array";                    -> esac
+   23          sw(10): s = "label";                    -> esac
+   24  
+   25          sw(*):  s = "illegal(".itos(t&15,0).")"; -> esac
+   26      esac:
+   27          %result = s
+   28      %end
+   29  
+   30  {----------------------------------------------------------------------------}
+   31  %endoffile
+
+   32 Statements compiled

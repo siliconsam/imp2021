@@ -1,26 +1,36 @@
 
     %include "inc.386.registers"
 
-{------------------------------------------------------------------------------}
+{-----------------------------------------------------------------------------}
     ! Array Reference function.
 
     ! Array indices are pushed left to right so we get them right to left.
-    ! The last thing pushed (our first C parameter) is a pointer to the Dope Vector.
-    ! Dope vectors are integer arrays of form :DIM:LB1:UB1:LB2:UB2:etc:LBn:UBn:ObjectSize:
-    ! We need to fiddle with addresses because this function has a variable parameter count.
+    ! The last thing pushed (our first C parameter) is a 
+    ! pointer to the Dope Vector.
+    !
+    ! Dope vectors are integer arrays of form
+    !      :DIM:LB1:UB1:LB2:UB2:etc:LBn:UBn:ArrayElementSize:
+    !      increasing address -->
+    !
+    ! We need to fiddle with addresses because this function has a 
+    ! variable parameter count.
+    !
     ! This parameter count depends on the number of dimensions in the array
     ! The parameters are stacked for use by a C routine (but this is IMP!)
     ! However, this is an IMP routine so need to access in reverse order
-    ! Even worse, there are a variable number of index values (One index value for each array index)
+    ! Even worse, there are a variable number of index values
+    !    (One index value for each array index)
     ! We pretend there are no stacked parameters in the function declaration
-    ! Fortunately the "last" IMP parameter (the dope vector) (but 1st C parameter) indicates
-    ! the expected parameter count.
-    ! We actually access parameters via the "ebp" register (=Base/Frame pointer)
+    ! Fortunately the "last" IMP parameter (the dope vector)
+    !     (but 1st C parameter) indicates the expected parameter count.
+    ! We actually access parameters via the "ebp" register
+    !                                      (=Base/Frame pointer)
+    ! Now assuming 4 byte = 1 integer
     ! Remember [ebp]   = framep
     !          [ebp+4] = return address
     !          [ebp+8] = 1st C parameter = dope vector address
     !          [ebp+12] = last array index = dim'th index value
-    !          [ebp+8+dim*4] = 1st array index = 1st index value (assuming 4 byte = 1 integer)
+    !          [ebp+8+dim*4] = 1st array index = 1st index value
     ! The function result is the offset that needs to be added to the
     ! notional A(0,0,0) address to get the variable in the array
     !
@@ -28,31 +38,36 @@
     ! extern int imparef(int *dvp, int idim, ...,int i1 )
     !
     ! IMP declaration (C parameter order reversed to give IMP order)
-    ! %external %integer %function imparef(%integer i1 { .. idim} , %integer %name dvp )
+    ! %external %integer %function imparef(%integer i1 {.. idim},
+    !                                      %integer %name dvp)
     !
-    ! Arrgggh! Even worse, this function has a variable number of parameters (illegal IMP)
-    ! Hence, the above mentioned contortions to deal with a variable count of parameters
-    ! Fortunately, the "last" parameter stacked (the dopevector address) gives a clue as to
-    ! the actual count of parameters.
-    ! Luckily, the IMP compiler "pops" the set of parameters on return from this routine call
-    ! Thus we can "pretend" this routine is declared with no parameters, however we need to
-    ! use a bit of embedded machine code to access the real parameters via the frame pointer
+    ! Arrgggh! Even worse, this function has a variable number of parameters
+    ! (which is illegal in IMP)
+    !
+    ! Hence, the above mentioned contortions to deal with a variable count
+    ! of parameters.
+    ! Fortunately, the "last" parameter stacked (the dopevector address)
+    ! gives a clue as to the actual count of parameters.
+    !
+    ! Luckily, the IMP compiler "pops" the set of parameters on return from
+    ! this routine call. Thus we can "pretend" this routine is declared with
+    ! no parameters, however we need to use a bit of embedded machine code
+    ! to access the real parameters via the frame pointer
 
     %external %integer %function imparef
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
+
+        ! wordsize in bytes of integer/address
+        %constant %integer addressSize = 4
 
         %integer framep
         %integer %name dvp
-        %integer dim, sz
-        %integer lb, ub
-        %integer index
+        %integer dvpParameterAddress, indexAddress
+        %integer szAddress, lbAddress, ubAddress
+        %integer dim, sz, lb, ub, index
         %integer row, result
         %integer i
-        %constant %integer wordsize = 4;        ! wordsize in bytes of integer/address
-        %constant %integer param1 = 2*wordsize; ! frame pointer offset (in bytes) of "last" parameter on stack
-                                                ! e.g. dopevector address
-        %constant %integer param2 = 3*wordsize; ! frame pointer offset (in bytes) of "last" array index
 
         ! Get the Base/Frame Pointer
         *mov_ framep,ebp
@@ -60,117 +75,170 @@
 
         ! IMP does NOT allow routines with a variable number of parameters
         ! but we need 
-        ! parameter        1) dope vector address
-        ! parameter 2..dim+1) array index values (dim = array dimensionality)
+        ! parameter         1) dope vector address
+        ! parameters 2..dim+1) array index values (dim = array dimensionality)
 
         ! Now get various data items from the dope vector
         ! The "last" parameter stacked is the pointer to dope vector
-        ! Get the dope vector address ("last" C parameter/"first" IMP parameter)
-        dvp == integer( integer( framep + param1 ) )
+        ! Get the dope vector address
+        !     ("last" C parameter/"first" IMP parameter)
+        ! skip over the 'old' FramePointer and the routine's ReturnAddress
+        ! on the stack
+        dvpParameterAddress = framep + 2*addressSize
  0007 8B 45 F8                        MOV EAX,[EBP-8]
- 000A 05 08 00 00 00                  ADD EAX, 8
- 000F 8B 00                           MOV EAX,[EAX]
- 0011 89 45 F4                        MOV [EBP-12],EAX
+ 000A 05 08 00 00 00                  ADD EAX,8
+ 000F 89 45 F0                        MOV [EBP-16],EAX
+        dvp == integer( integer( dvpParameterAddress ) )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+ 0012 8B 75 F0                        MOV ESI,[EBP-16]
+                                      CALL 'INTEGER' (MACRO 5)
+ 0015 8B 36                           MOV ESI,[ESI]
+ 0017 89 75 F4                        MOV [EBP-12],ESI
+
+        ! get the address of the last array index
+        ! remember the index values are stacked in reverse order
+        ! The last shall be first!!!
+        indexAddress = dvpParameterAddress + addressSize
+ 001A 8B 45 F0                        MOV EAX,[EBP-16]
+ 001D 05 04 00 00 00                  ADD EAX,4
+ 0022 89 45 EC                        MOV [EBP-20],EAX
+
         ! Now get the array dimensionality from the dope vector
         dim = dvp
- 0014 8B 75 F4                        MOV ESI,[EBP-12]
- 0017 8B 06                           MOV EAX,[ESI]
- 0019 89 45 F0                        MOV [EBP-16],EAX
-        ! Now get the size of each array element
-        sz = integer( addr(dvp) + wordsize*(2*dim + 1) )
- 001C 8B 45 F0                        MOV EAX,[EBP-16]
- 001F D1 E0                           SHL EAX, 1
- 0021 40                              INC EAX
- 0022 C1 E0 02                        SHL EAX, 2
- 0025 03 45 F4                        ADD EAX,[EBP-12]
- 0028 8B 00                           MOV EAX,[EAX]
- 002A 89 45 EC                        MOV [EBP-20],EAX
+ 0025 8B 7D F4                        MOV EDI,[EBP-12]
+ 0028 8B 07                           MOV EAX,[EDI]
+ 002A 89 45 DC                        MOV [EBP-36],EAX
 
-        ! For a general number of dimensions, 1 or more, we do this the hard way...
+        ! Now get the address of the size of each array element
+        szAddress = addr(dvp) + addressSize*(2*dim + 1)
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 002D 8B 45 DC                        MOV EAX,[EBP-36]
+ 0030 D1 E0                           SHL EAX,1
+ 0032 40                              INC EAX
+ 0033 C1 E0 02                        SHL EAX,2
+ 0036 03 45 F4                        ADD EAX,[EBP-12]
+ 0039 89 45 E8                        MOV [EBP-24],EAX
+
+        ! get the address of the last upper bound
+        ! placed just before the location of the array element size
+        ubAddress = szAddress - addressSize
+ 003C 8B 45 E8                        MOV EAX,[EBP-24]
+ 003F 2D 04 00 00 00                  SUB EAX,4
+ 0044 89 45 E0                        MOV [EBP-32],EAX
+        ! and the address of it's associated lower bound
+        lbAddress = ubAddress - addressSize
+ 0047 8B 45 E0                        MOV EAX,[EBP-32]
+ 004A 2D 04 00 00 00                  SUB EAX,4
+ 004F 89 45 E4                        MOV [EBP-28],EAX
+
+        ! General case iterates backwards toward first dimension
+        ! For a general number of dimensions, 1 or more
+        ! we do this the hard way...
         result = 0;        ! result so far
- 002D C7 45 D8 00 00 00 00            MOV WORD [EBP-40], 0
-        %for i=0,1,dim - 1 %cycle
- 0034 8B 45 F0                        MOV EAX,[EBP-16]
- 0037 48                              DEC EAX
- 0038 89 45 D0                        MOV [EBP-48],EAX
- 003B C7 45 D4 FF FF FF FF            MOV WORD [EBP-44],-1
- 0042                      L 1001  EQU $
- 0042 8B 45 D4                        MOV EAX,[EBP-44]
- 0045 3B 45 D0                        CMP EAX,[EBP-48]
- 0048 74 00                           JE L 1002
- 004A 40                              INC EAX
- 004B 89 45 D4                        MOV [EBP-44],EAX
+ 0052 C7 45 C4 00 00 00 00            MOV WORD [EBP-60],0
+        ! at i=1, we start with the rightmost bounds
+        ! their addresses have been 
+        %for i=1,1,dim %cycle
+ 0059 8B 45 DC                        MOV EAX,[EBP-36]
+ 005C 89 45 BC                        MOV [EBP-68],EAX
+ 005F C7 45 C0 00 00 00 00            MOV WORD [EBP-64],0
+ 0066                      L1001  EQU $
+ 0066 8B 45 C0                        MOV EAX,[EBP-64]
+ 0069 3B 45 BC                        CMP EAX,[EBP-68]
+ 006C 74 00                           JE L1002
+ 006E 40                              INC EAX
+ 006F 89 45 C0                        MOV [EBP-64],EAX
 
-            ! General case iterates backwards toward first dimension
-            lb = integer( addr(dvp) + wordsize*(2*(dim - i) - 1));  ! at i=0, point to the rightmost lower bound
- 004E 8B 45 F0                        MOV EAX,[EBP-16]
- 0051 2B 45 D4                        SUB EAX,[EBP-44]
- 0054 D1 E0                           SHL EAX, 1
- 0056 48                              DEC EAX
- 0057 C1 E0 02                        SHL EAX, 2
- 005A 03 45 F4                        ADD EAX,[EBP-12]
- 005D 8B 00                           MOV EAX,[EAX]
- 005F 89 45 E8                        MOV [EBP-24],EAX
-            ub = integer( addr(dvp) + wordsize*(2*(dim - i)    ));  ! at i=0, point to the rightmost upper bound
- 0062 8B 45 F0                        MOV EAX,[EBP-16]
- 0065 2B 45 D4                        SUB EAX,[EBP-44]
- 0068 D1 E0                           SHL EAX, 1
- 006A C1 E0 02                        SHL EAX, 2
- 006D 03 45 F4                        ADD EAX,[EBP-12]
- 0070 8B 00                           MOV EAX,[EAX]
- 0072 89 45 E4                        MOV [EBP-28],EAX
+            lb = integer( lbAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0072 8B 5D E4                        MOV EBX,[EBP-28]
+ 0075 8B 03                           MOV EAX,[EBX]
+ 0077 89 45 D4                        MOV [EBP-44],EAX
+            ub = integer( ubAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 007A 8B 75 E0                        MOV ESI,[EBP-32]
+ 007D 8B 06                           MOV EAX,[ESI]
+ 007F 89 45 D0                        MOV [EBP-48],EAX
 
             ! Get the index: at i=0, point to the rightmost array index
-            index = integer( framep + param2 + wordsize*i )
- 0075 8B 45 F8                        MOV EAX,[EBP-8]
- 0078 05 0C 00 00 00                  ADD EAX, 12
- 007D 8B 4D D4                        MOV ECX,[EBP-44]
- 0080 C1 E1 02                        SHL ECX, 2
- 0083 01 C1                           ADD ECX,EAX
- 0085 8B 09                           MOV ECX,[ECX]
- 0087 89 4D E0                        MOV [EBP-32],ECX
+            index = integer( indexAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0082 8B 7D EC                        MOV EDI,[EBP-20]
+ 0085 8B 07                           MOV EAX,[EDI]
+ 0087 89 45 CC                        MOV [EBP-52],EAX
 
             ! Check the index
-            %signal 6, 2, index %unless (lb <= index) %and (index <= ub); ! check to see if index in range lb:ub
- 008A 8B 45 E8                        MOV EAX,[EBP-24]
- 008D 3B 45 E0                        CMP EAX,[EBP-32]
- 0090 7F 00                           JG L 1003
- 0092 8B 45 E0                        MOV EAX,[EBP-32]
- 0095 3B 45 E4                        CMP EAX,[EBP-28]
- 0098 7E 00                           JLE L 1004
- 009A                      L 1003  EQU $
- 009A B8 06 00 00 00                  MOV EAX, 6
+            ! check to see if index in range lb:ub
+            %signal 6, 2, index %unless (lb <= index) %and (index <= ub)
+ 008A 8B 45 D4                        MOV EAX,[EBP-44]
+ 008D 3B 45 CC                        CMP EAX,[EBP-52]
+ 0090 7F 00                           JG L1003
+ 0092 8B 45 CC                        MOV EAX,[EBP-52]
+ 0095 3B 45 D0                        CMP EAX,[EBP-48]
+ 0098 7E 00                           JLE L1004
+ 009A                      L1003  EQU $
+ 009A B8 06 00 00 00                  MOV EAX,6
  009F 50                              PUSH EAX
- 00A0 8B 45 E0                        MOV EAX,[EBP-32]
+ 00A0 8B 45 CC                        MOV EAX,[EBP-52]
  00A3 50                              PUSH EAX
- 00A4 B8 02 00 00 00                  MOV EAX, 2
+ 00A4 B8 02 00 00 00                  MOV EAX,2
  00A9 50                              PUSH EAX
- 00AA E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 00AD 83 C4 0C                        ADD ESP, 12
- 00B0                      L 1004  EQU $
+ 00AA E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 00AD 83 C4 0C                        ADD ESP,12
+ 00B0                      L1004  EQU $
 
             row   = (ub - lb) + 1;         ! Number of objects in a row
- 00B0 8B 45 E4                        MOV EAX,[EBP-28]
- 00B3 2B 45 E8                        SUB EAX,[EBP-24]
+ 00B0 8B 45 D0                        MOV EAX,[EBP-48]
+ 00B3 2B 45 D4                        SUB EAX,[EBP-44]
  00B6 40                              INC EAX
- 00B7 89 45 DC                        MOV [EBP-36],EAX
+ 00B7 89 45 C8                        MOV [EBP-56],EAX
             result = (result * row) + index; ! accumulate this index
- 00BA 8B 45 D8                        MOV EAX,[EBP-40]
- 00BD F7 6D DC                        IMUL WORD [EBP-36]
- 00C0 03 45 E0                        ADD EAX,[EBP-32]
- 00C3 89 45 D8                        MOV [EBP-40],EAX
+ 00BA 8B 45 C4                        MOV EAX,[EBP-60]
+ 00BD F7 6D C8                        IMUL WORD [EBP-56]
+ 00C0 03 45 CC                        ADD EAX,[EBP-52]
+ 00C3 89 45 C4                        MOV [EBP-60],EAX
+
+            ! update the lb,ub,index addresses
+            ! get the previous upper bound address
+            ubAddress = lbAddress - addressSize
+ 00C6 8B 45 E4                        MOV EAX,[EBP-28]
+ 00C9 2D 04 00 00 00                  SUB EAX,4
+ 00CE 89 45 E0                        MOV [EBP-32],EAX
+            ! get it's associated lower bound address
+            lbAddress = ubAddress - addressSize
+ 00D1 8B 45 E0                        MOV EAX,[EBP-32]
+ 00D4 2D 04 00 00 00                  SUB EAX,4
+ 00D9 89 45 E4                        MOV [EBP-28],EAX
+            ! hop to the next lower index address
+            ! NB the index values are in reverse order
+            indexAddress = indexAddress + addressSize
+ 00DC 83 45 EC 04                     ADD WORD [EBP-20],4
         %repeat
- 00C6 EB 00                           JMP L 1001
- 00C8                      L 1002  EQU $
+ 00E0 EB 00                           JMP L1001
+ 00E2                      L1002  EQU $
+
+        ! finally get the array element size
+        sz = integer( szAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 00E2 8B 5D E8                        MOV EBX,[EBP-24]
+ 00E5 8B 03                           MOV EAX,[EBX]
+ 00E7 89 45 D8                        MOV [EBP-40],EAX
 
         %result = result * sz; ! multiply by element size
- 00C8 8B 45 D8                        MOV EAX,[EBP-40]
- 00CB F7 6D EC                        IMUL WORD [EBP-20]
- 00CE C9                              LEAVE
- 00CF C3                              RET
+ 00EA 8B 45 C4                        MOV EAX,[EBP-60]
+ 00ED F7 6D D8                        IMUL WORD [EBP-40]
+ 00F0 C9                              LEAVE
+ 00F1 C3                              RET
     %end
 
-{------------------------------------------------------------------------------}
+{-----------------------------------------------------------------------------}
 %endoffile
       _TEXT  ENDS
       CONST  SEGMENT WORD PUBLIC 'CONST'

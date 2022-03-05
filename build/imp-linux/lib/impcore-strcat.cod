@@ -1,25 +1,25 @@
 {------------------------------------------------------------------------------}
     %external %routine impstrcat ( %byte %name dst, src, %integer len)
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
         %integer i
         %integer count
         %byte dlen,slen
         %byte %name srcx,dstx
 
         %if (len = 0) %then len = MAXLENIMPSTRING; ! string(*)name - comes from general %name's etc
- 0004 8B 45 08                        MOV EAX,[EBP+ 8]
- 0007 3D 00 00 00 00                  CMP EAX, 0
- 000C 75 00                           JNE L 1001
- 000E C7 45 08 FF 00 00 00            MOV WORD [EBP+ 8], 255
- 0015                      L 1001  EQU $
+ 0004 8B 45 08                        MOV EAX,[EBP+8]
+ 0007 3D 00 00 00 00                  CMP EAX,0
+ 000C 75 00                           JNE L1001
+ 000E C7 45 08 FF 00 00 00            MOV WORD [EBP+8],255
+ 0015                      L1001  EQU $
 
         dlen = dst;   ! pick up existing destination length
- 0015 8B 75 10                        MOV ESI,[EBP+ 16]
+ 0015 8B 75 10                        MOV ESI,[EBP+16]
  0018 8A 06                           MOV AL,[ESI]
  001A 88 45 F3                        MOV [EBP-13],AL
         slen = src;   ! fetch the source length
- 001D 8B 7D 0C                        MOV EDI,[EBP+ 12]
+ 001D 8B 7D 0C                        MOV EDI,[EBP+12]
  0020 8A 07                           MOV AL,[EDI]
  0022 88 45 F2                        MOV [EBP-14],AL
 
@@ -29,17 +29,17 @@
  002A 31 C9                           XOR ECX,ECX
  002C 8A 4D F3                        MOV CL,[EBP-13]
  002F 01 C8                           ADD EAX,ECX
- 0031 3B 45 08                        CMP EAX,[EBP+ 8]
- 0034 7E 00                           JLE L 1002
- 0036 B8 06 00 00 00                  MOV EAX, 6
+ 0031 3B 45 08                        CMP EAX,[EBP+8]
+ 0034 7E 00                           JLE L1002
+ 0036 B8 06 00 00 00                  MOV EAX,6
  003B 50                              PUSH EAX
- 003C B8 01 00 00 00                  MOV EAX, 1
+ 003C B8 01 00 00 00                  MOV EAX,1
  0041 50                              PUSH EAX
- 0042 B8 01 00 00 00                  MOV EAX, 1
+ 0042 B8 01 00 00 00                  MOV EAX,1
  0047 50                              PUSH EAX
- 0048 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 004B 83 C4 0C                        ADD ESP, 12
- 004E                      L 1002  EQU $
+ 0048 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 004B 83 C4 0C                        ADD ESP,12
+ 004E                      L1002  EQU $
 
         count = slen
  004E 31 C0                           XOR EAX,EAX
@@ -51,7 +51,11 @@
 
         ! update the destination count
         dstx == byteinteger( addr( dst) ); ! get the address
- 005C 8B 45 10                        MOV EAX,[EBP+ 16]
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 005C 8B 45 10                        MOV EAX,[EBP+16]
  005F 89 45 E8                        MOV [EBP-24],EAX
         dstx = dlen;                       ! set the new length
  0062 8B 5D E8                        MOV EBX,[EBP-24]
@@ -62,23 +66,31 @@
         %for i = 1,1,count %cycle
  006A 8B 45 F4                        MOV EAX,[EBP-12]
  006D 89 45 E4                        MOV [EBP-28],EAX
- 0070 C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
- 0077                      L 1003  EQU $
+ 0070 C7 45 F8 00 00 00 00            MOV WORD [EBP-8],0
+ 0077                      L1003  EQU $
  0077 8B 45 F8                        MOV EAX,[EBP-8]
  007A 3B 45 E4                        CMP EAX,[EBP-28]
- 007D 74 00                           JE L 1004
+ 007D 74 00                           JE L1004
  007F 40                              INC EAX
  0080 89 45 F8                        MOV [EBP-8],EAX
             srcx == byteinteger( addr(src) + i )
- 0083 8B 45 0C                        MOV EAX,[EBP+ 12]
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0083 8B 45 0C                        MOV EAX,[EBP+12]
  0086 03 45 F8                        ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
  0089 89 45 EC                        MOV [EBP-20],EAX
             dstx == byteinteger( addr(dst) + (dlen - count) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
  008C 31 C0                           XOR EAX,EAX
  008E 8A 45 F3                        MOV AL,[EBP-13]
  0091 2B 45 F4                        SUB EAX,[EBP-12]
- 0094 03 45 10                        ADD EAX,[EBP+ 16]
+ 0094 03 45 10                        ADD EAX,[EBP+16]
  0097 03 45 F8                        ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
  009A 89 45 E8                        MOV [EBP-24],EAX
             dstx = srcx
  009D 8B 75 E8                        MOV ESI,[EBP-24]
@@ -86,8 +98,8 @@
  00A3 8A 07                           MOV AL,[EDI]
  00A5 88 06                           MOV [ESI],AL
         %repeat
- 00A7 EB 00                           JMP L 1003
- 00A9                      L 1004  EQU $
+ 00A7 EB 00                           JMP L1003
+ 00A9                      L1004  EQU $
     %end
  00A9 C9                              LEAVE
  00AA C3                              RET

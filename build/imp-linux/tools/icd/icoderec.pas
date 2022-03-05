@@ -391,36 +391,36 @@ LINE <l>         Set the current line number to <l>
 (*
 Pass2 Compiler (Intel 386)
 
-     !   OR            G   ALIAS        *c   MCODE
-     "   JUMPIFD       H   BEGIN         d   DIM
-     #   JNE           I   PASCAL??      e   EVENT
-     $   DEF           J   JUMP          f   FOR
-     %   XOR           K   FALSE         g   DIM duplicate??
-     &   AND           L   LABEL        *h   ALTBEG
-     '   PUSHS         M   MAP           i   INDEX
-     (   JLE           N   PUSHI         j   JAM
-     )   JGE           O   LINE          k   JZ
-     *   MUL          *P   PLANT(unused) l   LANG
-     +   ADD           Q   DIVIDE        m   MONITOR
-     -   SUB           R   RETURN        n   SELECT
-     .   CONCAT        S   ASSVAL        o   ON
-     /   QUOT          T   TRUE          p   ASSPAR
-     :   LOCATE        U   NEGATE        q   SUBA
-     ;   END           V   RESULT        r   RESOLVE
-     <   JL            W   SJUMP         s   STOP
-     =   JE            X   IEXP          t   JNZ
-     >   JG           *Y   DEFAULT       u   ADDA
-     ?   JUMPIF        Z   ASSREF        v   MOD
-     @   PUSH          [   LSH          *w   MCODE?  Machine Code
-     A   INIT          \   NOT           x   REXP
-     B   REPEAT        ]   RSH           y   DIAG
-     C   JUMPIFA       ^   PROC          z   CONTROL
-     D   PUSHR         _   SLABEL        {   START
-     E   CALL          a   ACCESS       *|   unused
-     F   GOTO          b   BOUNDS        }   FINISH
-										 ~A  ALTBEG
-										 ~B  ALTEND
-										 ~C  ALTNEXT
+    !   OR          G   ALIAS        *c   MCODE
+    "   COMPARED    H   BEGIN         d   DIM
+    #   JNE         I   PASCAL??      e   EVENT
+    $   DEF         J   JUMP          f   FOR
+    %   XOR         K   FALSE         g   DIM duplicate??
+    &   AND         L   LABEL        *h   ALTBEG
+    '   PUSHS       M   MAP           i   INDEX
+    (   JLE         N   PUSHI         j   JAM
+    )   JGE         O   LINE          k   JZ
+    *   MUL        *P   PLANT(unused) l   LANG
+    +   ADD         Q   DIVIDE        m   MONITOR
+    -   SUB         R   RETURN        n   SELECT
+    .   CONCAT      S   ASSVAL        o   ON
+    /   QUOT        T   TRUE          p   ASSPAR
+    :   LOCATE      U   NEGATE        q   SUBA
+    ;   END         V   RESULT        r   RESOLVE
+    <   JL          W   SJUMP         s   STOP
+    =   JE          X   IEXP          t   JNZ
+    >   JG         *Y   DEFAULT       u   ADDA
+    ?   COMPARE     Z   ASSREF        v   MOD
+    @   PUSH        [   LSH          *w   MCODE?  Machine Code
+    A   INIT        \   NOT           x   REXP
+    B   REPEAT      ]   RSH           y   DIAG
+    C   COMPAREA    ^   PROC          z   CONTROL
+    D   PUSHR       _   SLABEL        {   START
+    E   CALL        a   ACCESS       *|   unused
+    F   GOTO        b   BOUNDS        }   FINISH
+                                      ~A  ALTBEG
+                                      ~B  ALTEND
+                                      ~C  ALTNEXT
 
 *)
 
@@ -434,23 +434,31 @@ type
     assembly : string;
     case icode : char of
 chr(10),
-'!','%','&','*','+','-','.','/',
-';','E','H','K','M','P','Q','R',
-'S','T','U','V','X','Z','[','\',
-']','a','b','i','j','m','p','q',
-'s','u','v','x','{','|','}':     ();
-'#','(',')',':','<','=','>','A',
-'B','F','J','L','O','W','Y','_',
-'e','f','k','l','n','r','t','y',
-'z':                             ( d : word; );
-'"','?','C':                     ( test : char; clabel : word; );
-'''','G','w':                    ( str1 : string; );
-'d','g','o':                     ( d1, d2 : shortint; );
-'@','^','D':                     ( t : shortint; s : string; );
-'$':                             ( tag : word; name : string; defTypeForm,defSize : word; defDim,defFlags : byte; defMode : boolean );
-'N':                             ( n : longint; );
-'~':                             ( ch : char; );
-chr(255):                        ();
+'!','"','%','&',
+'*','+','-','.',
+'/',';','?','C',
+'E','H','K','M',
+'P','Q','R','S',
+'T','U','V','X',
+'Z','[','\',']',
+'a','b','i','j',
+'m','p','q','s',
+'u','v','x','{',
+'|','}':          ();
+'#','(',')',':',
+'<','=','>','A',
+'B','F','J','L',
+'O','W','Y','_',
+'e','f','k','l',
+'n','r','t','y',
+'z':              ( d : word; );
+'''','G','w':     ( str1 : string; );
+'d','g','o':      ( d1, d2 : shortint; );
+'@','^','D':      ( t : shortint; s : string; );
+'$':              ( tag : word; name : string; defTypeForm,defSize : word; defDim,defFlags : byte; defMode : boolean );
+'N':              ( n : longint; );
+'~':              ( ch : char; );
+chr(255):         ();
   end;
 
   function intelReg( s : string ): integer;
@@ -501,7 +509,7 @@ const
     case m of
 'ENDOFFILE': ch := chr(10);
 'OR':        ch := '!';
-'JUMPIFD':   ch := '"';
+'COMPARED':  ch := '"';
 'JNE':       ch := '#';
 'DEF':       ch := '$';
 'XOR':       ch := '%';
@@ -519,7 +527,7 @@ const
 'JL':        ch := '<';
 'JE':        ch := '=';
 'JG':        ch := '>';
-'JUMPIF':    ch := '?';
+'COMPARE':   ch := '?';
 'PUSH':      ch := '@';
 'INIT':      ch := 'A';
 'REPEAT':    ch := 'B';
@@ -596,7 +604,7 @@ const
     case c of
 chr(10): m := 'ENDOFFILE';
 '!':     m := 'OR';
-'"':     m := 'JUMPIFD';
+'"':     m := 'COMPARED';
 '#':     m := 'JNE';
 '$':     m := 'DEF';
 '%':     m := 'XOR';
@@ -614,7 +622,7 @@ chr(10): m := 'ENDOFFILE';
 '<':     m := 'JL';
 '=':     m := 'JE';
 '>':     m := 'JG';
-'?':     m := 'JUMPIF';
+'?':     m := 'COMPARE';
 '@':     m := 'PUSH';
 'A':     m := 'INIT';
 'B':     m := 'REPEAT';
@@ -763,6 +771,14 @@ chr(10): m := 'ENDOFFILE';
   8:  s := s + ' ENUM16("' + lookupTag( r.defSize ) + '")';
   9:  s := s + ' POINTER';
  10:  s := s + ' CHAR';
+ 11:  case r.defSize of
+    1:  s := s + ' UNSIGNED';
+    2:  s := s + ' BYTEUNSIGNED';
+    3:  s := s + ' SHORTUNSIGNED';
+    4:  s := s + ' LONGUNSIGNED';
+    5:  s := s + ' QUADUNSIGNED';
+      else
+      end;
     else
     end;
 
@@ -773,6 +789,7 @@ chr(10): m := 'ENDOFFILE';
   2:  s := s + ' NAME';
   3:  s := s + ' LABEL';
   4:  s := s + ' RECORDFORMAT';
+  5:  ;
   6:  s := s + ' SWITCH';
   7:  s := s + ' ROUTINE';
   8:  s := s + ' FUNCTION';
@@ -782,31 +799,36 @@ chr(10): m := 'ENDOFFILE';
  12:  s := s + ' ARRAYNAME';
  13:  s := s + ' NAMEARRAY';
  14:  s := s + ' NAMEARRAYNAME';
+ 15:  ;
     else
     end;
 
     { See if there are any flags set }
     flagstring := '';
-    if ((r.defFlags and $08) <> 0) then flagstring := 'SPEC';
-    if ((r.defFlags and $80) <> 0) then
+    if ((r.defFlags and $08) <> 0) then
     begin
       if (length(flagstring) > 0) then flagstring := flagstring + ',';
-      flagstring := flagstring + 'B7FLAG';
+      flagstring := flagstring + 'SPEC';
     end;
-    if ((r.defFlags and $40) <> 0) then
+    if ((r.defFlags and $10) <> 0) then
     begin
       if (length(flagstring) > 0) then flagstring := flagstring + ',';
-      flagstring := flagstring + 'B6FLAG';
+      flagstring := flagstring + 'INDIRECT';
     end;
     if ((r.defFlags and $20) <> 0) then
     begin
       if (length(flagstring) > 0) then flagstring := flagstring + ',';
       flagstring := flagstring + 'CHECK';
     end;
-    if ((r.defFlags and $10) <> 0) then
+    if ((r.defFlags and $40) <> 0) then
     begin
       if (length(flagstring) > 0) then flagstring := flagstring + ',';
-      flagstring := flagstring + 'INDIRECT';
+      flagstring := flagstring + 'B6FLAG';
+    end;
+    if ((r.defFlags and $80) <> 0) then
+    begin
+      if (length(flagstring) > 0) then flagstring := flagstring + ',';
+      flagstring := flagstring + 'B7FLAG';
     end;
 
     { Ok, flags were set so show them }

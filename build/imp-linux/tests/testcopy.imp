@@ -5,6 +5,11 @@
     %string(255) longdata
     %integer ch
 
+    %on %event 9 %start
+        ch = eof
+        -> theend
+    %finish
+
     selectoutput(0)
     printstring("Opening source ".sourcename); newline
     printstring("Opening file ".filename); newline
@@ -21,6 +26,7 @@ selectoutput(0)
         printsymbol(ch) %unless (ch = eof)
 selectoutput(1)
         printsymbol(ch) %unless (ch = eof)
+theend:
     %repeat %until (ch = eof)
 
     closeinput

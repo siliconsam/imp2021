@@ -32,283 +32,284 @@
    30      ! that provide a c interface
    31      %external %routine StartImp %alias "main" (%integer %name envp, %integer %name argv, %integer argc )
    32  
-   33          %on %event * %start
-   34              %integer event = get event
-   35              %integer sub = get event sub
-   36              %integer info  = get event info
-   37              %string(255) msg
-   38  
-   39              get eventmessage( msg )
-   40  
-   41              debugnewline
-   42              debugstring( "**** Arrgh! Last chance event handler has been triggered." );debugnewline
-   43              debugstring("**** Triggered by error event (".itos(event,0).",".itos(sub,0).",".itos(info,0)."). Error message '".msg."'");debugnewline
-   44  
-   45              %if event=6 %and sub = 2 %and info = 1 %start
-   46                  debugstring("**** Error likely caused by missing command line parameters for input/output file(s)");debug newline
-   47              %finish
-   48  
-   49              %if event = 9 %start
-   50                  %if (sub = 4) %start
-   51                      debugstring("**** Error likely caused by missing/invalid command line parameters for input file(s)");debug newline
-   52                  %finish
-   53                  %if (sub = 5) %start
-   54                      debugstring("**** Error likely caused by missing/invalid command line parameters for output files(s)");debug newline
-   55                  %finish
-   56              %finish
-   57  
-   58              %if event = 10 %start
-   59                  debugstring("**** Error caused by missing/invalid command line parameter(s)");debug newline
-   60              %finish
-   61  
-   62              debugnewline
-   63  
-   64              %stop
-   65  
-   66          %finish
-   67  
-   68          arguments == argv
-   69          environs == envp
-   70  
-   71          ! Intialise the runtime system
-   72          ! ass-u-me no debug required
-   73          set debug level( 0 )
-   74  
-   75          %if (length( getenv( getenvindex( "IMP_DEBUG" ) ) ) # 0) %start
-   76              ! ok, we want ALL debug levels
-   77              set debug level ( 16_ffffffff )
-   78          %finish
-   79  
-   80          initialise io
-   81  
-   82          ! ok, let's see which flavour of IMP program we have
-   83          ! We defer selection of %external %routine XXX %alias "__impmain" IMP program type
-   84          ! so that potentially extra ways of calling the compiler generated IMP program code
-   85          ! can be implemented
-   86          selectimptype
-   87  
-   88          ! don't forget to close down the I/O system
-   89          terminateio
-   90  
-   91          ! Switch off all debug now we are about to exit
-   92          set debug level ( 0 )
-   93  
-   94          ! If the IMP program exits through %endofprog then report success to the shell
-   95          exit(0)
-   96      %end
+   33          %on %event 6,9,10 %start
+   34              %integer eventno, sub, info
+   35              %string(255) msg
+   36  
+   37              eventno = event_event
+   38              sub = event_sub
+   39              info = event_info
+   40              msg = event_message
+   41  
+   42              debugnewline
+   43              debugstring( "**** Arrgh! Last chance event handler has been triggered." );debugnewline
+   44              debugstring( "**** Triggered by error event (".itos(eventno,0).",".itos(sub,0).",".itos(info,0)."). Error message '".msg."'" );debugnewline
+   45  
+   46              %if eventno=6 %and sub = 2 %and info = 1 %start
+   47                  debugstring("**** Error likely caused by missing command line parameters for input/output file(s)");debug newline
+   48              %finish
+   49  
+   50              %if eventno = 9 %start
+   51                  %if (sub = 4) %start
+   52                      debugstring("**** Error likely caused by missing/invalid command line parameters for input file(s)");debug newline
+   53                  %finish
+   54                  %if (sub = 5) %start
+   55                      debugstring("**** Error likely caused by missing/invalid command line parameters for output files(s)");debug newline
+   56                  %finish
+   57              %finish
+   58  
+   59              %if eventno = 10 %start
+   60                  debugstring("**** Error caused by missing/invalid command line parameter(s)");debug newline
+   61              %finish
+   62  
+   63              debugnewline
+   64  
+   65              %stop
+   66  
+   67          %finish
+   68  
+   69          arguments == argv
+   70          environs == envp
+   71  
+   72          ! Intialise the runtime system
+   73          ! ass-u-me no debug required
+   74          set debug level( 0 )
+   75  
+   76          %if (length( getenv( getenvindex( "IMP_DEBUG" ) ) ) # 0) %start
+   77              ! ok, we want ALL debug levels
+   78              set debug level ( 16_ffffffff )
+   79          %finish
+   80  
+   81          initialise io
+   82  
+   83          ! ok, let's see which flavour of IMP program we have
+   84          ! We defer selection of %external %routine XXX %alias "__impmain" IMP program type
+   85          ! so that potentially extra ways of calling the compiler generated IMP program code
+   86          ! can be implemented
+   87          selectimptype
+   88  
+   89          ! don't forget to close down the I/O system
+   90          terminateio
+   91  
+   92          ! Switch off all debug now we are about to exit
+   93          set debug level ( 0 )
+   94  
+   95          ! If the IMP program exits through %endofprog then report success to the shell
+   96          exit(0)
+   97      %end
 ?ARGC unused
-   97  
-   98      ! Enable access to the environment variables
-   99      ! Used by routines in "imprtl-system"
-  100      %external %integer %name %function getenvironment
-  101          %result == environs
-  102      %end
-  103  
-  104      ! Enable access to the command line parameters
-  105      ! Used by routines in "imprtl-system"
-  106      %external %integer %name %function getarguments
-  107          %result == arguments
-  108      %end
-  109  
-  110      ! for a %begin ... %end IMP program, indicate the expected command line parameters
-  111      %routine usage
-  112          debugstring( "Usage: <imp program> [in1[,in2[,in3]]]".tostring(FILE SEP)."[out1[,out2[,out3]]] [debug]" )
-  113          debug newline
-  114          debugstring( "   NB: the '".tostring(FILE SEP)."' separates the input files from the output files" )
-  115          debug newline
-  116          debugstring( "   NB: debug triggers extra run time debug messages)" )
-  117          debug newline
-  118          debugstring( "   NB: For debug activation (even if there are no I/O files requested) the '".tostring(FILE SEP)."' is mandatory" )
-  119          debug newline
-  120          exit(1)
-  121      %end
-  122  
-  123      ! Kludge to see if the program is a %begin .. %end block with file parameters
-  124      %predicate runmode(%string(255) arg1)
-  125          %string(255) s,a,b,c
-  126  
-  127          s = arg1
-  128          length( a ) = 0
-  129          b = tostring(FILE SEP)
-  130          length( c ) = 0
-  131  
-  132          ! ok, now check to see if the first program parameter indicates a file list
-  133          s->a.(b).c
-  134  
-  135          %false %if (s = a)        ;! no FILE SEP found
-  136          %true %if (s = b)         ;! a FILE SEP found (but, no I/O files requested) could want to invoke debug?
-  137          %true %if (length(a) > 0) ;! input files found
-  138          %true %if (length(c) > 0) ;! output files found
-  139  
-  140          %false                    ;! it looks like this is not a %begin .. %end program
-  141      %end
-  142  
-  143      ! This activates a %begin ... %end IMP program
-  144      ! This is in a separate routine to allow future enhancements
-  145      %routine imptype1
-  146          %integer errcount = 0
-  147          %integer argcount = getargcount
-  148  
-  149          ! Type 1 IMP PROGRAM?
-  150          ! Ok, this is a suspected %begin ... %end IMP program
-  151          ! set up the input and output streams
-  152          ! argc = 1 param 0 == progname
-  153          ! argc = 2 param 1 == input file list/output file list
-  154          ! argc = 3 param 2 => we want debug mode (any value will do for the moment!)
-  155  
-  156          ! Possible enhancement is to disable access to the command line parameters
-  157          ! if this type of IMP program is written.
-  158          ! The only command line access possible would then be in this module
-  159          %if (argcount > 1) %start
-  160              ! Check we don't have too many parameters
-  161              %if (argcount > 3) %start
-  162                  usage
-  163                  errcount = errcount + 1
-  164              %finish %else %start
-  165                  ! We may want to debug the I/O initialisation
-  166                  ! if so, then uncomment the next line
-  167  !                set debug level( debug mode ! DBGIO ! DBGPRIM )
-  168                  %if (split io list( getarg(1) ) # 0) %then errcount = errcount + 1;
-  169              %finish
-  170          %finish
-  171  
-  172          %if (errcount = 0) %start
-  173              ! check for debug mode
-  174              %if (argcount > 2) %then set debug level( debug mode ! DBGMAIN ! DBGPROG ! DBGCORE )
-  175  
-  176              %if ((debug mode & DBGMAIN) # 0) %start
-  177                  debug string( "IMPMAINX: About to enter the IMP program")
-  178                  debug newline
-  179              %finish
-  180  
-  181              ! ok, let's go IMPing!!
-  182              impmain
-  183  
-  184              %if ((debug mode & DBGMAIN) # 0) %start
-  185                  debug string( "IMPMAINX: Completed the IMP program")
-  186                  debug newline
-  187              %finish
-  188          %finish
-  189      %end
-  190  
-  191      ! This activates a suspected %external %routine XXX %alias "__impmain" ... %end IMP program
-  192      ! This is in a separate routine to allow future enhancements
-  193      %routine imptype2
-  194  
-  195          ! Type 2 IMP PROGRAM?
-  196          ! Ok, this is a suspected %external %routine XXX %alias "__impmain" ... %end
-  197          ! It is the IMP programmers resposibility to open files and read the command line
-  198  
-  199          %if ((debug mode & DBGMAIN) # 0) %start
-  200              debug string( "IMPMAIN: About to enter the IMP program")
-  201              debug newline
-  202          %finish
-  203  
-  204          ! ok, let's go IMPing!!
-  205          impmain
-  206  
-  207          %if ((debug mode & DBGMAIN) # 0) %start
-  208              debug string( "IMPMAIN: Completed the IMP program")
-  209              debug newline
-  210          %finish
-  211      %end
-  212  
-  213      %routine selectimptype
-  214          %if runmode( getarg(1) ) %start
-  215              ! Type 1 IMP PROGRAM?
-  216              imptype1
-  217          %finish %else %start
-  218              ! Type 2 IMP PROGRAM?
-  219              imptype2
-  220          %finish
-  221      %end
-  222  
-  223      ! External Library routines implemented in C
-  224      ! N.B. These routines need an alias name referring to the actual C routine
-  225      !      Also the alias name may need to be changed for different operating systems
-  226      ! imprtl routines implemented in C to access C standard file handles,error status,write a double length real
-  227      %external %routine     %spec prim exit            %alias "exit" ( %integer status )
-  228      %external %integer %fn %spec prim geterr          %alias "geterrno"
-  229      %external %integer %fn %spec prim geterrhandle    %alias "getstderr"
-  230      %external %integer %fn %spec prim getinhandle     %alias "getstdin"
-  231      %external %integer %fn %spec prim getouthandle    %alias "getstdout"
-  232      %external %routine     %spec prim write double    %alias "fileputreal" ( %integer handle, %long %real d )
-  233  
-  234      %external %integer %fn %spec prim openfile        %alias "fopen" ( %integer mode address, %integer file name address )
-  235      %external %integer %fn %spec prim tell            %alias "ftell" ( %integer handle )
-  236      %external %routine     %spec prim file rewind     %alias "rewind" ( %integer handle )
-  237      %external %routine     %spec prim file seek       %alias "fseek" ( %integer handle, displacement, pos )
-  238      %external %routine     %spec prim close           %alias "fclose" ( %integer handle )
-  239      %external %integer %fn %spec prim readbytes       %alias "fread" ( %integer handle, count, itemsz, %byte %name buffer )
-  240      %external %integer %fn %spec prim writebytes      %alias "fwrite" ( %integer handle, count, itemsz,%byte %name buffer )
-  241      %external %integer %fn %spec prim get char        %alias "fgetc" ( %integer handle )
-  242      %external %routine     %spec prim put char        %alias "fputc" ( %integer handle,ch )
-  243      %external %routine     %spec prim flush           %alias "fflush" ( %integer handle )
-  244  
-  245      %external %routine exit( %integer status )
-  246          prim exit( status )
-  247      %end
-  248  
-  249      %external %integer %fn get error
-  250          %result = prim get err
-  251      %end
-  252  
-  253      %external %integer %fn getstderrhandle
-  254          %result = prim geterrhandle
-  255      %end
-  256  
-  257      %external %integer %fn getstdinhandle
-  258          %result = prim getinhandle
-  259      %end
-  260  
-  261      %external %integer %fn getstdouthandle
-  262          %result = prim getouthandle
-  263      %end
-  264  
-  265      %external %routine put double( %integer handle, %long %real d )
-  266          prim write double( handle, d )
-  267      %end
-  268  
-  269      %external %integer %fn openfile ( %integer mode address, %integer file name address )
-  270          %result = prim openfile( mode address, file name address )
-  271      %end
-  272  
-  273      %external %integer %fn tell ( %integer handle )
-  274          %result = prim tell( handle )
-  275      %end
-  276  
-  277      %external %routine file rewind( %integer handle )
-  278          prim file rewind( handle )
-  279      %end
-  280  
-  281      %external %routine file seek ( %integer handle, displacement, pos )
-  282          prim file seek( handle, displacement, pos )
-  283      %end
-  284  
-  285      %external %routine close( %integer handle )
-  286          prim close( handle )
-  287      %end
-  288  
-  289      %external %integer %fn readbytes( %integer handle, count, itemsz, %byte %name buffer )
-  290          %result = prim readbytes( handle, count, itemsz, buffer )
-  291      %end
-  292  
-  293      %external %integer %fn writebytes( %integer handle, count, itemsz,%byte %name buffer )
-  294          %result = prim writebytes( handle, count, itemsz, buffer )
-  295      %end
-  296  
-  297      %external %integer %fn get char( %integer handle )
-  298          %result = prim get char( handle )
-  299      %end
-  300  
-  301      %external %routine put char( %integer handle,ch )
-  302          prim put char( handle,ch )
-  303      %end
-  304  
-  305      %external %routine flush( %integer handle )
-  306          prim flush( handle )
-  307      %end
-  308  
-  309  %endoffile
+   98  
+   99      ! Enable access to the environment variables
+  100      ! Used by routines in "imprtl-system"
+  101      %external %integer %name %function getenvironment
+  102          %result == environs
+  103      %end
+  104  
+  105      ! Enable access to the command line parameters
+  106      ! Used by routines in "imprtl-system"
+  107      %external %integer %name %function getarguments
+  108          %result == arguments
+  109      %end
+  110  
+  111      ! for a %begin ... %end IMP program, indicate the expected command line parameters
+  112      %routine usage
+  113          debugstring( "Usage: <imp program> [in1[,in2[,in3]]]".tostring(FILE SEP)."[out1[,out2[,out3]]] [debug]" )
+  114          debug newline
+  115          debugstring( "   NB: the '".tostring(FILE SEP)."' separates the input files from the output files" )
+  116          debug newline
+  117          debugstring( "   NB: debug triggers extra run time debug messages)" )
+  118          debug newline
+  119          debugstring( "   NB: For debug activation (even if there are no I/O files requested) the '".tostring(FILE SEP)."' is mandatory" )
+  120          debug newline
+  121          exit(1)
+  122      %end
+  123  
+  124      ! Kludge to see if the program is a %begin .. %end block with file parameters
+  125      %predicate runmode(%string(255) arg1)
+  126          %string(255) s,a,b,c
+  127  
+  128          s = arg1
+  129          length( a ) = 0
+  130          b = tostring(FILE SEP)
+  131          length( c ) = 0
+  132  
+  133          ! ok, now check to see if the first program parameter indicates a file list
+  134          s->a.(b).c
+  135  
+  136          %false %if (s = a)        ;! no FILE SEP found
+  137          %true %if (s = b)         ;! a FILE SEP found (but, no I/O files requested) could want to invoke debug?
+  138          %true %if (length(a) > 0) ;! input files found
+  139          %true %if (length(c) > 0) ;! output files found
+  140  
+  141          %false                    ;! it looks like this is not a %begin .. %end program
+  142      %end
+  143  
+  144      ! This activates a %begin ... %end IMP program
+  145      ! This is in a separate routine to allow future enhancements
+  146      %routine imptype1
+  147          %integer errcount = 0
+  148          %integer argcount = getargcount
+  149  
+  150          ! Type 1 IMP PROGRAM?
+  151          ! Ok, this is a suspected %begin ... %end IMP program
+  152          ! set up the input and output streams
+  153          ! argc = 1 param 0 == progname
+  154          ! argc = 2 param 1 == input file list/output file list
+  155          ! argc = 3 param 2 => we want debug mode (any value will do for the moment!)
+  156  
+  157          ! Possible enhancement is to disable access to the command line parameters
+  158          ! if this type of IMP program is written.
+  159          ! The only command line access possible would then be in this module
+  160          %if (argcount > 1) %start
+  161              ! Check we don't have too many parameters
+  162              %if (argcount > 3) %start
+  163                  usage
+  164                  errcount = errcount + 1
+  165              %finish %else %start
+  166                  ! We may want to debug the I/O initialisation
+  167                  ! if so, then uncomment the next line
+  168  !                set debug level( debug mode ! DBGIO ! DBGPRIM )
+  169                  %if (split io list( getarg(1) ) # 0) %then errcount = errcount + 1;
+  170              %finish
+  171          %finish
+  172  
+  173          %if (errcount = 0) %start
+  174              ! check for debug mode
+  175              %if (argcount > 2) %then set debug level( debug mode ! DBGMAIN ! DBGPROG ! DBGCORE )
+  176  
+  177              %if ((debug mode & DBGMAIN) # 0) %start
+  178                  debug string( "IMPMAINX: About to enter the IMP program")
+  179                  debug newline
+  180              %finish
+  181  
+  182              ! ok, let's go IMPing!!
+  183              impmain
+  184  
+  185              %if ((debug mode & DBGMAIN) # 0) %start
+  186                  debug string( "IMPMAINX: Completed the IMP program")
+  187                  debug newline
+  188              %finish
+  189          %finish
+  190      %end
+  191  
+  192      ! This activates a suspected %external %routine XXX %alias "__impmain" ... %end IMP program
+  193      ! This is in a separate routine to allow future enhancements
+  194      %routine imptype2
+  195  
+  196          ! Type 2 IMP PROGRAM?
+  197          ! Ok, this is a suspected %external %routine XXX %alias "__impmain" ... %end
+  198          ! It is the IMP programmers responsibility to open files and read the command line
+  199  
+  200          %if ((debug mode & DBGMAIN) # 0) %start
+  201              debug string( "IMPMAIN: About to enter the IMP program")
+  202              debug newline
+  203          %finish
+  204  
+  205          ! ok, let's go IMPing!!
+  206          impmain
+  207  
+  208          %if ((debug mode & DBGMAIN) # 0) %start
+  209              debug string( "IMPMAIN: Completed the IMP program")
+  210              debug newline
+  211          %finish
+  212      %end
+  213  
+  214      %routine selectimptype
+  215          %if runmode( getarg(1) ) %start
+  216              ! Type 1 IMP PROGRAM?
+  217              imptype1
+  218          %finish %else %start
+  219              ! Type 2 IMP PROGRAM?
+  220              imptype2
+  221          %finish
+  222      %end
+  223  
+  224      ! External Library routines implemented in C
+  225      ! N.B. These routines need an alias name referring to the actual C routine
+  226      !      Also the alias name may need to be changed for different operating systems
+  227      ! imprtl routines implemented in C to access C standard file handles,error status,write a double length real
+  228      %external %routine     %spec prim exit            %alias "exit" ( %integer status )
+  229      %external %integer %fn %spec prim geterr          %alias "geterrno"
+  230      %external %integer %fn %spec prim geterrhandle    %alias "getstderr"
+  231      %external %integer %fn %spec prim getinhandle     %alias "getstdin"
+  232      %external %integer %fn %spec prim getouthandle    %alias "getstdout"
+  233      %external %routine     %spec prim write double    %alias "fileputreal" ( %integer handle, %long %real d )
+  234  
+  235      %external %integer %fn %spec prim openfile        %alias "fopen" ( %integer mode address, %integer file name address )
+  236      %external %integer %fn %spec prim tell            %alias "ftell" ( %integer handle )
+  237      %external %routine     %spec prim file rewind     %alias "rewind" ( %integer handle )
+  238      %external %routine     %spec prim file seek       %alias "fseek" ( %integer handle, displacement, pos )
+  239      %external %routine     %spec prim close           %alias "fclose" ( %integer handle )
+  240      %external %integer %fn %spec prim readbytes       %alias "fread" ( %integer handle, count, itemsz, %byte %name buffer )
+  241      %external %integer %fn %spec prim writebytes      %alias "fwrite" ( %integer handle, count, itemsz,%byte %name buffer )
+  242      %external %integer %fn %spec prim get char        %alias "fgetc" ( %integer handle )
+  243      %external %routine     %spec prim put char        %alias "fputc" ( %integer handle,ch )
+  244      %external %routine     %spec prim flush           %alias "fflush" ( %integer handle )
+  245  
+  246      %external %routine exit( %integer status )
+  247          prim exit( status )
+  248      %end
+  249  
+  250      %external %integer %fn get error
+  251          %result = prim get err
+  252      %end
+  253  
+  254      %external %integer %fn getstderrhandle
+  255          %result = prim geterrhandle
+  256      %end
+  257  
+  258      %external %integer %fn getstdinhandle
+  259          %result = prim getinhandle
+  260      %end
+  261  
+  262      %external %integer %fn getstdouthandle
+  263          %result = prim getouthandle
+  264      %end
+  265  
+  266      %external %routine put double( %integer handle, %long %real d )
+  267          prim write double( handle, d )
+  268      %end
+  269  
+  270      %external %integer %fn openfile ( %integer mode address, %integer file name address )
+  271          %result = prim openfile( mode address, file name address )
+  272      %end
+  273  
+  274      %external %integer %fn tell ( %integer handle )
+  275          %result = prim tell( handle )
+  276      %end
+  277  
+  278      %external %routine file rewind( %integer handle )
+  279          prim file rewind( handle )
+  280      %end
+  281  
+  282      %external %routine file seek ( %integer handle, displacement, pos )
+  283          prim file seek( handle, displacement, pos )
+  284      %end
+  285  
+  286      %external %routine close( %integer handle )
+  287          prim close( handle )
+  288      %end
+  289  
+  290      %external %integer %fn readbytes( %integer handle, count, itemsz, %byte %name buffer )
+  291          %result = prim readbytes( handle, count, itemsz, buffer )
+  292      %end
+  293  
+  294      %external %integer %fn writebytes( %integer handle, count, itemsz,%byte %name buffer )
+  295          %result = prim writebytes( handle, count, itemsz, buffer )
+  296      %end
+  297  
+  298      %external %integer %fn get char( %integer handle )
+  299          %result = prim get char( handle )
+  300      %end
+  301  
+  302      %external %routine put char( %integer handle,ch )
+  303          prim put char( handle,ch )
+  304      %end
+  305  
+  306      %external %routine flush( %integer handle )
+  307          prim flush( handle )
+  308      %end
+  309  
+  310  %endoffile
 
-  189 Statements compiled
+  190 Statements compiled

@@ -30,23 +30,24 @@
     ! that provide a c interface
     %external %routine StartImp %alias "main" (%integer %name envp, %integer %name argv, %integer argc )
 
-        %on %event * %start
-            %integer event = get event
-            %integer sub = get event sub
-            %integer info  = get event info
+        %on %event 6,9,10 %start
+            %integer eventno, sub, info
             %string(255) msg
 
-            get eventmessage( msg )
+            eventno = event_event
+            sub = event_sub
+            info = event_info
+            msg = event_message
 
             debugnewline
             debugstring( "**** Arrgh! Last chance event handler has been triggered." );debugnewline
-            debugstring("**** Triggered by error event (".itos(event,0).",".itos(sub,0).",".itos(info,0)."). Error message '".msg."'");debugnewline
+            debugstring( "**** Triggered by error event (".itos(eventno,0).",".itos(sub,0).",".itos(info,0)."). Error message '".msg."'" );debugnewline
 
-            %if event=6 %and sub = 2 %and info = 1 %start
+            %if eventno=6 %and sub = 2 %and info = 1 %start
                 debugstring("**** Error likely caused by missing command line parameters for input/output file(s)");debug newline
             %finish
 
-            %if event = 9 %start
+            %if eventno = 9 %start
                 %if (sub = 4) %start
                     debugstring("**** Error likely caused by missing/invalid command line parameters for input file(s)");debug newline
                 %finish
@@ -55,7 +56,7 @@
                 %finish
             %finish
 
-            %if event = 10 %start
+            %if eventno = 10 %start
                 debugstring("**** Error caused by missing/invalid command line parameter(s)");debug newline
             %finish
 
@@ -194,7 +195,7 @@
 
         ! Type 2 IMP PROGRAM?
         ! Ok, this is a suspected %external %routine XXX %alias "__impmain" ... %end
-        ! It is the IMP programmers resposibility to open files and read the command line
+        ! It is the IMP programmers responsibility to open files and read the command line
 
         %if ((debug mode & DBGMAIN) # 0) %start
             debug string( "IMPMAIN: About to enter the IMP program")

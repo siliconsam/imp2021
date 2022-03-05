@@ -5,96 +5,144 @@
  &  1  %endoflist
  & 10  %endoffile
    3  
-   4  {------------------------------------------------------------------------------}
+   4  {-----------------------------------------------------------------------------}
    5      ! Array Reference function.
    6  
    7      ! Array indices are pushed left to right so we get them right to left.
-   8      ! The last thing pushed (our first C parameter) is a pointer to the Dope Vector.
-   9      ! Dope vectors are integer arrays of form :DIM:LB1:UB1:LB2:UB2:etc:LBn:UBn:ObjectSize:
-   10      ! We need to fiddle with addresses because this function has a variable parameter count.
-   11      ! This parameter count depends on the number of dimensions in the array
-   12      ! The parameters are stacked for use by a C routine (but this is IMP!)
-   13      ! However, this is an IMP routine so need to access in reverse order
-   14      ! Even worse, there are a variable number of index values (One index value for each array index)
-   15      ! We pretend there are no stacked parameters in the function declaration
-   16      ! Fortunately the "last" IMP parameter (the dope vector) (but 1st C parameter) indicates
-   17      ! the expected parameter count.
-   18      ! We actually access parameters via the "ebp" register (=Base/Frame pointer)
-   19      ! Remember [ebp]   = framep
-   20      !          [ebp+4] = return address
-   21      !          [ebp+8] = 1st C parameter = dope vector address
-   22      !          [ebp+12] = last array index = dim'th index value
-   23      !          [ebp+8+dim*4] = 1st array index = 1st index value (assuming 4 byte = 1 integer)
-   24      ! The function result is the offset that needs to be added to the
-   25      ! notional A(0,0,0) address to get the variable in the array
-   26      !
-   27      ! C declaration
-   28      ! extern int imparef(int *dvp, int idim, ...,int i1 )
-   29      !
-   30      ! IMP declaration (C parameter order reversed to give IMP order)
-   31      ! %external %integer %function imparef(%integer i1 { .. idim} , %integer %name dvp )
-   32      !
-   33      ! Arrgggh! Even worse, this function has a variable number of parameters (illegal IMP)
-   34      ! Hence, the above mentioned contortions to deal with a variable count of parameters
-   35      ! Fortunately, the "last" parameter stacked (the dopevector address) gives a clue as to
-   36      ! the actual count of parameters.
-   37      ! Luckily, the IMP compiler "pops" the set of parameters on return from this routine call
-   38      ! Thus we can "pretend" this routine is declared with no parameters, however we need to
-   39      ! use a bit of embedded machine code to access the real parameters via the frame pointer
-   40  
-   41      %external %integer %function imparef
-   42  
-   43          %integer framep
-   44          %integer %name dvp
-   45          %integer dim, sz
-   46          %integer lb, ub
-   47          %integer index
-   48          %integer row, result
-   49          %integer i
-   50          %constant %integer wordsize = 4;        ! wordsize in bytes of integer/address
-   51          %constant %integer param1 = 2*wordsize; ! frame pointer offset (in bytes) of "last" parameter on stack
-   52                                                  ! e.g. dopevector address
-   53          %constant %integer param2 = 3*wordsize; ! frame pointer offset (in bytes) of "last" array index
-   54  
-   55          ! Get the Base/Frame Pointer
-   56          *mov_ framep,ebp
-   57  
-   58          ! IMP does NOT allow routines with a variable number of parameters
-   59          ! but we need 
-   60          ! parameter        1) dope vector address
-   61          ! parameter 2..dim+1) array index values (dim = array dimensionality)
-   62  
-   63          ! Now get various data items from the dope vector
-   64          ! The "last" parameter stacked is the pointer to dope vector
-   65          ! Get the dope vector address ("last" C parameter/"first" IMP parameter)
-   66          dvp == integer( integer( framep + param1 ) )
-   67          ! Now get the array dimensionality from the dope vector
-   68          dim = dvp
-   69          ! Now get the size of each array element
-   70          sz = integer( addr(dvp) + wordsize*(2*dim + 1) )
-   71  
-   72          ! For a general number of dimensions, 1 or more, we do this the hard way...
-   73          result = 0;        ! result so far
-   74          %for i=0,1,dim - 1 %cycle
-   75  
-   76              ! General case iterates backwards toward first dimension
-   77              lb = integer( addr(dvp) + wordsize*(2*(dim - i) - 1));  ! at i=0, point to the rightmost lower bound
-   78              ub = integer( addr(dvp) + wordsize*(2*(dim - i)    ));  ! at i=0, point to the rightmost upper bound
-   79  
-   80              ! Get the index: at i=0, point to the rightmost array index
-   81              index = integer( framep + param2 + wordsize*i )
-   82  
-   83              ! Check the index
-   84              %signal 6, 2, index %unless (lb <= index) %and (index <= ub); ! check to see if index in range lb:ub
-   85  
-   86              row   = (ub - lb) + 1;         ! Number of objects in a row
-   87              result = (result * row) + index; ! accumulate this index
-   88          %repeat
-   89  
-   90          %result = result * sz; ! multiply by element size
-   91      %end
-   92  
-   93  {------------------------------------------------------------------------------}
-   94  %endoffile
+   8      ! The last thing pushed (our first C parameter) is a 
+   9      ! pointer to the Dope Vector.
+   10      !
+   11      ! Dope vectors are integer arrays of form
+   12      !      :DIM:LB1:UB1:LB2:UB2:etc:LBn:UBn:ArrayElementSize:
+   13      !      increasing address -->
+   14      !
+   15      ! We need to fiddle with addresses because this function has a 
+   16      ! variable parameter count.
+   17      !
+   18      ! This parameter count depends on the number of dimensions in the array
+   19      ! The parameters are stacked for use by a C routine (but this is IMP!)
+   20      ! However, this is an IMP routine so need to access in reverse order
+   21      ! Even worse, there are a variable number of index values
+   22      !    (One index value for each array index)
+   23      ! We pretend there are no stacked parameters in the function declaration
+   24      ! Fortunately the "last" IMP parameter (the dope vector)
+   25      !     (but 1st C parameter) indicates the expected parameter count.
+   26      ! We actually access parameters via the "ebp" register
+   27      !                                      (=Base/Frame pointer)
+   28      ! Now assuming 4 byte = 1 integer
+   29      ! Remember [ebp]   = framep
+   30      !          [ebp+4] = return address
+   31      !          [ebp+8] = 1st C parameter = dope vector address
+   32      !          [ebp+12] = last array index = dim'th index value
+   33      !          [ebp+8+dim*4] = 1st array index = 1st index value
+   34      ! The function result is the offset that needs to be added to the
+   35      ! notional A(0,0,0) address to get the variable in the array
+   36      !
+   37      ! C declaration
+   38      ! extern int imparef(int *dvp, int idim, ...,int i1 )
+   39      !
+   40      ! IMP declaration (C parameter order reversed to give IMP order)
+   41      ! %external %integer %function imparef(%integer i1 {.. idim},
+   42      !                                      %integer %name dvp)
+   43      !
+   44      ! Arrgggh! Even worse, this function has a variable number of parameters
+   45      ! (which is illegal in IMP)
+   46      !
+   47      ! Hence, the above mentioned contortions to deal with a variable count
+   48      ! of parameters.
+   49      ! Fortunately, the "last" parameter stacked (the dopevector address)
+   50      ! gives a clue as to the actual count of parameters.
+   51      !
+   52      ! Luckily, the IMP compiler "pops" the set of parameters on return from
+   53      ! this routine call. Thus we can "pretend" this routine is declared with
+   54      ! no parameters, however we need to use a bit of embedded machine code
+   55      ! to access the real parameters via the frame pointer
+   56  
+   57      %external %integer %function imparef
+   58  
+   59          ! wordsize in bytes of integer/address
+   60          %constant %integer addressSize = 4
+   61  
+   62          %integer framep
+   63          %integer %name dvp
+   64          %integer dvpParameterAddress, indexAddress
+   65          %integer szAddress, lbAddress, ubAddress
+   66          %integer dim, sz, lb, ub, index
+   67          %integer row, result
+   68          %integer i
+   69  
+   70          ! Get the Base/Frame Pointer
+   71          *mov_ framep,ebp
+   72  
+   73          ! IMP does NOT allow routines with a variable number of parameters
+   74          ! but we need 
+   75          ! parameter         1) dope vector address
+   76          ! parameters 2..dim+1) array index values (dim = array dimensionality)
+   77  
+   78          ! Now get various data items from the dope vector
+   79          ! The "last" parameter stacked is the pointer to dope vector
+   80          ! Get the dope vector address
+   81          !     ("last" C parameter/"first" IMP parameter)
+   82          ! skip over the 'old' FramePointer and the routine's ReturnAddress
+   83          ! on the stack
+   84          dvpParameterAddress = framep + 2*addressSize
+   85          dvp == integer( integer( dvpParameterAddress ) )
+   86  
+   87          ! get the address of the last array index
+   88          ! remember the index values are stacked in reverse order
+   89          ! The last shall be first!!!
+   90          indexAddress = dvpParameterAddress + addressSize
+   91  
+   92          ! Now get the array dimensionality from the dope vector
+   93          dim = dvp
+   94  
+   95          ! Now get the address of the size of each array element
+   96          szAddress = addr(dvp) + addressSize*(2*dim + 1)
+   97  
+   98          ! get the address of the last upper bound
+   99          ! placed just before the location of the array element size
+  100          ubAddress = szAddress - addressSize
+  101          ! and the address of it's associated lower bound
+  102          lbAddress = ubAddress - addressSize
+  103  
+  104          ! General case iterates backwards toward first dimension
+  105          ! For a general number of dimensions, 1 or more
+  106          ! we do this the hard way...
+  107          result = 0;        ! result so far
+  108          ! at i=1, we start with the rightmost bounds
+  109          ! their addresses have been 
+  110          %for i=1,1,dim %cycle
+  111  
+  112              lb = integer( lbAddress )
+  113              ub = integer( ubAddress )
+  114  
+  115              ! Get the index: at i=0, point to the rightmost array index
+  116              index = integer( indexAddress )
+  117  
+  118              ! Check the index
+  119              ! check to see if index in range lb:ub
+  120              %signal 6, 2, index %unless (lb <= index) %and (index <= ub)
+  121  
+  122              row   = (ub - lb) + 1;         ! Number of objects in a row
+  123              result = (result * row) + index; ! accumulate this index
+  124  
+  125              ! update the lb,ub,index addresses
+  126              ! get the previous upper bound address
+  127              ubAddress = lbAddress - addressSize
+  128              ! get it's associated lower bound address
+  129              lbAddress = ubAddress - addressSize
+  130              ! hop to the next lower index address
+  131              ! NB the index values are in reverse order
+  132              indexAddress = indexAddress + addressSize
+  133          %repeat
+  134  
+  135          ! finally get the array element size
+  136          sz = integer( szAddress )
+  137  
+  138          %result = result * sz; ! multiply by element size
+  139      %end
+  140  
+  141  {-----------------------------------------------------------------------------}
+  142  %endoffile
 
-   32 Statements compiled
+   38 Statements compiled

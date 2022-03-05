@@ -1,0 +1,273 @@
+{----------------------------------------------------------------------------}
+    { This function decodes the return value of the typeof function to }
+    { a string value                                                   }
+    %external %string(255) %function typeName( %integer t )
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
+        %string(255) s
+        %switch sw(0:15)
+
+        s = ""
+ 0004 C6 85 FC FE FF FF 00            MOV BYTE [EBP-260],0
+
+        -> sw(t&15)
+ 000B 8B 45 0C                        MOV EAX,[EBP+12]
+ 000E 25 0F 00 00 00                  AND EAX,15
+ 0013 C1 E0 02                        SHL EAX,2
+ 0016 89 C6                           MOV ESI,EAX
+ 0018 FF A6 00 00 00 00               JMP WORD [ESI+SWTAB]
+        ! type value given in the document "THE IMP LANGUAGE - A Reference Manual"
+        ! as output values from typeof.
+        sw(0):  s = "unknown";                  -> esac
+ 001E                      L1001  EQU $
+ 001E 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 0024 50                              PUSH EAX
+ 0025 B9 10 00 00 00                  MOV ECX,COT+16
+ 002A 51                              PUSH ECX
+ 002B 68 FF 00 00 00                  PUSH 255
+ 0030 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 0033 83 C4 0C                        ADD ESP,12
+ 0036 EB 00                           JMP L1002
+        sw(1):  s = "integer";                  -> esac
+ 0038                      L1003  EQU $
+ 0038 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 003E 50                              PUSH EAX
+ 003F B9 18 00 00 00                  MOV ECX,COT+24
+ 0044 51                              PUSH ECX
+ 0045 68 FF 00 00 00                  PUSH 255
+ 004A E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 004D 83 C4 0C                        ADD ESP,12
+ 0050 EB 00                           JMP L1002
+        sw(2):  s = "real";                     -> esac
+ 0052                      L1004  EQU $
+ 0052 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 0058 50                              PUSH EAX
+ 0059 B9 20 00 00 00                  MOV ECX,COT+32
+ 005E 51                              PUSH ECX
+ 005F 68 FF 00 00 00                  PUSH 255
+ 0064 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 0067 83 C4 0C                        ADD ESP,12
+ 006A EB 00                           JMP L1002
+        sw(3):  s = "string";                   -> esac
+ 006C                      L1005  EQU $
+ 006C 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 0072 50                              PUSH EAX
+ 0073 B9 25 00 00 00                  MOV ECX,COT+37
+ 0078 51                              PUSH ECX
+ 0079 68 FF 00 00 00                  PUSH 255
+ 007E E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 0081 83 C4 0C                        ADD ESP,12
+ 0084 EB 00                           JMP L1002
+        sw(4):  s = "record";                   -> esac
+ 0086                      L1006  EQU $
+ 0086 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 008C 50                              PUSH EAX
+ 008D B9 2C 00 00 00                  MOV ECX,COT+44
+ 0092 51                              PUSH ECX
+ 0093 68 FF 00 00 00                  PUSH 255
+ 0098 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 009B 83 C4 0C                        ADD ESP,12
+ 009E EB 00                           JMP L1002
+        sw(5):  s = "byte";                     -> esac
+ 00A0                      L1007  EQU $
+ 00A0 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 00A6 50                              PUSH EAX
+ 00A7 B9 33 00 00 00                  MOV ECX,COT+51
+ 00AC 51                              PUSH ECX
+ 00AD 68 FF 00 00 00                  PUSH 255
+ 00B2 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 00B5 83 C4 0C                        ADD ESP,12
+ 00B8 EB 00                           JMP L1002
+        sw(6):  s = "shortinteger";             -> esac
+ 00BA                      L1008  EQU $
+ 00BA 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 00C0 50                              PUSH EAX
+ 00C1 B9 38 00 00 00                  MOV ECX,COT+56
+ 00C6 51                              PUSH ECX
+ 00C7 68 FF 00 00 00                  PUSH 255
+ 00CC E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 00CF 83 C4 0C                        ADD ESP,12
+ 00D2 EB 00                           JMP L1002
+        sw(7):  s = "longinteger";              -> esac
+ 00D4                      L1009  EQU $
+ 00D4 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 00DA 50                              PUSH EAX
+ 00DB B9 45 00 00 00                  MOV ECX,COT+69
+ 00E0 51                              PUSH ECX
+ 00E1 68 FF 00 00 00                  PUSH 255
+ 00E6 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 00E9 83 C4 0C                        ADD ESP,12
+ 00EC EB 00                           JMP L1002
+        sw(8):  s = "longreal";                 -> esac
+ 00EE                      L1010  EQU $
+ 00EE 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 00F4 50                              PUSH EAX
+ 00F5 B9 51 00 00 00                  MOV ECX,COT+81
+ 00FA 51                              PUSH ECX
+ 00FB 68 FF 00 00 00                  PUSH 255
+ 0100 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 0103 83 C4 0C                        ADD ESP,12
+ 0106 EB 00                           JMP L1002
+        sw(9):  s = "array";                    -> esac
+ 0108                      L1011  EQU $
+ 0108 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 010E 50                              PUSH EAX
+ 010F B9 5A 00 00 00                  MOV ECX,COT+90
+ 0114 51                              PUSH ECX
+ 0115 68 FF 00 00 00                  PUSH 255
+ 011A E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 011D 83 C4 0C                        ADD ESP,12
+ 0120 EB 00                           JMP L1002
+        sw(10): s = "label";                    -> esac
+ 0122                      L1012  EQU $
+ 0122 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 0128 50                              PUSH EAX
+ 0129 B9 60 00 00 00                  MOV ECX,COT+96
+ 012E 51                              PUSH ECX
+ 012F 68 FF 00 00 00                  PUSH 255
+ 0134 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 0137 83 C4 0C                        ADD ESP,12
+ 013A EB 00                           JMP L1002
+
+        sw(*):  s = "illegal(".itos(t&15,0).")"; -> esac
+ 013C                      L1013  EQU $
+ 013C                      L1014  EQU $
+ 013C                      L1015  EQU $
+ 013C                      L1016  EQU $
+ 013C                      L1017  EQU $
+ 013C 8B 45 0C                        MOV EAX,[EBP+12]
+ 013F 25 0F 00 00 00                  AND EAX,15
+ 0144 50                              PUSH EAX
+ 0145 6A 00                           PUSH 0
+ 0147 8D 85 FC FD FF FF               LEA EAX,[EBP-516]
+ 014D 50                              PUSH EAX
+ 014E E8 39 00                        CALL 'ITOS' (EXTERN 57)
+ 0151 83 C4 0C                        ADD ESP,12
+ 0154 8D 85 FC FC FF FF               LEA EAX,[EBP-772]
+ 015A 50                              PUSH EAX
+ 015B B8 66 00 00 00                  MOV EAX,COT+102
+ 0160 50                              PUSH EAX
+ 0161 68 FF 00 00 00                  PUSH 255
+ 0166 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 0169 83 C4 0C                        ADD ESP,12
+ 016C 8D 85 FC FC FF FF               LEA EAX,[EBP-772]
+ 0172 50                              PUSH EAX
+ 0173 8D 85 FC FD FF FF               LEA EAX,[EBP-516]
+ 0179 50                              PUSH EAX
+ 017A 68 FF 00 00 00                  PUSH 255
+ 017F E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
+ 0182 83 C4 0C                        ADD ESP,12
+ 0185 8D 85 FC FC FF FF               LEA EAX,[EBP-772]
+ 018B 50                              PUSH EAX
+ 018C B8 6F 00 00 00                  MOV EAX,COT+111
+ 0191 50                              PUSH EAX
+ 0192 68 FF 00 00 00                  PUSH 255
+ 0197 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
+ 019A 83 C4 0C                        ADD ESP,12
+ 019D 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
+ 01A3 50                              PUSH EAX
+ 01A4 8D 8D FC FC FF FF               LEA ECX,[EBP-772]
+ 01AA 51                              PUSH ECX
+ 01AB 68 FF 00 00 00                  PUSH 255
+ 01B0 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 01B3 83 C4 0C                        ADD ESP,12
+ 01B6 EB 00                           JMP L1002
+    esac:
+ 01B8                      L1002  EQU $
+        %result = s
+ 01B8 8B 45 08                        MOV EAX,[EBP+8]
+ 01BB 50                              PUSH EAX
+ 01BC 8D 8D FC FE FF FF               LEA ECX,[EBP-260]
+ 01C2 51                              PUSH ECX
+ 01C3 68 FF 00 00 00                  PUSH 255
+ 01C8 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 01CB 83 C4 0C                        ADD ESP,12
+ 01CE C9                              LEAVE
+ 01CF C3                              RET
+    %end
+
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+ 0000 01 00                           db 01,00 ; ..
+ 0002 00 00                           db 00,00 ; ..
+ 0004 00 00                           db 00,00 ; ..
+ 0006 00 00                           db 00,00 ; ..
+ 0008 0F 00                           db 0F,00 ; ..
+ 000A 00 00                           db 00,00 ; ..
+ 000C 00 00                           db 00,00 ; ..
+ 000E 00 00                           db 00,00 ; ..
+ 0010 07 75                           db 07,75 ; .u
+ 0012 6E 6B                           db 6E,6B ; nk
+ 0014 6E 6F                           db 6E,6F ; no
+ 0016 77 6E                           db 77,6E ; wn
+ 0018 07 69                           db 07,69 ; .i
+ 001A 6E 74                           db 6E,74 ; nt
+ 001C 65 67                           db 65,67 ; eg
+ 001E 65 72                           db 65,72 ; er
+ 0020 04 72                           db 04,72 ; .r
+ 0022 65 61                           db 65,61 ; ea
+ 0024 6C 06                           db 6C,06 ; l.
+ 0026 73 74                           db 73,74 ; st
+ 0028 72 69                           db 72,69 ; ri
+ 002A 6E 67                           db 6E,67 ; ng
+ 002C 06 72                           db 06,72 ; .r
+ 002E 65 63                           db 65,63 ; ec
+ 0030 6F 72                           db 6F,72 ; or
+ 0032 64 04                           db 64,04 ; d.
+ 0034 62 79                           db 62,79 ; by
+ 0036 74 65                           db 74,65 ; te
+ 0038 0C 73                           db 0C,73 ; .s
+ 003A 68 6F                           db 68,6F ; ho
+ 003C 72 74                           db 72,74 ; rt
+ 003E 69 6E                           db 69,6E ; in
+ 0040 74 65                           db 74,65 ; te
+ 0042 67 65                           db 67,65 ; ge
+ 0044 72 0B                           db 72,0B ; r.
+ 0046 6C 6F                           db 6C,6F ; lo
+ 0048 6E 67                           db 6E,67 ; ng
+ 004A 69 6E                           db 69,6E ; in
+ 004C 74 65                           db 74,65 ; te
+ 004E 67 65                           db 67,65 ; ge
+ 0050 72 08                           db 72,08 ; r.
+ 0052 6C 6F                           db 6C,6F ; lo
+ 0054 6E 67                           db 6E,67 ; ng
+ 0056 72 65                           db 72,65 ; re
+ 0058 61 6C                           db 61,6C ; al
+ 005A 05 61                           db 05,61 ; .a
+ 005C 72 72                           db 72,72 ; rr
+ 005E 61 79                           db 61,79 ; ay
+ 0060 05 6C                           db 05,6C ; .l
+ 0062 61 62                           db 61,62 ; ab
+ 0064 65 6C                           db 65,6C ; el
+ 0066 08 69                           db 08,69 ; .i
+ 0068 6C 6C                           db 6C,6C ; ll
+ 006A 65 67                           db 65,67 ; eg
+ 006C 61 6C                           db 61,6C ; al
+ 006E 28 01                           db 28,01 ; (.
+ 0070 29 00                           db 29,00 ; ).
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+ 0000 E9 03                           db E9,03 ; ..
+ 0002 EB 03                           db EB,03 ; ..
+ 0004 EC 03                           db EC,03 ; ..
+ 0006 ED 03                           db ED,03 ; ..
+ 0008 EE 03                           db EE,03 ; ..
+ 000A EF 03                           db EF,03 ; ..
+ 000C F0 03                           db F0,03 ; ..
+ 000E F1 03                           db F1,03 ; ..
+ 0010 F2 03                           db F2,03 ; ..
+ 0012 F3 03                           db F3,03 ; ..
+ 0014 F4 03                           db F4,03 ; ..
+ 0016 F5 03                           db F5,03 ; ..
+ 0018 F6 03                           db F6,03 ; ..
+ 001A F7 03                           db F7,03 ; ..
+ 001C F8 03                           db F8,03 ; ..
+ 001E F9 03                           db F9,03 ; ..
+      _SWTAB   ENDS

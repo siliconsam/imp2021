@@ -18,8 +18,8 @@
     %constlongreal MaxFloat = 3.3@38
 
     %external %routine Read( %name ptr)
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
         %string(255)  s
         %integer ch
         %integer sign, digit, len, adr, type, base, found
@@ -29,135 +29,161 @@
         %integer i
 
         len = size of(ptr)
- 0004 8B 45 0C                        MOV EAX,[EBP+ 12]
- 0007 C1 E8 04                        SHR EAX, 4
+                                      Generating CODE for 'SIZEOF' (MACRO 14)
+ 0004 8B 45 0C                        MOV EAX,[EBP+12]
+ 0007 C1 E8 04                        SHR EAX,4
+                                      CALL 'SIZEOF' (MACRO 14)
  000A 89 85 EC FE FF FF               MOV [EBP-276],EAX
         adr = addr(ptr)
- 0010 8B 45 08                        MOV EAX,[EBP+ 8]
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0010 8B 45 08                        MOV EAX,[EBP+8]
  0013 89 85 E8 FE FF FF               MOV [EBP-280],EAX
         type = type of(ptr)
- 0019 8B 45 0C                        MOV EAX,[EBP+ 12]
- 001C 25 0F 00 00 00                  AND EAX, 15
+                                      Generating CODE for 'TYPEOF' (MACRO 13)
+ 0019 8B 45 0C                        MOV EAX,[EBP+12]
+ 001C 25 0F 00 00 00                  AND EAX,15
+                                      CALL 'TYPEOF' (MACRO 13)
  0021 89 85 E4 FE FF FF               MOV [EBP-284],EAX
 
         %unless intgr <= type <= strng %or type = byte %or type = double %start
  0027 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
- 002D 3D 01 00 00 00                  CMP EAX, 1
- 0032 7C 00                           JL L 1001
- 0034 3D 03 00 00 00                  CMP EAX, 3
- 0039 7E 00                           JLE L 1002
- 003B                      L 1001  EQU $
+ 002D 3D 01 00 00 00                  CMP EAX,1
+ 0032 7C 00                           JL L1001
+ 0034 3D 03 00 00 00                  CMP EAX,3
+ 0039 7E 00                           JLE L1002
+ 003B                      L1001  EQU $
  003B 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
- 0041 3D 06 00 00 00                  CMP EAX, 6
- 0046 74 00                           JE L 1002
+ 0041 3D 06 00 00 00                  CMP EAX,6
+ 0046 74 00                           JE L1002
  0048 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
- 004E 3D 08 00 00 00                  CMP EAX, 8
- 0053 74 00                           JE L 1002
+ 004E 3D 08 00 00 00                  CMP EAX,8
+ 0053 74 00                           JE L1002
             %signal 5,5,type
- 0055 B8 05 00 00 00                  MOV EAX, 5
+ 0055 B8 05 00 00 00                  MOV EAX,5
  005A 50                              PUSH EAX
  005B 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
  0061 50                              PUSH EAX
- 0062 B8 05 00 00 00                  MOV EAX, 5
+ 0062 B8 05 00 00 00                  MOV EAX,5
  0067 50                              PUSH EAX
- 0068 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 006B 83 C4 0C                        ADD ESP, 12
+ 0068 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 006B 83 C4 0C                        ADD ESP,12
         %finish
- 006E                      L 1002  EQU $
+ 006E                      L1002  EQU $
 
         ! skip white space
         skip symbol %while next symbol = ' ' %or next symbol = 8 %or next symbol = NL %or next symbol = 13
- 006E                      L 1003  EQU $
- 006E E8 1E 00                        CALL 'NEXTSYMBOL' (EXTERN  30)
- 0071 3D 20 00 00 00                  CMP EAX, 32
- 0076 74 00                           JE L 1004
- 0078 E8 1E 00                        CALL 'NEXTSYMBOL' (EXTERN  30)
- 007B 3D 08 00 00 00                  CMP EAX, 8
- 0080 74 00                           JE L 1004
- 0082 E8 1E 00                        CALL 'NEXTSYMBOL' (EXTERN  30)
- 0085 3D 0A 00 00 00                  CMP EAX, 10
- 008A 74 00                           JE L 1004
- 008C E8 1E 00                        CALL 'NEXTSYMBOL' (EXTERN  30)
- 008F 3D 0D 00 00 00                  CMP EAX, 13
- 0094 75 00                           JNE L 1005
- 0096                      L 1004  EQU $
- 0096 E8 2F 00                        CALL 'SKIPSYMBOL' (EXTERN  47)
- 0099 EB 00                           JMP L 1003
- 009B                      L 1005  EQU $
+ 006E                      L1003  EQU $
+ 006E E8 19 00                        CALL 'NEXTSYMBOL' (EXTERN 25)
+ 0071 3D 20 00 00 00                  CMP EAX,32
+ 0076 74 00                           JE L1004
+ 0078 E8 19 00                        CALL 'NEXTSYMBOL' (EXTERN 25)
+ 007B 3D 08 00 00 00                  CMP EAX,8
+ 0080 74 00                           JE L1004
+ 0082 E8 19 00                        CALL 'NEXTSYMBOL' (EXTERN 25)
+ 0085 3D 0A 00 00 00                  CMP EAX,10
+ 008A 74 00                           JE L1004
+ 008C E8 19 00                        CALL 'NEXTSYMBOL' (EXTERN 25)
+ 008F 3D 0D 00 00 00                  CMP EAX,13
+ 0094 75 00                           JNE L1005
+ 0096                      L1004  EQU $
+ 0096 E8 2A 00                        CALL 'SKIPSYMBOL' (EXTERN 42)
+ 0099 EB 00                           JMP L1003
+ 009B                      L1005  EQU $
 
         %if type = strng %start
  009B 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
- 00A1 3D 03 00 00 00                  CMP EAX, 3
- 00A6 75 00                           JNE L 1006
+ 00A1 3D 03 00 00 00                  CMP EAX,3
+ 00A6 75 00                           JNE L1006
             length(s) = 0
- 00A8 C6 85 FC FE FF FF 00            MOV BYTE [EBP-260], 0
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
+ 00A8 C6 85 FC FE FF FF 00            MOV BYTE [EBP-260],0
             %cycle
- 00AF                      L 1007  EQU $
+ 00AF                      L1007  EQU $
                 ch = next symbol
- 00AF E8 1E 00                        CALL 'NEXTSYMBOL' (EXTERN  30)
+ 00AF E8 19 00                        CALL 'NEXTSYMBOL' (EXTERN 25)
  00B2 89 85 F8 FE FF FF               MOV [EBP-264],EAX
                 %exit %if ch = ' ' %or ch = NL %or ch = 8
  00B8 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 00BE 3D 20 00 00 00                  CMP EAX, 32
- 00C3 74 00                           JE L 1008
+ 00BE 3D 20 00 00 00                  CMP EAX,32
+ 00C3 74 00                           JE L1008
  00C5 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 00CB 3D 0A 00 00 00                  CMP EAX, 10
- 00D0 74 00                           JE L 1008
+ 00CB 3D 0A 00 00 00                  CMP EAX,10
+ 00D0 74 00                           JE L1008
  00D2 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 00D8 3D 08 00 00 00                  CMP EAX, 8
- 00DD 75 00                           JNE L 1009
- 00DF                      L 1008  EQU $
- 00DF EB 00                           JMP L 1010
- 00E1                      L 1009  EQU $
+ 00D8 3D 08 00 00 00                  CMP EAX,8
+ 00DD 75 00                           JNE L1009
+ 00DF                      L1008  EQU $
+ 00DF EB 00                           JMP L1010
+ 00E1                      L1009  EQU $
                 length(s) = length(s) + 1
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
  00E1 FE 85 FC FE FF FF               INC BYTE [EBP-260]
                 charno(s,length(s)) = ch
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
+                                      Generating CODE for 'CHARNO' (MACRO 12)
  00E7 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
  00ED 31 C9                           XOR ECX,ECX
  00EF 8A 8D FC FE FF FF               MOV CL,[EBP-260]
  00F5 01 C8                           ADD EAX,ECX
+                                      CALL 'CHARNO' (MACRO 12)
  00F7 8B 8D F8 FE FF FF               MOV ECX,[EBP-264]
  00FD 88 08                           MOV [EAX],CL
                 skip symbol
- 00FF E8 2F 00                        CALL 'SKIPSYMBOL' (EXTERN  47)
+ 00FF E8 2A 00                        CALL 'SKIPSYMBOL' (EXTERN 42)
             %repeat
- 0102 EB 00                           JMP L 1007
- 0104                      L 1010  EQU $
+ 0102 EB 00                           JMP L1007
+ 0104                      L1010  EQU $
 
             %signal 6,1 %if length(s) > len
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
  0104 31 C0                           XOR EAX,EAX
  0106 8A 85 FC FE FF FF               MOV AL,[EBP-260]
  010C 3B 85 EC FE FF FF               CMP EAX,[EBP-276]
- 0112 7E 00                           JLE L 1011
- 0114 B8 06 00 00 00                  MOV EAX, 6
+ 0112 7E 00                           JLE L1011
+ 0114 B8 06 00 00 00                  MOV EAX,6
  0119 50                              PUSH EAX
  011A 31 C0                           XOR EAX,EAX
  011C 50                              PUSH EAX
- 011D B8 01 00 00 00                  MOV EAX, 1
+ 011D B8 01 00 00 00                  MOV EAX,1
  0122 50                              PUSH EAX
- 0123 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 0126 83 C4 0C                        ADD ESP, 12
- 0129                      L 1011  EQU $
+ 0123 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 0126 83 C4 0C                        ADD ESP,12
+ 0129                      L1011  EQU $
 
             ! Now to put the string just "read", into the variable specified
             %for i = 0,1,length(s) %cycle
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
  0129 31 C0                           XOR EAX,EAX
  012B 8A 85 FC FE FF FF               MOV AL,[EBP-260]
  0131 89 85 B4 FE FF FF               MOV [EBP-332],EAX
  0137 C7 85 B8 FE FF FF FF FF         MOV WORD [EBP-328],-1
- 0141                      L 1012  EQU $
+ 0141                      L1012  EQU $
  0141 8B 85 B8 FE FF FF               MOV EAX,[EBP-328]
  0147 3B 85 B4 FE FF FF               CMP EAX,[EBP-332]
- 014D 74 00                           JE L 1013
+ 014D 74 00                           JE L1013
  014F 40                              INC EAX
  0150 89 85 B8 FE FF FF               MOV [EBP-328],EAX
                 dst == byteinteger( adr + i )
  0156 8B 85 E8 FE FF FF               MOV EAX,[EBP-280]
  015C 03 85 B8 FE FF FF               ADD EAX,[EBP-328]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
  0162 89 85 C0 FE FF FF               MOV [EBP-320],EAX
                 src == byteinteger( addr(s) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
  0168 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
  016E 03 85 B8 FE FF FF               ADD EAX,[EBP-328]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
  0174 89 85 BC FE FF FF               MOV [EBP-324],EAX
                 dst = src
  017A 8B B5 C0 FE FF FF               MOV ESI,[EBP-320]
@@ -165,228 +191,238 @@
  0186 8A 07                           MOV AL,[EDI]
  0188 88 06                           MOV [ESI],AL
             %repeat
- 018A EB 00                           JMP L 1012
- 018C                      L 1013  EQU $
+ 018A EB 00                           JMP L1012
+ 018C                      L1013  EQU $
 
             %return
  018C C9                              LEAVE
  018D C3                              RET
         %finish
- 018E                      L 1006  EQU $
+ 018E                      L1006  EQU $
 
         ! The rest (int/real/byte/lreal) all expect a number
         ! We collect it in a longreal so that we can correctly read
         ! an integer into a real that is bigger than MaxInt
         base = 10
- 018E C7 85 E0 FE FF FF 0A 00         MOV WORD [EBP-288], 10
+ 018E C7 85 E0 FE FF FF 0A 00         MOV WORD [EBP-288],10
         sign = 0
- 0198 C7 85 F4 FE FF FF 00 00         MOV WORD [EBP-268], 0
+ 0198 C7 85 F4 FE FF FF 00 00         MOV WORD [EBP-268],0
 
         readsymbol(sign) %if next symbol = '-' %or next symbol = '+'
- 01A2 E8 1E 00                        CALL 'NEXTSYMBOL' (EXTERN  30)
- 01A5 3D 2D 00 00 00                  CMP EAX, 45
- 01AA 74 00                           JE L 1014
- 01AC E8 1E 00                        CALL 'NEXTSYMBOL' (EXTERN  30)
- 01AF 3D 2B 00 00 00                  CMP EAX, 43
- 01B4 75 00                           JNE L 1015
- 01B6                      L 1014  EQU $
+ 01A2 E8 19 00                        CALL 'NEXTSYMBOL' (EXTERN 25)
+ 01A5 3D 2D 00 00 00                  CMP EAX,45
+ 01AA 74 00                           JE L1014
+ 01AC E8 19 00                        CALL 'NEXTSYMBOL' (EXTERN 25)
+ 01AF 3D 2B 00 00 00                  CMP EAX,43
+ 01B4 75 00                           JNE L1015
+ 01B6                      L1014  EQU $
  01B6 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
  01BC 50                              PUSH EAX
- 01BD E8 1D 00                        CALL 'READSYMBOL' (EXTERN  29)
- 01C0 83 C4 04                        ADD ESP, 4
- 01C3                      L 1015  EQU $
+ 01BD E8 18 00                        CALL 'READSYMBOL' (EXTERN 24)
+ 01C0 83 C4 04                        ADD ESP,4
+ 01C3                      L1015  EQU $
 
         %cycle
- 01C3                      L 1016  EQU $
+ 01C3                      L1016  EQU $
             r = 0
  01C3 D9 EE                           FLDZ
  01C5 DD 9D D4 FE FF FF               FSTP QWORD [EBP-300]
             found = 0
- 01CB C7 85 DC FE FF FF 00 00         MOV WORD [EBP-292], 0
+ 01CB C7 85 DC FE FF FF 00 00         MOV WORD [EBP-292],0
 
             %cycle
- 01D5                      L 1017  EQU $
+ 01D5                      L1017  EQU $
                 ch = next symbol
- 01D5 E8 1E 00                        CALL 'NEXTSYMBOL' (EXTERN  30)
+ 01D5 E8 19 00                        CALL 'NEXTSYMBOL' (EXTERN 25)
  01D8 89 85 F8 FE FF FF               MOV [EBP-264],EAX
                 %if '0' <= ch <= '9' %start
  01DE 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 01E4 3D 30 00 00 00                  CMP EAX, 48
- 01E9 7C 00                           JL L 1018
- 01EB 3D 39 00 00 00                  CMP EAX, 57
- 01F0 7F 00                           JG L 1018
+ 01E4 3D 30 00 00 00                  CMP EAX,48
+ 01E9 7C 00                           JL L1018
+ 01EB 3D 39 00 00 00                  CMP EAX,57
+ 01F0 7F 00                           JG L1018
                     digit = ch - '0'
  01F2 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 01F8 2D 30 00 00 00                  SUB EAX, 48
+ 01F8 2D 30 00 00 00                  SUB EAX,48
  01FD 89 85 F0 FE FF FF               MOV [EBP-272],EAX
                 %else %if 'A' <= ch & 95 <= 'Z'
- 0203 EB 00                           JMP L 1019
- 0205                      L 1018  EQU $
+ 0203 EB 00                           JMP L1019
+ 0205                      L1018  EQU $
  0205 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 020B 25 5F 00 00 00                  AND EAX, 95
- 0210 3D 41 00 00 00                  CMP EAX, 65
- 0215 7C 00                           JL L 1020
- 0217 3D 5A 00 00 00                  CMP EAX, 90
- 021C 7F 00                           JG L 1020
+ 020B 25 5F 00 00 00                  AND EAX,95
+ 0210 3D 41 00 00 00                  CMP EAX,65
+ 0215 7C 00                           JL L1020
+ 0217 3D 5A 00 00 00                  CMP EAX,90
+ 021C 7F 00                           JG L1020
                     digit = ch & 95 - 'A' + 10
  021E 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 0224 25 5F 00 00 00                  AND EAX, 95
- 0229 2D 41 00 00 00                  SUB EAX, 65
- 022E 05 0A 00 00 00                  ADD EAX, 10
+ 0224 25 5F 00 00 00                  AND EAX,95
+ 0229 2D 41 00 00 00                  SUB EAX,65
+ 022E 05 0A 00 00 00                  ADD EAX,10
  0233 89 85 F0 FE FF FF               MOV [EBP-272],EAX
                 %finish %else %exit
- 0239 EB 00                           JMP L 1019
- 023B                      L 1020  EQU $
- 023B EB 00                           JMP L 1021
- 023D                      L 1019  EQU $
+ 0239 EB 00                           JMP L1019
+ 023B                      L1020  EQU $
+ 023B EB 00                           JMP L1021
+ 023D                      L1019  EQU $
                 %exit %if digit >= Base
  023D 8B 85 F0 FE FF FF               MOV EAX,[EBP-272]
  0243 3B 85 E0 FE FF FF               CMP EAX,[EBP-288]
- 0249 7C 00                           JL L 1022
- 024B EB 00                           JMP L 1021
- 024D                      L 1022  EQU $
+ 0249 7C 00                           JL L1022
+ 024B EB 00                           JMP L1021
+ 024D                      L1022  EQU $
                 found = 1
- 024D C7 85 DC FE FF FF 01 00         MOV WORD [EBP-292], 1
+ 024D C7 85 DC FE FF FF 01 00         MOV WORD [EBP-292],1
                 skip symbol
- 0257 E8 2F 00                        CALL 'SKIPSYMBOL' (EXTERN  47)
+ 0257 E8 2A 00                        CALL 'SKIPSYMBOL' (EXTERN 42)
                 r = r * Base + digit
  025A DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  0260 DB 85 E0 FE FF FF               FILD [EBP-288]
- 0266 DE C9                           FMULP ST( 1),ST
+ 0266 DE C9                           FMULP ST(1),ST
  0268 DB 85 F0 FE FF FF               FILD [EBP-272]
- 026E DE C1                           FADDP ST( 1),ST
+ 026E DE C1                           FADDP ST(1),ST
  0270 DD 9D D4 FE FF FF               FSTP QWORD [EBP-300]
             %repeat
- 0276 EB 00                           JMP L 1017
- 0278                      L 1021  EQU $
+ 0276 EB 00                           JMP L1017
+ 0278                      L1021  EQU $
 
             %exit %if ch # '_' %or r = 0
  0278 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 027E 3D 5F 00 00 00                  CMP EAX, 95
- 0283 75 00                           JNE L 1023
+ 027E 3D 5F 00 00 00                  CMP EAX,95
+ 0283 75 00                           JNE L1023
  0285 DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  028B D9 EE                           FLDZ
- 028D DE D9                           FCOMPP ST( 1),ST
+ 028D DE D9                           FCOMPP ST(1),ST
  028F DF E0                           FSTSW AX
  0291 9E                              SAHF
- 0292 75 00                           JNE L 1024
- 0294                      L 1023  EQU $
- 0294 EB 00                           JMP L 1025
- 0296                      L 1024  EQU $
+ 0292 75 00                           JNE L1024
+ 0294                      L1023  EQU $
+ 0294 EB 00                           JMP L1025
+ 0296                      L1024  EQU $
 
             base = int(r)
+                                      Generating CODE for 'INT' (MACRO 15)
  0296 DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  029C DB 9D B0 FE FF FF               FISTP [EBP-336]
+                                      CALL 'INT' (MACRO 15)
  02A2 8B 85 B0 FE FF FF               MOV EAX,[EBP-336]
  02A8 89 85 E0 FE FF FF               MOV [EBP-288],EAX
             skipsymbol
- 02AE E8 2F 00                        CALL 'SKIPSYMBOL' (EXTERN  47)
+ 02AE E8 2A 00                        CALL 'SKIPSYMBOL' (EXTERN 42)
         %repeat
- 02B1 EB 00                           JMP L 1016
- 02B3                      L 1025  EQU $
+ 02B1 EB 00                           JMP L1016
+ 02B3                      L1025  EQU $
 
         ! here we've got an integer in R - if that's what we want, exit now
         %if type = intgr %or type = byte %start
  02B3 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
- 02B9 3D 01 00 00 00                  CMP EAX, 1
- 02BE 74 00                           JE L 1026
+ 02B9 3D 01 00 00 00                  CMP EAX,1
+ 02BE 74 00                           JE L1026
  02C0 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
- 02C6 3D 06 00 00 00                  CMP EAX, 6
- 02CB 75 00                           JNE L 1027
- 02CD                      L 1026  EQU $
+ 02C6 3D 06 00 00 00                  CMP EAX,6
+ 02CB 75 00                           JNE L1027
+ 02CD                      L1026  EQU $
 
             %signal 3,1,ch %if found = 0; ! no digits?  Then report the char we found
  02CD 8B 85 DC FE FF FF               MOV EAX,[EBP-292]
- 02D3 3D 00 00 00 00                  CMP EAX, 0
- 02D8 75 00                           JNE L 1028
- 02DA B8 03 00 00 00                  MOV EAX, 3
+ 02D3 3D 00 00 00 00                  CMP EAX,0
+ 02D8 75 00                           JNE L1028
+ 02DA B8 03 00 00 00                  MOV EAX,3
  02DF 50                              PUSH EAX
  02E0 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
  02E6 50                              PUSH EAX
- 02E7 B8 01 00 00 00                  MOV EAX, 1
+ 02E7 B8 01 00 00 00                  MOV EAX,1
  02EC 50                              PUSH EAX
- 02ED E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 02F0 83 C4 0C                        ADD ESP, 12
- 02F3                      L 1028  EQU $
+ 02ED E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 02F0 83 C4 0C                        ADD ESP,12
+ 02F3                      L1028  EQU $
 
             %if type = intgr %start
  02F3 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
- 02F9 3D 01 00 00 00                  CMP EAX, 1
- 02FE 75 00                           JNE L 1029
+ 02F9 3D 01 00 00 00                  CMP EAX,1
+ 02FE 75 00                           JNE L1029
                 %if r > MaxInt %then %signal 1,1
  0300 DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  0306 DB 05 08 00 00 00               FILD [COT+0008]
- 030C DE D9                           FCOMPP ST( 1),ST
+ 030C DE D9                           FCOMPP ST(1),ST
  030E DF E0                           FSTSW AX
  0310 9E                              SAHF
- 0311 73 00                           JAE L 1030
- 0313 B8 01 00 00 00                  MOV EAX, 1
+ 0311 73 00                           JAE L1030
+ 0313 B8 01 00 00 00                  MOV EAX,1
  0318 50                              PUSH EAX
  0319 31 C0                           XOR EAX,EAX
  031B 50                              PUSH EAX
- 031C B8 01 00 00 00                  MOV EAX, 1
+ 031C B8 01 00 00 00                  MOV EAX,1
  0321 50                              PUSH EAX
- 0322 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 0325 83 C4 0C                        ADD ESP, 12
- 0328                      L 1030  EQU $
+ 0322 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 0325 83 C4 0C                        ADD ESP,12
+ 0328                      L1030  EQU $
                 %if sign = '-' %then r = -r
  0328 8B 85 F4 FE FF FF               MOV EAX,[EBP-268]
- 032E 3D 2D 00 00 00                  CMP EAX, 45
- 0333 75 00                           JNE L 1031
+ 032E 3D 2D 00 00 00                  CMP EAX,45
+ 0333 75 00                           JNE L1031
  0335 DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
- 033B D9 E0                           FCHS ST( 0),ST
+ 033B D9 E0                           FCHS ST(0),ST
  033D DD 9D D4 FE FF FF               FSTP QWORD [EBP-300]
- 0343                      L 1031  EQU $
+ 0343                      L1031  EQU $
                 integer(adr) = int(r)
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+                                      Generating CODE for 'INT' (MACRO 15)
  0343 DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  0349 DB 9D AC FE FF FF               FISTP [EBP-340]
+                                      CALL 'INT' (MACRO 15)
  034F 8B 9D E8 FE FF FF               MOV EBX,[EBP-280]
  0355 8B 85 AC FE FF FF               MOV EAX,[EBP-340]
  035B 89 03                           MOV [EBX],EAX
             %else
- 035D EB 00                           JMP L 1032
- 035F                      L 1029  EQU $
+ 035D EB 00                           JMP L1032
+ 035F                      L1029  EQU $
                 %if r > MaxByte %or sign = '-' %then %signal 1,1
  035F DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  0365 DB 05 0C 00 00 00               FILD [COT+000C]
- 036B DE D9                           FCOMPP ST( 1),ST
+ 036B DE D9                           FCOMPP ST(1),ST
  036D DF E0                           FSTSW AX
  036F 9E                              SAHF
- 0370 72 00                           JB L 1033
+ 0370 72 00                           JB L1033
  0372 8B 85 F4 FE FF FF               MOV EAX,[EBP-268]
- 0378 3D 2D 00 00 00                  CMP EAX, 45
- 037D 75 00                           JNE L 1034
- 037F                      L 1033  EQU $
- 037F B8 01 00 00 00                  MOV EAX, 1
+ 0378 3D 2D 00 00 00                  CMP EAX,45
+ 037D 75 00                           JNE L1034
+ 037F                      L1033  EQU $
+ 037F B8 01 00 00 00                  MOV EAX,1
  0384 50                              PUSH EAX
  0385 31 C0                           XOR EAX,EAX
  0387 50                              PUSH EAX
- 0388 B8 01 00 00 00                  MOV EAX, 1
+ 0388 B8 01 00 00 00                  MOV EAX,1
  038D 50                              PUSH EAX
- 038E E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 0391 83 C4 0C                        ADD ESP, 12
- 0394                      L 1034  EQU $
+ 038E E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 0391 83 C4 0C                        ADD ESP,12
+ 0394                      L1034  EQU $
                 byte integer(adr) = int(r)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+                                      Generating CODE for 'INT' (MACRO 15)
  0394 DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  039A DB 9D A8 FE FF FF               FISTP [EBP-344]
+                                      CALL 'INT' (MACRO 15)
  03A0 8B B5 E8 FE FF FF               MOV ESI,[EBP-280]
  03A6 8B 85 A8 FE FF FF               MOV EAX,[EBP-344]
  03AC 88 06                           MOV [ESI],AL
             %finish
- 03AE                      L 1032  EQU $
+ 03AE                      L1032  EQU $
             %return
  03AE C9                              LEAVE
  03AF C3                              RET
         %finish
- 03B0                      L 1027  EQU $
+ 03B0                      L1027  EQU $
 
         ! If we're still here, we are collecting a floating point number
         %if ch = '.' %start
  03B0 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 03B6 3D 2E 00 00 00                  CMP EAX, 46
- 03BB 75 00                           JNE L 1035
+ 03B6 3D 2E 00 00 00                  CMP EAX,46
+ 03BB 75 00                           JNE L1035
             skip symbol
- 03BD E8 2F 00                        CALL 'SKIPSYMBOL' (EXTERN  47)
+ 03BD E8 2A 00                        CALL 'SKIPSYMBOL' (EXTERN 42)
             frac = 0
  03C0 D9 EE                           FLDZ
  03C2 DD 9D C4 FE FF FF               FSTP QWORD [EBP-316]
@@ -395,115 +431,119 @@
  03CE DD 9D CC FE FF FF               FSTP QWORD [EBP-308]
 
             %cycle
- 03D4                      L 1036  EQU $
+ 03D4                      L1036  EQU $
                 ch = next symbol
- 03D4 E8 1E 00                        CALL 'NEXTSYMBOL' (EXTERN  30)
+ 03D4 E8 19 00                        CALL 'NEXTSYMBOL' (EXTERN 25)
  03D7 89 85 F8 FE FF FF               MOV [EBP-264],EAX
                 %exit %unless '0' <= ch <= '9'
  03DD 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 03E3 3D 30 00 00 00                  CMP EAX, 48
- 03E8 7C 00                           JL L 1037
- 03EA 3D 39 00 00 00                  CMP EAX, 57
- 03EF 7E 00                           JLE L 1038
- 03F1                      L 1037  EQU $
- 03F1 EB 00                           JMP L 1039
- 03F3                      L 1038  EQU $
+ 03E3 3D 30 00 00 00                  CMP EAX,48
+ 03E8 7C 00                           JL L1037
+ 03EA 3D 39 00 00 00                  CMP EAX,57
+ 03EF 7E 00                           JLE L1038
+ 03F1                      L1037  EQU $
+ 03F1 EB 00                           JMP L1039
+ 03F3                      L1038  EQU $
                 frac = frac + (ch - '0')/exp
  03F3 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
- 03F9 2D 30 00 00 00                  SUB EAX, 48
+ 03F9 2D 30 00 00 00                  SUB EAX,48
  03FE 89 85 A4 FE FF FF               MOV [EBP-348],EAX
  0404 DB 85 A4 FE FF FF               FILD [EBP-348]
  040A DD 85 CC FE FF FF               FLD QWORD [EBP-308]
- 0410 DE F9                           FDIVP ST( 1),ST
+ 0410 DE F9                           FDIVP ST(1),ST
  0412 DD 85 C4 FE FF FF               FLD QWORD [EBP-316]
- 0418 DE C1                           FADDP ST( 1),ST
+ 0418 DE C1                           FADDP ST(1),ST
  041A DD 9D C4 FE FF FF               FSTP QWORD [EBP-316]
                 exp = exp*10
  0420 DD 85 CC FE FF FF               FLD QWORD [EBP-308]
  0426 DB 05 10 00 00 00               FILD [COT+0010]
- 042C DE C9                           FMULP ST( 1),ST
+ 042C DE C9                           FMULP ST(1),ST
  042E DD 9D CC FE FF FF               FSTP QWORD [EBP-308]
                 found = 1
- 0434 C7 85 DC FE FF FF 01 00         MOV WORD [EBP-292], 1
+ 0434 C7 85 DC FE FF FF 01 00         MOV WORD [EBP-292],1
                 skip symbol
- 043E E8 2F 00                        CALL 'SKIPSYMBOL' (EXTERN  47)
+ 043E E8 2A 00                        CALL 'SKIPSYMBOL' (EXTERN 42)
             %repeat
- 0441 EB 00                           JMP L 1036
- 0443                      L 1039  EQU $
+ 0441 EB 00                           JMP L1036
+ 0443                      L1039  EQU $
 
             r = r + frac
  0443 DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  0449 DD 85 C4 FE FF FF               FLD QWORD [EBP-316]
- 044F DE C1                           FADDP ST( 1),ST
+ 044F DE C1                           FADDP ST(1),ST
  0451 DD 9D D4 FE FF FF               FSTP QWORD [EBP-300]
         %finish
- 0457                      L 1035  EQU $
+ 0457                      L1035  EQU $
 
         ! We should really worry about @Exponent at this point...
         ! ... add that to the to-do list!
 
         %signal 3,1,ch %if found = 0
  0457 8B 85 DC FE FF FF               MOV EAX,[EBP-292]
- 045D 3D 00 00 00 00                  CMP EAX, 0
- 0462 75 00                           JNE L 1040
- 0464 B8 03 00 00 00                  MOV EAX, 3
+ 045D 3D 00 00 00 00                  CMP EAX,0
+ 0462 75 00                           JNE L1040
+ 0464 B8 03 00 00 00                  MOV EAX,3
  0469 50                              PUSH EAX
  046A 8B 85 F8 FE FF FF               MOV EAX,[EBP-264]
  0470 50                              PUSH EAX
- 0471 B8 01 00 00 00                  MOV EAX, 1
+ 0471 B8 01 00 00 00                  MOV EAX,1
  0476 50                              PUSH EAX
- 0477 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 047A 83 C4 0C                        ADD ESP, 12
- 047D                      L 1040  EQU $
+ 0477 E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 047A 83 C4 0C                        ADD ESP,12
+ 047D                      L1040  EQU $
 
         %if type = float %and r > MaxFloat %then %signal 1,2
  047D 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
- 0483 3D 02 00 00 00                  CMP EAX, 2
- 0488 75 00                           JNE L 1041
+ 0483 3D 02 00 00 00                  CMP EAX,2
+ 0488 75 00                           JNE L1041
  048A DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  0490 DD 05 00 00 00 00               FLD QWORD [COT+0000]
- 0496 DE D9                           FCOMPP ST( 1),ST
+ 0496 DE D9                           FCOMPP ST(1),ST
  0498 DF E0                           FSTSW AX
  049A 9E                              SAHF
- 049B 73 00                           JAE L 1041
- 049D B8 01 00 00 00                  MOV EAX, 1
+ 049B 73 00                           JAE L1041
+ 049D B8 01 00 00 00                  MOV EAX,1
  04A2 50                              PUSH EAX
  04A3 31 C0                           XOR EAX,EAX
  04A5 50                              PUSH EAX
- 04A6 B8 02 00 00 00                  MOV EAX, 2
+ 04A6 B8 02 00 00 00                  MOV EAX,2
  04AB 50                              PUSH EAX
- 04AC E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN  11)
- 04AF 83 C4 0C                        ADD ESP, 12
- 04B2                      L 1041  EQU $
+ 04AC E8 0B 00                        CALL '_IMPSIGNAL' (EXTERN 11)
+ 04AF 83 C4 0C                        ADD ESP,12
+ 04B2                      L1041  EQU $
 
         %if sign = '-' %start
  04B2 8B 85 F4 FE FF FF               MOV EAX,[EBP-268]
- 04B8 3D 2D 00 00 00                  CMP EAX, 45
- 04BD 75 00                           JNE L 1042
+ 04B8 3D 2D 00 00 00                  CMP EAX,45
+ 04BD 75 00                           JNE L1042
             r = -r
  04BF DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
- 04C5 D9 E0                           FCHS ST( 0),ST
+ 04C5 D9 E0                           FCHS ST(0),ST
  04C7 DD 9D D4 FE FF FF               FSTP QWORD [EBP-300]
         %finish
- 04CD                      L 1042  EQU $
+ 04CD                      L1042  EQU $
 
         %if type = float %start
  04CD 8B 85 E4 FE FF FF               MOV EAX,[EBP-284]
- 04D3 3D 02 00 00 00                  CMP EAX, 2
- 04D8 75 00                           JNE L 1043
+ 04D3 3D 02 00 00 00                  CMP EAX,2
+ 04D8 75 00                           JNE L1043
             real(adr) = r
+                                      Generating CODE for 'REAL' (MACRO 9)
+                                      CALL 'REAL' (MACRO 9)
  04DA 8B BD E8 FE FF FF               MOV EDI,[EBP-280]
  04E0 DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  04E6 D9 1F                           FSTP DWORD [EDI]
         %else
- 04E8 EB 00                           JMP L 1044
- 04EA                      L 1043  EQU $
+ 04E8 EB 00                           JMP L1044
+ 04EA                      L1043  EQU $
             long real(adr) = r
+                                      Generating CODE for 'LONG REAL' (MACRO 10)
+                                      CALL 'LONG REAL' (MACRO 10)
  04EA 8B 9D E8 FE FF FF               MOV EBX,[EBP-280]
  04F0 DD 85 D4 FE FF FF               FLD QWORD [EBP-300]
  04F6 DD 1B                           FSTP QWORD [EBX]
         %finish
- 04F8                      L 1044  EQU $
+ 04F8                      L1044  EQU $
     %end
  04F8 C9                              LEAVE
  04F9 C3                              RET

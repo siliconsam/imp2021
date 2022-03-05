@@ -6,33 +6,37 @@
     %external %integer %name %function %spec getarguments
 
     %external %integer %function getargcount
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
         %integer %name arr
         %integer count
 
         arr == getarguments
- 0004 E8 62 00                        CALL 'GETARGUMENTS' (EXTERN  98)
+ 0004 E8 5D 00                        CALL 'GETARGUMENTS' (EXTERN 93)
  0007 89 45 F8                        MOV [EBP-8],EAX
 
         count = 0
- 000A C7 45 F4 00 00 00 00            MOV WORD [EBP-12], 0
+ 000A C7 45 F4 00 00 00 00            MOV WORD [EBP-12],0
         ! Find the count of environment variables
         ! We treat an address as a 4-byte unsigned value
         ! In this case we are only concerned about zero v non-zero values
         %while integer( addr( arr ) + WORDSIZE*count ) # 0 %cycle
- 0011                      L 1001  EQU $
+ 0011                      L1001  EQU $
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
  0011 8B 45 F4                        MOV EAX,[EBP-12]
- 0014 C1 E0 02                        SHL EAX, 2
+ 0014 C1 E0 02                        SHL EAX,2
  0017 03 45 F8                        ADD EAX,[EBP-8]
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
  001A 8B 00                           MOV EAX,[EAX]
- 001C 3D 00 00 00 00                  CMP EAX, 0
- 0021 74 00                           JE L 1002
+ 001C 3D 00 00 00 00                  CMP EAX,0
+ 0021 74 00                           JE L1002
             count = count + 1
  0023 FF 45 F4                        INC WORD [EBP-12]
         %repeat
- 0026 EB 00                           JMP L 1001
- 0028                      L 1002  EQU $
+ 0026 EB 00                           JMP L1001
+ 0028                      L1002  EQU $
 
         %result = count
  0028 8B 45 F4                        MOV EAX,[EBP-12]
@@ -41,30 +45,38 @@
     %end
 
     %external %string(255) %function getarg( %integer index )
- 002D                      L 1003  EQU $
- 002D C8 00 00 01                     ENTER 0000, 1
+ 002D                      L1003  EQU $
+ 002D C8 00 00 01                     ENTER 0000,1
         %integer i,len
         %byte %name b,src
         %string(255) s
 
         length(s) = 0
- 0031 C6 85 EC FE FF FF 00            MOV BYTE [EBP-276], 0
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
+ 0031 C6 85 EC FE FF FF 00            MOV BYTE [EBP-276],0
 
         %if (0 <= index < getargcount) %start
- 0038 8B 45 0C                        MOV EAX,[EBP+ 12]
- 003B 3D 00 00 00 00                  CMP EAX, 0
- 0040 7C 00                           JL L 1004
+ 0038 8B 45 0C                        MOV EAX,[EBP+12]
+ 003B 3D 00 00 00 00                  CMP EAX,0
+ 0040 7C 00                           JL L1004
  0042 89 85 E8 FE FF FF               MOV [EBP-280],EAX
- 0048 E8 00 00                        CALL 'GETARGCOUNT' (INTERNAL L 1000 )
+ 0048 E8 00 00                        CALL 'GETARGCOUNT' (INTERNAL L1000 )
  004B 8B 8D E8 FE FF FF               MOV ECX,[EBP-280]
  0051 39 C1                           CMP ECX,EAX
- 0053 7D 00                           JGE L 1004
+ 0053 7D 00                           JGE L1004
             ! get the pointer (aka "name") to the C-style char array
             b == byteinteger( integer( addr(getarguments) + WORDSIZE*index ) )
- 0055 E8 62 00                        CALL 'GETARGUMENTS' (EXTERN  98)
- 0058 8B 4D 0C                        MOV ECX,[EBP+ 12]
- 005B C1 E1 02                        SHL ECX, 2
+ 0055 E8 5D 00                        CALL 'GETARGUMENTS' (EXTERN 93)
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0058 8B 4D 0C                        MOV ECX,[EBP+12]
+ 005B C1 E1 02                        SHL ECX,2
  005E 01 C1                           ADD ECX,EAX
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
  0060 8B 09                           MOV ECX,[ECX]
  0062 89 4D F0                        MOV [EBP-16],ECX
 
@@ -75,15 +87,19 @@
             ! Also, I should use len as a 32-bit UNSIGNED integer
             ! and defend against negative values!!
             len = 0
- 0065 C7 45 F4 00 00 00 00            MOV WORD [EBP-12], 0
+ 0065 C7 45 F4 00 00 00 00            MOV WORD [EBP-12],0
             %while byteinteger( addr( b ) + len ) # 0 %cycle
- 006C                      L 1005  EQU $
+ 006C                      L1005  EQU $
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
  006C 8B 45 F0                        MOV EAX,[EBP-16]
  006F 03 45 F4                        ADD EAX,[EBP-12]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
  0072 8A 00                           MOV AL,[EAX]
- 0074 25 FF 00 00 00                  AND EAX, 255
- 0079 3D 00 00 00 00                  CMP EAX, 0
- 007E 74 00                           JE L 1006
+ 0074 25 FF 00 00 00                  AND EAX,255
+ 0079 3D 00 00 00 00                  CMP EAX,0
+ 007E 74 00                           JE L1006
                 len = len + BYTESIZE
  0080 FF 45 F4                        INC WORD [EBP-12]
 
@@ -91,16 +107,16 @@
                 %if (len = -1) %start
  0083 8B 45 F4                        MOV EAX,[EBP-12]
  0086 3D FF FF FF FF                  CMP EAX,-1
- 008B 75 00                           JNE L 1007
+ 008B 75 00                           JNE L1007
                     len = 0
- 008D C7 45 F4 00 00 00 00            MOV WORD [EBP-12], 0
+ 008D C7 45 F4 00 00 00 00            MOV WORD [EBP-12],0
                     %exit
- 0094 EB 00                           JMP L 1006
+ 0094 EB 00                           JMP L1006
                 %finish
- 0096                      L 1007  EQU $
+ 0096                      L1007  EQU $
             %repeat
- 0096 EB 00                           JMP L 1005
- 0098                      L 1006  EQU $
+ 0096 EB 00                           JMP L1005
+ 0098                      L1006  EQU $
 
             ! Now obtain the actual C string
             ! Beware! IMP is restricted to 255 characters at most
@@ -110,45 +126,57 @@
             %for i = 1,1,len %cycle
  0098 8B 45 F4                        MOV EAX,[EBP-12]
  009B 89 85 E4 FE FF FF               MOV [EBP-284],EAX
- 00A1 C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
- 00A8                      L 1008  EQU $
+ 00A1 C7 45 F8 00 00 00 00            MOV WORD [EBP-8],0
+ 00A8                      L1008  EQU $
  00A8 8B 45 F8                        MOV EAX,[EBP-8]
  00AB 3B 85 E4 FE FF FF               CMP EAX,[EBP-284]
- 00B1 74 00                           JE L 1009
+ 00B1 74 00                           JE L1009
  00B3 40                              INC EAX
  00B4 89 45 F8                        MOV [EBP-8],EAX
                 src == byteinteger( addr( b ) + BYTESIZE*(i - 1) )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
  00B7 8B 45 F8                        MOV EAX,[EBP-8]
  00BA 48                              DEC EAX
  00BB 03 45 F0                        ADD EAX,[EBP-16]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
  00BE 89 45 EC                        MOV [EBP-20],EAX
 
                 ! yes to both conditions met so append the current char
                 length(s) = length(s) + 1
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
  00C1 FE 85 EC FE FF FF               INC BYTE [EBP-276]
                 charno( s, length(s) ) = src
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
+                                      Generating CODE for 'CHARNO' (MACRO 12)
  00C7 8D 85 EC FE FF FF               LEA EAX,[EBP-276]
  00CD 31 C9                           XOR ECX,ECX
  00CF 8A 8D EC FE FF FF               MOV CL,[EBP-276]
  00D5 01 C8                           ADD EAX,ECX
+                                      CALL 'CHARNO' (MACRO 12)
  00D7 8B 75 EC                        MOV ESI,[EBP-20]
  00DA 8A 0E                           MOV CL,[ESI]
  00DC 88 08                           MOV [EAX],CL
             %repeat
- 00DE EB 00                           JMP L 1008
- 00E0                      L 1009  EQU $
+ 00DE EB 00                           JMP L1008
+ 00E0                      L1009  EQU $
 
         %finish
- 00E0                      L 1004  EQU $
+ 00E0                      L1004  EQU $
 
         %result = s
- 00E0 8B 45 08                        MOV EAX,[EBP+ 8]
+ 00E0 8B 45 08                        MOV EAX,[EBP+8]
  00E3 50                              PUSH EAX
  00E4 8D 8D EC FE FF FF               LEA ECX,[EBP-276]
  00EA 51                              PUSH ECX
- 00EB 68 FF 00 00 00                  PUSH  255
- 00F0 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN  3)
- 00F3 83 C4 0C                        ADD ESP, 12
+ 00EB 68 FF 00 00 00                  PUSH 255
+ 00F0 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
+ 00F3 83 C4 0C                        ADD ESP,12
  00F6 C9                              LEAVE
  00F7 C3                              RET
     %end

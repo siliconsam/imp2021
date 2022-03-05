@@ -1541,7 +1541,7 @@
   1535  act(181):   atom1 = amap(decl&15);                     ! dummy
   1536              ->more
   1537  
-  1538  act(182):   class = escdec;  g = glink(g)!escape;
+  1538  act(182):   class = escdec;  g = glink(g)!escape;      ! an example of ! as an operator
   1539              decl = 0;  otype = 0;  ->esc;              ! decl
   1540  
   1541  act(199):   ;                                          ! compile

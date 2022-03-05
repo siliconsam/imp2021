@@ -644,11 +644,11 @@
   640          flush( out_streams( out_current stream )_handle )
   641      %end
   642  
-  643      %own %string(31) prompt = "prompt ->"
+  643      %own %string(31) input prompt = "prompt ->"
   644      %own %integer tty needs a prompt = 1
   645  
-  646      %external %routine set prompt( %string(31) s )
-  647          prompt = s
+  646      %external %routine prompt( %string(31) s )
+  647          input prompt = s
   648      %end
   649  
   650      %external %integer %function next symbol
@@ -665,8 +665,8 @@
   661                  %if (tty needs a prompt # 0) %start
   662                      tty needs a prompt = 0;
   663  
-  664                      %for i = 1,1,length( prompt ) %cycle
-  665                          put char( error stream_handle, charno( prompt, i ) )
+  664                      %for i = 1,1,length( input prompt ) %cycle
+  665                          put char( error stream_handle, charno( input prompt, i ) )
   666                      %repeat
   667  
   668                  %finish
@@ -678,100 +678,109 @@
   674  
   675              ! NL => we should prompt next time
   676              %if (in_current stream = 0) %and (ch = nl) %then tty needs a prompt = 1;
-  677          %finish
-  678          
-  679          %result = in_streams( in_current stream )_lookahead
-  680      %end
-  681  
-  682      %external %routine read symbol( %integer %name s )
-  683          %if need to initialise %then initialise io
-  684  
-  685          s = next symbol
-  686          in_streams( in_current stream )_lookahead = -1
-  687      %end
-  688  
-  689      %external %routine print symbol( %integer c )
-  690          %if need to initialise %then initialise io
-  691  
-  692          %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
-  693          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
-  694  
-  695          ! Not sure what the official IMP behaviour is for output on a closed file.
-  696          ! We choose to silently ignore it...
-  697          ! check file open before writing?
-  698          %if (out_streams( out_current stream )_handle # 0) %start
-  699              put char( out_streams( out_current stream )_handle, c)
-  700              %if (c = nl) %then flush output 
-  701          %finish
-  702      %end
-  703  
-  704      %external %routine print real( %long %real d )
-  705          %if need to initialise %then initialise io
-  706  
-  707          %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
-  708          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
-  709  
-  710          ! Not sure what the official IMP behaviour is for output on a closed file.
-  711          ! We choose to silently ignore it...
-  712          ! check file open before writing?
-  713          %if (out_streams( out_current stream )_handle # 0) %then put double( out_streams( out_current stream )_handle, d)
-  714      %end
-  715  
-  716      %routine parse list( %string(255) list, %integer direction)
-  717          %string(255) x,a,c,mode,file
-  718          %integer streamid
-  719  
-  720          x = list
-  721          streamid = 1
-  722          %while length(x) > 0 %cycle
-  723  
-  724              %exit %unless (streamid <= get max stream)
-  725  
-  726              ! split the comma separated list
-  727              length(a) = 0
-  728              length(c) = 0
-  729              x->a.(",").c
-  730  
-  731              %exit %unless length(a) > 0
+  677  
+  678              ! Are we attempting to read after the end of file
+  679              %signal 9,0, in_current stream %if (ch < 0)        
+  680  
+  681          %finish
+  682          
+  683          %result = in_streams( in_current stream )_lookahead
+  684      %end
+  685  
+  686      %external %routine read symbol( %integer %name ch )
+  687  
+  688          %if need to initialise %then initialise io
+  689  
+  690          ch = next symbol
+  691          in_streams( in_current stream )_lookahead = -1
+  692  
+  693          ! Are we attempting to read after the end of file
+  694          %signal 9,1, in_current stream %if (ch < 0)        
+  695  
+  696      %end
+  697  
+  698      %external %routine print symbol( %integer c )
+  699          %if need to initialise %then initialise io
+  700  
+  701          %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
+  702          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  703  
+  704          ! Not sure what the official IMP behaviour is for output on a closed file.
+  705          ! We choose to silently ignore it...
+  706          ! check file open before writing?
+  707          %if (out_streams( out_current stream )_handle # 0) %start
+  708              put char( out_streams( out_current stream )_handle, c)
+  709              %if (c = nl) %then flush output 
+  710          %finish
+  711      %end
+  712  
+  713      %external %routine print real( %long %real d )
+  714          %if need to initialise %then initialise io
+  715  
+  716          %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
+  717          %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+  718  
+  719          ! Not sure what the official IMP behaviour is for output on a closed file.
+  720          ! We choose to silently ignore it...
+  721          ! check file open before writing?
+  722          %if (out_streams( out_current stream )_handle # 0) %then put double( out_streams( out_current stream )_handle, d)
+  723      %end
+  724  
+  725      %routine parse list( %string(255) list, %integer direction)
+  726          %string(255) x,a,c,mode,file
+  727          %integer streamid
+  728  
+  729          x = list
+  730          streamid = 1
+  731          %while length(x) > 0 %cycle
   732  
-  733              file = a
-  734              length(mode) = 0
-  735              %if (charno(a,length(a)) = 'b') %and (charno(a,length(a) - 1 ) = ':') %start
-  736                  length(file) = length(file) - 2
-  737                  mode = ":b"
-  738              %finish
+  733              %exit %unless (streamid <= get max stream)
+  734  
+  735              ! split the comma separated list
+  736              length(a) = 0
+  737              length(c) = 0
+  738              x->a.(",").c
   739  
-  740              %exit %unless length( file ) > 0
+  740              %exit %unless length(a) > 0
   741  
-  742              %if length(mode) = 0 %start
-  743                  %if (direction = FILE IN) %then open input( streamid, file )
-  744                  %if (direction = FILE OUT) %then open output( streamid, file )
-  745              %finish %else %start
-  746                  %if (direction = FILE IN) %then open binary input( streamid, file )
-  747                  %if (direction = FILE OUT) %then open binary output( streamid, file )
-  748              %finish
-  749                  
-  750              x = c
-  751              streamid = streamid + 1
-  752          %repeat
-  753      %end
-  754  
-  755      %external %integer %function split io list ( %string(255) io list )
-  756          %string(255) s,a,b,c
-  757  
-  758          s = io list
-  759          length(a) = 0
-  760          b = tostring(FILE SEP)
-  761          length(c) = 0
-  762  
-  763          s -> a.(b).c
-  764  
-  765          %if length( a ) > 0 %then parse list( a, FILE IN )
-  766          %if length( c ) > 0 %then parse list( c, FILE OUT )
-  767  
-  768          %result = 0
-  769      %end
-  770  
-  771  %endoffile
+  742              file = a
+  743              length(mode) = 0
+  744              %if (charno(a,length(a)) = 'b') %and (charno(a,length(a) - 1 ) = ':') %start
+  745                  length(file) = length(file) - 2
+  746                  mode = ":b"
+  747              %finish
+  748  
+  749              %exit %unless length( file ) > 0
+  750  
+  751              %if length(mode) = 0 %start
+  752                  %if (direction = FILE IN) %then open input( streamid, file )
+  753                  %if (direction = FILE OUT) %then open output( streamid, file )
+  754              %finish %else %start
+  755                  %if (direction = FILE IN) %then open binary input( streamid, file )
+  756                  %if (direction = FILE OUT) %then open binary output( streamid, file )
+  757              %finish
+  758                  
+  759              x = c
+  760              streamid = streamid + 1
+  761          %repeat
+  762      %end
+  763  
+  764      %external %integer %function split io list ( %string(255) io list )
+  765          %string(255) s,a,b,c
+  766  
+  767          s = io list
+  768          length(a) = 0
+  769          b = tostring(FILE SEP)
+  770          length(c) = 0
+  771  
+  772          s -> a.(b).c
+  773  
+  774          %if length( a ) > 0 %then parse list( a, FILE IN )
+  775          %if length( c ) > 0 %then parse list( c, FILE OUT )
+  776  
+  777          %result = 0
+  778      %end
+  779  
+  780  %endoffile
 
-  527 Statements compiled
+  529 Statements compiled

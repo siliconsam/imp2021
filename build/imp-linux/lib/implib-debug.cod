@@ -3,26 +3,26 @@
     %own %integer debuglevel = 0
 
     %external %routine Set Debug
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
         debuglevel = dbgprog
- 0004 C7 05 00 00 00 00 01 00         MOV WORD [DATA+0000], 1
+ 0004 C7 05 00 00 00 00 01 00         MOV WORD [DATA+0000],1
     %end
  000E C9                              LEAVE
  000F C3                              RET
 
     %external %routine Clear Debug
- 0010                      L 1001  EQU $
- 0010 C8 00 00 01                     ENTER 0000, 1
+ 0010                      L1001  EQU $
+ 0010 C8 00 00 01                     ENTER 0000,1
         debuglevel = dbgoff
- 0014 C7 05 00 00 00 00 00 00         MOV WORD [DATA+0000], 0
+ 0014 C7 05 00 00 00 00 00 00         MOV WORD [DATA+0000],0
     %end
  001E C9                              LEAVE
  001F C3                              RET
 
     %external %integer %fn Debug Mode
- 0020                      L 1002  EQU $
- 0020 C8 00 00 01                     ENTER 0000, 1
+ 0020                      L1002  EQU $
+ 0020 C8 00 00 01                     ENTER 0000,1
         %result = debuglevel
  0024 A1 00 00 00 00                  MOV EAX,[DATA+0000]
  0029 C9                              LEAVE
@@ -30,10 +30,10 @@
     %end
 
     %external %routine Set Debug Level( %integer level )
- 002B                      L 1003  EQU $
- 002B C8 00 00 01                     ENTER 0000, 1
+ 002B                      L1003  EQU $
+ 002B C8 00 00 01                     ENTER 0000,1
         debuglevel = level
- 002F 8B 45 08                        MOV EAX,[EBP+ 8]
+ 002F 8B 45 08                        MOV EAX,[EBP+8]
  0032 89 05 00 00 00 00               MOV [DATA+0000],EAX
     %end
  0038 C9                              LEAVE
@@ -41,84 +41,88 @@
 
 {----------------------------------------------------------------------------}
     %external %routine debug space
- 003A                      L 1004  EQU $
- 003A C8 00 00 01                     ENTER 0000, 1
+ 003A                      L1004  EQU $
+ 003A C8 00 00 01                     ENTER 0000,1
         debugsymbol( ' ' )
- 003E 6A 20                           PUSH  32
- 0040 E8 2D 00                        CALL 'DEBUGSYMBOL' (EXTERN  45)
- 0043 83 C4 04                        ADD ESP, 4
+ 003E 6A 20                           PUSH 32
+ 0040 E8 28 00                        CALL 'DEBUGSYMBOL' (EXTERN 40)
+ 0043 83 C4 04                        ADD ESP,4
     %end
  0046 C9                              LEAVE
  0047 C3                              RET
 
     %external %routine debug spaces( %integer count )
- 0048                      L 1005  EQU $
- 0048 C8 00 00 01                     ENTER 0000, 1
+ 0048                      L1005  EQU $
+ 0048 C8 00 00 01                     ENTER 0000,1
         %integer i
 
         %if (count > 0) %start
- 004C 8B 45 08                        MOV EAX,[EBP+ 8]
- 004F 3D 00 00 00 00                  CMP EAX, 0
- 0054 7E 00                           JLE L 1006
+ 004C 8B 45 08                        MOV EAX,[EBP+8]
+ 004F 3D 00 00 00 00                  CMP EAX,0
+ 0054 7E 00                           JLE L1006
             %for i = 1,1,count %cycle
- 0056 8B 45 08                        MOV EAX,[EBP+ 8]
+ 0056 8B 45 08                        MOV EAX,[EBP+8]
  0059 89 45 F4                        MOV [EBP-12],EAX
- 005C C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
- 0063                      L 1007  EQU $
+ 005C C7 45 F8 00 00 00 00            MOV WORD [EBP-8],0
+ 0063                      L1007  EQU $
  0063 8B 45 F8                        MOV EAX,[EBP-8]
  0066 3B 45 F4                        CMP EAX,[EBP-12]
- 0069 74 00                           JE L 1008
+ 0069 74 00                           JE L1008
  006B 40                              INC EAX
  006C 89 45 F8                        MOV [EBP-8],EAX
                 debug space
- 006F E8 00 00                        CALL 'DEBUGSPACE' (INTERNAL L 1004 )
+ 006F E8 00 00                        CALL 'DEBUGSPACE' (INTERNAL L1004 )
             %repeat
- 0072 EB 00                           JMP L 1007
- 0074                      L 1008  EQU $
+ 0072 EB 00                           JMP L1007
+ 0074                      L1008  EQU $
         %finish
- 0074                      L 1006  EQU $
+ 0074                      L1006  EQU $
     %end
  0074 C9                              LEAVE
  0075 C3                              RET
 
     %external %routine debug string ( %string(255) s )
- 0076                      L 1009  EQU $
- 0076 C8 00 00 01                     ENTER 0000, 1
+ 0076                      L1009  EQU $
+ 0076 C8 00 00 01                     ENTER 0000,1
         %integer i
 
         %for i=1,1,length(s) %cycle
+                                      Generating CODE for 'LENGTH' (MACRO 11)
+                                      CALL 'LENGTH' (MACRO 11)
  007A 31 C0                           XOR EAX,EAX
- 007C 8A 45 08                        MOV AL,[EBP+ 8]
+ 007C 8A 45 08                        MOV AL,[EBP+8]
  007F 89 45 F4                        MOV [EBP-12],EAX
- 0082 C7 45 F8 00 00 00 00            MOV WORD [EBP-8], 0
- 0089                      L 1010  EQU $
+ 0082 C7 45 F8 00 00 00 00            MOV WORD [EBP-8],0
+ 0089                      L1010  EQU $
  0089 8B 45 F8                        MOV EAX,[EBP-8]
  008C 3B 45 F4                        CMP EAX,[EBP-12]
- 008F 74 00                           JE L 1011
+ 008F 74 00                           JE L1011
  0091 40                              INC EAX
  0092 89 45 F8                        MOV [EBP-8],EAX
             debug symbol( charno(s,i))
- 0095 8D 45 08                        LEA EAX,[EBP+ 8]
+                                      Generating CODE for 'CHARNO' (MACRO 12)
+ 0095 8D 45 08                        LEA EAX,[EBP+8]
  0098 03 45 F8                        ADD EAX,[EBP-8]
+                                      CALL 'CHARNO' (MACRO 12)
  009B 8A 00                           MOV AL,[EAX]
- 009D 25 FF 00 00 00                  AND EAX, 255
+ 009D 25 FF 00 00 00                  AND EAX,255
  00A2 50                              PUSH EAX
- 00A3 E8 2D 00                        CALL 'DEBUGSYMBOL' (EXTERN  45)
- 00A6 83 C4 04                        ADD ESP, 4
+ 00A3 E8 28 00                        CALL 'DEBUGSYMBOL' (EXTERN 40)
+ 00A6 83 C4 04                        ADD ESP,4
         %repeat
- 00A9 EB 00                           JMP L 1010
- 00AB                      L 1011  EQU $
+ 00A9 EB 00                           JMP L1010
+ 00AB                      L1011  EQU $
     %end
  00AB C9                              LEAVE
  00AC C3                              RET
 
     %external %routine debug newline
- 00AD                      L 1012  EQU $
- 00AD C8 00 00 01                     ENTER 0000, 1
+ 00AD                      L1012  EQU $
+ 00AD C8 00 00 01                     ENTER 0000,1
         debug symbol( nl )
- 00B1 6A 0A                           PUSH  10
- 00B3 E8 2D 00                        CALL 'DEBUGSYMBOL' (EXTERN  45)
- 00B6 83 C4 04                        ADD ESP, 4
+ 00B1 6A 0A                           PUSH 10
+ 00B3 E8 28 00                        CALL 'DEBUGSYMBOL' (EXTERN 40)
+ 00B6 83 C4 04                        ADD ESP,4
     %end
  00B9 C9                              LEAVE
  00BA C3                              RET

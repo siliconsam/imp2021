@@ -1,14 +1,14 @@
 {----------------------------------------------------------------------------}
     %external %routine skipsymbol
- 0000                      L 1000  EQU $
- 0000 C8 00 00 01                     ENTER 0000, 1
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                     ENTER 0000,1
         %integer trash
 
         readsymbol(trash)
  0004 8D 45 F8                        LEA EAX,[EBP-8]
  0007 50                              PUSH EAX
- 0008 E8 1D 00                        CALL 'READSYMBOL' (EXTERN  29)
- 000B 83 C4 04                        ADD ESP, 4
+ 0008 E8 18 00                        CALL 'READSYMBOL' (EXTERN 24)
+ 000B 83 C4 04                        ADD ESP,4
     %end
  000E C9                              LEAVE
  000F C3                              RET
