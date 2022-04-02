@@ -1,17 +1,0 @@
-         Edinburgh IMP77 Compiler - Version 8.4
-
-   1  {----------------------------------------------------------------------------}
-   2      %external %routine To Lower(%string(*)%name s)
-   3          %integer i
-   4          %byte %name p
-   5  
-   6          %for i=1,1,length(s) %cycle
-   7              p == charno(s,i)
-   8              %if 'A' <= p <= 'Z' %then p = p + ('a'-'A')
-   9          %repeat
-   10      %end
-   11  
-   12  {----------------------------------------------------------------------------}
-   13  %endoffile
-
-   9 Statements compiled

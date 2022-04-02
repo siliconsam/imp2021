@@ -1,14 +1,0 @@
-         Edinburgh IMP77 Compiler - Version 8.4
-
-   1  {----------------------------------------------------------------------------}
-   2      %external %routine newlines( %integer count )
-   3          %while count > 0 %cycle
-   4              printsymbol(nl)
-   5              count = count - 1
-   6          %repeat
-   7      %end
-   8  
-   9  {----------------------------------------------------------------------------}
-   10  %endoffile
-
-   7 Statements compiled
