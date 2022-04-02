@@ -1,0 +1,102 @@
+    %external %long %real %fn %spec C Lib Cos %alias "cos" ( %longreal r)
+    %external %long %real %fn %spec C Lib Sine %alias "sin" ( %longreal r)
+
+{----------------------------------------------------------------------------}
+    ! Simple trig library functions to demonstrate
+    ! how to cross-link with the C library functions
+    ! Copyright 2002 NB Information Limited
+    !
+    ! Declare useful trignometry functions
+    !
+    %external %long %real %function cosine(%longreal r)
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                           ENTER 0000,1
+
+        %if |r| > 30000 %then %signal 10,1,5
+ 0004 DD 45 08                              FLD QWORD [EBP+8]
+ 0007 D9 E1                                 FABS ST(0),ST
+ 0009 DB 05 00 00 00 00                     FILD [COT+0000]
+ 000F DE D9                                 FCOMPP ST(1),ST
+ 0011 DF E0                                 FSTSW AX
+ 0013 9E                                    SAHF
+ 0014 73 00                                 JAE L1001
+ 0016 B8 0D 00 00 00                        MOV EAX,13
+ 001B 50                                    PUSH EAX
+ 001C B8 0A 00 00 00                        MOV EAX,10
+ 0021 50                                    PUSH EAX
+ 0022 B8 01 00 00 00                        MOV EAX,1
+ 0027 50                                    PUSH EAX
+ 0028 B8 05 00 00 00                        MOV EAX,5
+ 002D 50                                    PUSH EAX
+ 002E E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 0031 83 C4 10                              ADD ESP,16
+ 0034                      L1001  EQU $
+
+        %result = C Lib Cos(r)
+ 0034 DD 45 08                              FLD QWORD [EBP+8]
+ 0037 83 EC 08                              SUB ESP,8
+ 003A 89 E6                                 MOV ESI,ESP
+ 003C DD 1E                                 FSTP QWORD [ESI]
+ 003E E8 64 00                              CALL 'CLIBCOS' (EXTERN 100)
+ 0041 83 C4 08                              ADD ESP,8
+ 0044 C9                                    LEAVE
+ 0045 C3                                    RET
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    ! Simple trig library functions to demonstrate
+    ! how to cross-link with the C library functions
+    ! Copyright 2002 NB Information Limited
+    !
+    ! Declare useful trignometry functions
+    !
+    %external %long %real %function sine(%longreal r)
+ 0046                      L1002  EQU $
+ 0046 C8 00 00 01                           ENTER 0000,1
+
+        ! Slightly arbitrary - the C library tries to work with larger values,
+        ! but this demonstrates keeping the error case in the IMP world
+        %if |r| > 30000 %then %signal 10,1,5
+ 004A DD 45 08                              FLD QWORD [EBP+8]
+ 004D D9 E1                                 FABS ST(0),ST
+ 004F DB 05 00 00 00 00                     FILD [COT+0000]
+ 0055 DE D9                                 FCOMPP ST(1),ST
+ 0057 DF E0                                 FSTSW AX
+ 0059 9E                                    SAHF
+ 005A 73 00                                 JAE L1003
+ 005C B8 1D 00 00 00                        MOV EAX,29
+ 0061 50                                    PUSH EAX
+ 0062 B8 0A 00 00 00                        MOV EAX,10
+ 0067 50                                    PUSH EAX
+ 0068 B8 01 00 00 00                        MOV EAX,1
+ 006D 50                                    PUSH EAX
+ 006E B8 05 00 00 00                        MOV EAX,5
+ 0073 50                                    PUSH EAX
+ 0074 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 0077 83 C4 10                              ADD ESP,16
+ 007A                      L1003  EQU $
+
+        %result = C Lib Sine(r)
+ 007A DD 45 08                              FLD QWORD [EBP+8]
+ 007D 83 EC 08                              SUB ESP,8
+ 0080 89 E7                                 MOV EDI,ESP
+ 0082 DD 1F                                 FSTP QWORD [EDI]
+ 0084 E8 65 00                              CALL 'CLIBSINE' (EXTERN 101)
+ 0087 83 C4 08                              ADD ESP,8
+ 008A C9                                    LEAVE
+ 008B C3                                    RET
+    %end
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+ 0000 30 75                                 db 30,75 ; 0u
+ 0002 00 00                                 db 00,00 ; ..
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

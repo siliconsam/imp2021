@@ -1,0 +1,48 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  
+   2      !--------------------------------------------------------------------------
+   3      ! Returns floating point x ^ p
+   4      !--------------------------------------------------------------------------
+   5      %external %long %real %function impfexp ( %integer p, %long %real x)
+   6          %long %real r;
+   7  
+   8          %if (p = 0) %then %result = 1.0
+   9          %if (x = 0.0) %then %result = 0.0
+   10  
+   11          ! deal with negative exponents
+   12          %if (p < 0) %start
+   13              x = 1.0/x
+   14              p = -p
+   15          %finish
+   16  
+   17          r = 1.0
+   18          %cycle
+   19              %if ((p & 1) # 0) %then r = r * x;
+   20              p = p >> 1;
+   21              %if (p = 0) %then %result = r;
+   22              x = x * x;
+   23          %repeat
+   24      %end
+   25      !--------------------------------------------------------------------------
+   26      !--------------------------------------------------------------------------
+   27      ! returns x ^ y
+   28      !--------------------------------------------------------------------------
+   29      %external %integer %function impiexp ( %integer y, x)
+   30          %integer value;
+   31  
+   32          %signal 5, 2, y %unless (y >=0);
+   33  
+   34          value = 1;
+   35  
+   36          %while (y > 0) %cycle
+   37              value = value * x
+   38              y = y - 1
+   39          %repeat
+   40  
+   41          %result = value
+   42      %end
+   43      !--------------------------------------------------------------------------
+   44  %endoffile
+
+   27 Statements compiled

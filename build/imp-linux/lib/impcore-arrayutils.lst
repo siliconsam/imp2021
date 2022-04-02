@@ -1,0 +1,615 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  {-----------------------------------------------------------------------------}
+   2  
+   3      ! We will be "tweaking" data by accessing the machine registers
+   4      %include "inc.386.registers"
+ &  1  %endoflist
+ & 10  %endoffile
+   5  
+   6      !
+   7      ! We ass-u-me that:
+   8      ! (1) the processor is byte addressable
+   9      ! (2) an address is 32-bits (=4 bytes)
+   10      !  
+   11      %constinteger address size = 4
+   12      ! simple data-types
+   13      %constinteger  integertype  = 1
+   14      %constinteger  realtype     = 2
+   15      %constinteger  stringtype   = 3
+   16      %constinteger  recordtype   = 4
+   17      %constinteger  bytetype     = 5
+   18      %constinteger  shorttype    = 6
+   19      %constinteger  longtype     = 7
+   20      %constinteger  longrealtype = 8
+   21      %constinteger  arraytype    = 9
+   22      %constinteger  labeltype    = 10
+   23      !--------------------------------------------------------------------------
+   24      !--------------------------------------------------------------------------
+   25      !
+   26      ! IMP uses the concept of a Dope Vector (DV) to access arrays
+   27      ! A pointer to a Dope Vector is indicated as DVP
+   28      !
+   29      ! The tuple (dvp,address) represents the %name value for an array.
+   30      ! dvp, address are pointers to the dope vector and array data.
+   31      ! This function only works when invoked with an array 'name' is
+   32      ! passed as a parameter.
+   33      !
+   34      ! Memory layout of an array's dope vector
+   35      !  Low                              High
+   36      !  dvp
+   37      !  |
+   38      !  v
+   39      !  dim=n:lb1:ub1:lb2:ub2:...lbn:ubn:sizetype
+   40      !
+   41      ! Given the dope vector memory layout, various array properties can be
+   42      ! calculated/retrieved
+   43      !
+   44      ! Retrievable array properties
+   45      ! (1) dimensionality of an array
+   46      ! (2) size of each array entry
+   47      ! (3) type of each array entry
+   48      ! (4) lower bound of an array index
+   49      ! (5) upper bound of an array index
+   50      !
+   51      ! Calculated array properties
+   52      ! (1) number of elements in the array
+   53      ! (2) total size (in bytes) used for array storage (excluding DV)
+   54      !
+   55      ! call/spec the following routine/functions as
+   56      ! %external %integer %fn %spec XXXt %alias "_YYY" ( %name dvp )
+   57      ! N.B. the %name parameter on the stack is actually:
+   58      ! two integers dvp,address
+   59      !
+   60      !--------------------------------------------------------------------------
+   61      ! External declarations of retrieved array properties:
+   62      ! %external %integer %fn %spec array entry size( %name n )
+   63      ! %external %integer %fn %spec array entry type( %name n )
+   64      ! %external %integer %fn %spec array dimensions( %name n )
+   65      ! %external %integer %fn %spec array lower bound( %integer index, %name n )
+   66      ! %external %integer %fn %spec array upper bound( %integer index, %name n )
+   67      !--------------------------------------------------------------------------
+   68      !--------------------------------------------------------------------------
+   69      ! Retrieved array properties
+   70      !--------------------------------------------------------------------------
+   71      !--------------------------------------------------------------------------
+   72      ! This function retrieves the size of an array entry using
+   73      ! the associated Dope Vector
+   74      ! The actual address of the array is ignored!
+   75      !--------------------------------------------------------------------------
+   76      %external %integer %fn array entry size( %integer dvp,address )
+   77          %integer dim
+   78          %integer st,staddress
+   79  
+   80          ! determine if this "dvp" is a descriptor or a dope vector pointer
+   81          %if (dvp&1 = 1) %start
+   82              ! This is a size/type/flag descriptor
+   83              st = dvp
+   84          %finish %else %start
+   85              ! This is a genuine Dope Vector address
+   86              ! obtain the dimensions of the array
+   87              dim = integer( dvp )
+   88  
+   89              ! next obtain the address of the DV size/type value
+   90              staddress = dvp + (2*dim + 1)*address size
+   91  
+   92              ! we've reached just past the range bound pairs
+   93              ! so get the array element size/type value
+   94              st = integer( staddress )
+   95          %finish
+   96  
+   97          ! Extract the size field from the descriptor
+   98          %result = (st >> 5)
+   99      %end
+?ADDRESS unused
+  100      !--------------------------------------------------------------------------
+  101      !--------------------------------------------------------------------------
+  102      ! This function retrieves the type of an array entry using
+  103      ! the associated Dope Vector
+  104      ! The actual address of the array is ignored!
+  105      !--------------------------------------------------------------------------
+  106      %external %integer %fn array entry type( %integer dvp,address )
+  107          %integer dim
+  108          %integer st,staddress
+  109  
+  110          ! determine if this "dvp" is a descriptor or a dope vector pointer
+  111          %if (dvp&1 = 1) %start
+  112              ! This is a size/type/flag descriptor
+  113              st = dvp
+  114          %finish %else %start
+  115              ! This is a genuine Dope Vector address
+  116              ! obtain the dimensions of the array
+  117              dim = integer( dvp )
+  118  
+  119              ! next obtain the address of the DV size/type value
+  120              staddress = dvp + (2*dim + 1)*address size
+  121  
+  122              ! we've reached just past the range bound pairs
+  123              ! so get the array element size/type value
+  124              st = integer( staddress )
+  125          %finish
+  126  
+  127          ! Extract the type field from the descriptor
+  128          %result = (st>>1)&15
+  129      %end
+?ADDRESS unused
+  130      !--------------------------------------------------------------------------
+  131      !--------------------------------------------------------------------------
+  132      ! This function retrieves the dimensionality of an array using
+  133      ! the associated Dope Vector
+  134      ! The actual address of the array is ignored!
+  135      !--------------------------------------------------------------------------
+  136      %external %integer %fn array dimensions( %integer dvp,address )
+  137          %integer dim
+  138  
+  139          ! determine if this "dvp" is a descriptor or a dope vector pointer
+  140          %if (dvp&1 = 1) %start
+  141              ! This is a size/type/flag descriptor
+  142              dim = 0
+  143          %finish %else %start
+  144              ! This is a genuine Dope Vector address
+  145              ! So, this is a genuine array
+  146  
+  147              ! obtain the dimensions of the array
+  148              dim = integer( dvp )
+  149          %finish
+  150  
+  151          %result = dim
+  152      %end
+?ADDRESS unused
+  153      !--------------------------------------------------------------------------
+  154      !--------------------------------------------------------------------------
+  155      ! This function retrieves the lower bound for a given array index using
+  156      ! the associated Dope Vector
+  157      ! The actual address of the array is ignored!
+  158      !--------------------------------------------------------------------------
+  159      %external %integer %fn array lower bound( %integer dvp,address,index )
+  160          %integer dim
+  161          %integer lb,lbaddress, ub,ubaddress, thebound
+  162          %integer i
+  163  
+  164          ! determine if this "dvp" is a descriptor or a dope vector pointer
+  165          %if (dvp&1 = 1) %start
+  166              ! This is a size/type/flag descriptor
+  167              ! Fake up a lower bound
+  168              the bound = 0
+  169          %finish %else %start
+  170              ! This is a genuine Dope Vector address
+  171              ! So, this is a genuine array
+  172  
+  173              ! obtain the dimensions of the array
+  174              dim = integer( dvp )
+  175              ! next obtain the addresses of the lower and upper bounds
+  176              ! of the first dimension
+  177              lbaddress = dvp + address size
+  178              ubaddress = lbaddress + address size
+  179  
+  180              the bound = 0
+  181              ! code to iterate over the dimension ranges to:
+  182              ! (1) check each pair of bounds are valid (lb <= ub)
+  183              ! (2) retrieve the lower bound for the specified array index
+  184              %for i=1,1,dim %cycle
+  185                  ! General case iterates from first dimension
+  186                  ! at i=1, point to the leftmost lower bound
+  187                  lb = integer( lbaddress )
+  188  
+  189                  ! at i=1, point to the leftmost upper bound
+  190                  ub = integer( ubaddress )
+  191  
+  192                  %if (i = index) %then the bound = lb
+  193  
+  194                  ! now point to the next dimensions lb,ub values
+  195                  ! evaluate next lower bound index
+  196                  lbaddress = ubaddress + address size
+  197  
+  198                  ! evaluate next upper bound index
+  199                  ubaddress = lbaddress + address size
+  200              %repeat
+  201          %finish
+  202  
+  203          %result = the bound 
+  204      %end
+?ADDRESS unused
+  205      !--------------------------------------------------------------------------
+  206      !--------------------------------------------------------------------------
+  207      ! This function retrieves the upper bound for a given array index using
+  208      ! the associated Dope Vector
+  209      ! The actual address of the array is ignored!
+  210      !--------------------------------------------------------------------------
+  211      %external %integer %fn array upper bound( %integer dvp,address,index )
+  212          %integer dim
+  213          %integer lb,lbaddress, ub,ubaddress, thebound
+  214          %integer i
+  215  
+  216          ! determine if this "dvp" is a descriptor or a dope vector pointer
+  217          %if (dvp&1 = 1) %start
+  218              ! This is a size/type/flag descriptor
+  219              ! Fake up an upper bound
+  220              the bound = 0
+  221          %finish %else %start
+  222              ! This is a genuine Dope Vector address
+  223              ! So, this is a genuine array
+  224  
+  225              ! obtain the dimensions of the array
+  226              dim = integer( dvp )
+  227              ! next obtain the addresses of the lower and upper bounds
+  228              ! of the first dimension
+  229              lbaddress = dvp + address size
+  230              ubaddress = lbaddress + address size
+  231  
+  232              the bound = 0
+  233              ! code to iterate over the dimension ranges to:
+  234              ! (1) check each pair of bounds are valid (lb <= ub)
+  235              ! (2) retrieve the specified bound for the array index
+  236              %for i=1,1,dim %cycle
+  237                  ! General case iterates from first dimension
+  238                  ! at i=1, point to the leftmost lower bound
+  239                  lb = integer( lbaddress )
+  240  
+  241                  ! at i=1, point to the leftmost upper bound
+  242                  ub = integer( ubaddress )
+  243  
+  244                  %if (i = index) %then the bound = ub
+  245  
+  246                  ! now point to the next dimensions lb,ub values
+  247                  ! evaluate next lower bound index
+  248                  lbaddress = ubaddress + address size
+  249  
+  250                  ! evaluate next upper bound index
+  251                  ubaddress = lbaddress + address size
+  252              %repeat
+  253          %finish
+  254  
+  255          %result = the bound
+  256      %end
+?ADDRESS unused
+  257      !--------------------------------------------------------------------------
+  258      !--------------------------------------------------------------------------
+  259      ! Calculated array properties
+  260      !--------------------------------------------------------------------------
+  261      !--------------------------------------------------------------------------
+  262      ! Given a dope vector:
+  263      ! (1) calculate the offset (in bytes) of the highest element
+  264      ! (2) calculate the offset from A(0,...,0) of the first element
+  265      ! - the size of the store to allocate is therefore the difference.
+  266      ! We return the two 32 bit answers as one result
+  267      !     => "high" answer is in DX
+  268      !     => "low" answer is in AX.
+  269      ! Thus DX contains the top, AX the A(0) offset
+  270      ! The way we achieve this is compiler dependent,
+  271      ! so we declare this as VOID and then do the return in-line
+  272      !--------------------------------------------------------------------------
+  273      %external %routine impadef ( %integer %name dvp )
+  274          %integer lb,lbAddress, ub,ubAddress, sz,szAddress
+  275          %integer i, dim, base, limit, row
+  276  
+  277          ! The count of array dimensions is located at addr(dvp)
+  278          dim = dvp
+  279  
+  280          ! the element size is given after the last pair of lower,upper bounds
+  281          szAddress = addr(dvp) + addressSize*(2*dim + 1)
+  282  
+  283          ! initialise the base "address" and limit "address"
+  284          base = 0
+  285          limit = 0
+  286  
+  287          ! General case iterates backwards toward first dimension
+  288          ! last dim upper bound is just before the szAddress
+  289          ubAddress = szAddress - addressSize
+  290          ! a lower bound is always just before the upper bound
+  291          lbAddress = ubAddress - addressSize
+  292  
+  293          ! Now, iterate over each pair of a dimensions bounds
+  294          %for i=1,1,dim %cycle
+  295              ! NB. at i=1, we point to the rightmost dimensions lower,upper bounds
+  296              lb = integer( lbAddress )
+  297              ub = integer( ubAddress )
+  298  
+  299              ! we declare array bounds so that lb <= ub
+  300              ! so, check that the bounds obey that rule!
+  301              %signal 5, 3, 0 %unless lb <= ub
+  302  
+  303              ! calculate the number of objects in a row
+  304              ! NB we add one to avoid the fence post error
+  305              row   = (ub - lb) + 1
+  306              base  = base * row + lb
+  307              limit = limit * row + ub
+  308  
+  309              ! now point to the lower, upper bounds of the next lower array dimension
+  310              ubAddress = lbAddress - addressSize
+  311              lbAddress = ubAddress - addressSize
+  312          %repeat
+  313  
+  314          ! Get the size/type descriptor
+  315          sz = integer( szAddress )
+  316  
+  317          ! finally get the size of each array element
+  318          sz = (sz>>5)
+  319  
+  320          base = base * sz
+  321          limit = (limit + 1) * sz
+  322  
+  323          *mov_ edx,limit
+  324          *mov_ eax,base
+  325  
+  326          %return
+  327      %end
+  328      !--------------------------------------------------------------------------
+  329      !--------------------------------------------------------------------------
+  330      ! Array Reference function.
+  331      !
+  332      ! Array indices are pushed left to right so we get them right to left.
+  333      ! The last thing pushed is a pointer to the Dope Vector.
+  334      !
+  335      ! We need to fiddle with addresses because this function has a 
+  336      ! variable parameter count.
+  337      !
+  338      ! This parameter count depends on the number of dimensions in the array
+  339      ! The IMP parameters are stacked, so need to access in reverse order
+  340      ! Even worse, there are a variable number of index values
+  341      !    (One index value for each array index)
+  342      ! We pretend there are no stacked parameters in the function declaration
+  343      ! Fortunately the "last" IMP parameter (the DVP) can be used to calculate
+  344      ! the expected parameter count.
+  345      ! We actually access parameters via the "ebp" register
+  346      !                                      (=Base/Frame pointer)
+  347      ! Now assuming 4 byte = 1 integer
+  348      ! Remember [ebp]         = framep
+  349      !          [ebp+4]       = return address
+  350      !          [ebp+8]       = dope vector address (DVP)
+  351      !          [ebp+12]      = last array index = dim'th index value
+  352      !          [ebp+8+dim*4] = 1st array index = 1st index value
+  353      ! The function result is the offset that needs to be added to the
+  354      ! notional A(0,0,0) address to get the variable in the array
+  355      !
+  356      ! IMP declaration
+  357      ! %external %integer %function imparef(%integer i1 {.. idim},
+  358      !                                      %integer %name dvp)
+  359      !
+  360      ! Hence, the above mentioned contortions to deal with a variable count
+  361      ! of parameters.
+  362      ! Fortunately, the "last" parameter stacked (the dopevector address)
+  363      ! gives a clue as to the actual count of parameters.
+  364      !
+  365      ! Luckily, the IMP compiler "pops" the set of parameters on return from
+  366      ! this routine call.
+  367      ! Thus we can "pretend" this routine is declared with no parameters.
+  368      ! However we need to use a bit of embedded machine code to access the
+  369      ! actual parameters via the frame pointer
+  370      !--------------------------------------------------------------------------
+  371      %external %integer %function imparef
+  372          %integer framep
+  373          %integer %name dvp
+  374          %integer dvpAddress, indexAddress
+  375          %integer szAddress, lbAddress, ubAddress
+  376          %integer dim, sz, lb, ub, index
+  377          %integer row, result
+  378          %integer i
+  379  
+  380          ! Get the Base/Frame Pointer
+  381          *mov_ framep,ebp
+  382  
+  383          ! IMP does NOT allow routines with a variable number of parameters
+  384          ! but we need 
+  385          ! parameter         1) dope vector address
+  386          ! parameters 2..dim+1) array index values (dim = array dimensionality)
+  387  
+  388          ! Now get various data items from the dope vector
+  389          ! The "last" parameter stacked is the pointer to dope vector
+  390          ! Get the dope vector address
+  391          !     ("last" C parameter/"first" IMP parameter)
+  392          ! skip over the 'old' FramePointer and the routine's ReturnAddress
+  393          ! on the stack
+  394          dvpAddress = framep + 2*addressSize
+  395          dvp == integer( integer( dvpAddress ) )
+  396  
+  397          ! get the address of the last array index
+  398          ! remember the index values are stacked in reverse order
+  399          ! The last shall be first!!!
+  400          indexAddress = dvpAddress + addressSize
+  401  
+  402          ! Now get the array dimensionality from the dope vector
+  403          dim = dvp
+  404  
+  405          ! Now get the address of the size of each array element
+  406          szAddress = addr(dvp) + addressSize*(2*dim + 1)
+  407  
+  408          ! get the address of the last upper bound
+  409          ! placed just before the location of the array element size
+  410          ubAddress = szAddress - addressSize
+  411          ! and the address of it's associated lower bound
+  412          lbAddress = ubAddress - addressSize
+  413  
+  414          ! General case iterates backwards toward first dimension
+  415          ! For a general number of dimensions, 1 or more
+  416          ! we do this the hard way...
+  417          ! result so far
+  418          result = 0
+  419          ! at i=1, we start with the rightmost bounds
+  420          ! their addresses have been pre-calculated 
+  421          %for i=1,1,dim %cycle
+  422  
+  423              lb = integer( lbAddress )
+  424              ub = integer( ubAddress )
+  425  
+  426              ! Get the index: at i=0, point to the rightmost array index
+  427              index = integer( indexAddress )
+  428  
+  429              ! Check the index to see if index in range lb:ub
+  430              %signal 6, 2, index %unless (lb <= index <= ub)
+  431  
+  432              ! calculate the number of objects in a row
+  433              row   = (ub - lb) + 1
+  434  
+  435              ! accumulate this index count
+  436              result = (result * row) + index
+  437  
+  438              ! update the lb,ub,index addresses
+  439              ! get the previous upper bound address
+  440              ubAddress = lbAddress - addressSize
+  441              ! get it's associated lower bound address
+  442              lbAddress = ubAddress - addressSize
+  443              ! hop to the next lower index address
+  444              ! NB the index values are in reverse order
+  445              indexAddress = indexAddress + addressSize
+  446          %repeat
+  447  
+  448          ! Get the size/type descriptor
+  449          sz = integer( szAddress )
+  450  
+  451          ! finally get the size of each array element
+  452          sz = (sz>>5)
+  453  
+  454          ! multiply the accumulated count by element size
+  455          %result = result * sz
+  456      %end
+  457      !--------------------------------------------------------------------------
+  458      !--------------------------------------------------------------------------
+  459      ! type of x,size of x have 2 declaration formats
+  460      !
+  461      ! external declarations are:
+  462      ! %external %integer %fn %spec type of x( %name n )
+  463      ! %external %integer %fn %spec size of x( %name n )
+  464      !
+  465      ! internal declarations are:
+  466      ! %external %integer %fn type of x( %integer dvp,address )
+  467      ! %external %integer %fn size of x( %integer dvp,address )
+  468      !
+  469      ! For the 2 routines, the internal parameters are:
+  470      ! dvp = DVP or size/type/flag
+  471      !      if dvp is an even number
+  472      !          then it is a DVP (DopeVectorPointer)
+  473      !          where
+  474      !              dvp is the address of the DV (Dope Vector)
+  475      !      if dvp is an odd number
+  476      !          then it is a size/type/flag value
+  477      !          where
+  478      !              size == n1>>5
+  479      !              type == (n1>>1)&15
+  480      !              flag == n1&1
+  481      ! address = address of "named" variable
+  482      !--------------------------------------------------------------------------
+  483      !--------------------------------------------------------------------------
+  484      ! This function decodes the returned value of the typeof function to be a
+  485      ! corresponding string value
+  486      !--------------------------------------------------------------------------
+  487      %external %string(255) %function typeName( %integer t )
+  488          %string(255) s
+  489          %switch sw(0:15)
+  490  
+  491          s = ""
+  492  
+  493          -> sw(t&15)
+  494          ! type value given in the document
+  495          !   "THE IMP LANGUAGE - A Reference Manual"
+  496          ! are the output values provided by typeof.
+  497          sw(0):  s = "unknown";                   -> esac
+  498          sw(1):  s = "integer";                   -> esac
+  499          sw(2):  s = "real";                      -> esac
+  500          sw(3):  s = "string";                    -> esac
+  501          sw(4):  s = "record";                    -> esac
+  502          sw(5):  s = "byte";                      -> esac
+  503          sw(6):  s = "shortinteger";              -> esac
+  504          sw(7):  s = "longinteger";               -> esac
+  505          sw(8):  s = "longreal";                  -> esac
+  506          sw(9):  s = "array";                     -> esac
+  507          sw(10): s = "label";                     -> esac
+  508  
+  509          ! Belt and braces result which warns of an invalid data-type
+  510          sw(*):  s = "illegal(".itos(t&15,0).")"; -> esac
+  511      esac:
+  512          %result = s
+  513      %end
+  514      !--------------------------------------------------------------------------
+  515      !--------------------------------------------------------------------------
+  516      ! This function retrieves the type of a %name using
+  517      ! the associated Dope Vector v Size/Type value
+  518      ! The actual address of the name is ignored!
+  519      !--------------------------------------------------------------------------
+  520      %external %integer %fn type of( %integer dvp,address )
+  521          ! determine if this "dvp" is a descriptor or a dope vector pointer
+  522          %if (dvp&1 = 1) %start
+  523              ! This is a size/type/flag descriptor
+  524              %result = (dvp >> 1)&15
+  525          %else
+  526              ! This is a genuine Dope Vector address
+  527              %result = 9
+  528          %finish
+  529      %end
+?ADDRESS unused
+  530      !--------------------------------------------------------------------------
+  531      !--------------------------------------------------------------------------
+  532      ! This function retrieves the "size" of a %name using
+  533      ! the associated Dope Vector v Size/Type value
+  534      ! The actual address of the name is ignored!
+  535      ! If N is a simple variable type,
+  536      !    then this returns the size of the simple variable
+  537      ! If N is an array type,
+  538      !    then this returns the size in bytes of the array
+  539      !--------------------------------------------------------------------------
+  540      %external %integer %fn size of( %integer dvp,address )
+  541          %integer dim, sz, entries
+  542          %integer lb,lbaddress, ub,ubaddress
+  543          %integer i
+  544  
+  545          ! determine if this "dvp" is a descriptor or a dope vector pointer
+  546          %if (dvp&1 = 1) %start
+  547              ! This is a size/type/flag descriptor
+  548              %result = (dvp >> 5)
+  549          %else
+  550              ! This is a genuine Dope Vector address
+  551              ! So, this is a genuine array
+  552  
+  553              ! obtain the dimensions of the array
+  554              dim = integer( dvp )
+  555              ! next obtain the addresses of the lower and upper bounds
+  556              ! of the first dimension
+  557              lbaddress = dvp + address size
+  558              ubaddress = lbaddress + address size
+  559              ! An array will have at minimum, one element
+  560              entries  = 1
+  561  
+  562              ! code to iterate over the dimension ranges to:
+  563              ! (1) check each pair of bounds are valid (lb <= ub)
+  564              ! (2) calculate the number of array entries
+  565              %for i=1,1,dim %cycle
+  566                  ! General case iterates from first dimension
+  567                  ! at i=1, point to the leftmost lower bound
+  568                  lb = integer( lbaddress )
+  569  
+  570                  ! at i=1, point to the leftmost upper bound
+  571                  ub = integer( ubaddress )
+  572  
+  573                  ! we declare array bounds so that lb <= ub
+  574                  %signal 5, 3, i %unless lb <= ub
+  575                  ! Accumulate size of objects in a row
+  576                  ! Allowing for fence-post errors
+  577                  ! the number of entries for dimension i is:
+  578                  ! (ub - lb) + 1
+  579                  ! scale up the entries count so far
+  580                  entries = entries * ((ub - lb) + 1)
+  581  
+  582                  ! now point to the next dimensions lb,ub values
+  583                  ! evaluate next lower bound index
+  584                  lbaddress = ubaddress + address size
+  585  
+  586                  ! evaluate next upper bound index
+  587                  ubaddress = lbaddress + address size
+  588              %repeat
+  589  
+  590              ! we've reached just past the range bound pairs
+  591              ! so get the array element size/type value
+  592              sz = integer( lbaddress )
+  593  
+  594              ! extract the size from the descriptor
+  595              sz = (sz>>5)
+  596  
+  597              ! calculate the total size (in bytes) of the array
+  598              %result = entries * sz
+  599          %finish
+  600      %end
+?ADDRESS unused
+  601      !--------------------------------------------------------------------------
+  602  %endoffile
+
+  213 Statements compiled

@@ -16,8 +16,8 @@
     %external %routine %spec impmain %alias "__impmain"
 
     %external %integer %function %spec split io list ( %string(255) io list )
-    %external %routine %spec initialise io
-    %external %routine %spec terminate io
+    %external %routine %spec initialise io system
+    %external %routine %spec terminate io system
 
     ! This acts as a "wrapper" routine around the "__impmain" routine
     ! Forward declarations (just to ensure routine trap tables follow in order)
@@ -28,36 +28,65 @@
     ! The external symbol name "_main" (or "main" for Unix/Linux) is used
     ! to ensure IMP programs can be used in Windows/Unix/Linux environments
     ! that provide a c interface
-    %external %routine StartImp %alias "main" (%integer %name envp, %integer %name argv, %integer argc )
+    %external %routine StartImp %c
+                %alias "main" (%integer %name envp,
+                               %integer %name argv,
+                               %integer argc )
 
-        %on %event 6,9,10 %start
-            %integer eventno, sub, info
+!        %on %event 6,9,10 %start
+        %on %event 9,10 %start
+            %integer eventno, sub, info, line
             %string(255) msg
 
             eventno = event_event
             sub = event_sub
             info = event_info
+            line = event_line
             msg = event_message
 
             debugnewline
-            debugstring( "**** Arrgh! Last chance event handler has been triggered." );debugnewline
-            debugstring( "**** Triggered by error event (".itos(eventno,0).",".itos(sub,0).",".itos(info,0)."). Error message '".msg."'" );debugnewline
+            debugstring( "**** Arrgh!" )
+            debugstring( " Last chance event handler triggered from line=" )
+            debugstring( itos(line,0) )
+            debugnewline
+            debugstring( "**** Triggered by error (event,sub,extra)=" )
+            debugstring( "(" )
+            debugstring( itos(eventno,0).",".itos(sub,0).",".itos(info,0) )
+            debugstring( ")" )
+            debugnewline
+            debugstring( "     Error message is '".msg."'" )
+            debugnewline
 
             %if eventno=6 %and sub = 2 %and info = 1 %start
-                debugstring("**** Error likely caused by missing command line parameters for input/output file(s)");debug newline
+                debugstring("**** Likely cause of error: ")
+                debugstring("Missing command line parameter(s) ")
+                debugstring("for input/output file(s)")
+                debug newline
             %finish
 
             %if eventno = 9 %start
+                %if (sub = 4) %or (sub = 5) %start
+                    debugstring("**** Likely cause of error: ")
+                    debugstring("Missing/invalid command line parameter for ")
+                %finish
                 %if (sub = 4) %start
-                    debugstring("**** Error likely caused by missing/invalid command line parameters for input file(s)");debug newline
+                    debugstring("input ")
+                    debug newline
                 %finish
                 %if (sub = 5) %start
-                    debugstring("**** Error likely caused by missing/invalid command line parameters for output files(s)");debug newline
+                    debugstring("output ")
+                    debug newline
                 %finish
+                %if (sub = 4) %or (sub = 5) %start
+                    debugstring("file(s)")
+                %finish
+
             %finish
 
             %if eventno = 10 %start
-                debugstring("**** Error caused by missing/invalid command line parameter(s)");debug newline
+                debugstring("**** Likely cause of error: ")
+                debugstring("Missing/invalid command line parameter(s)")
+                debug newline
             %finish
 
             debugnewline
@@ -69,7 +98,7 @@
         arguments == argv
         environs == envp
 
-        ! Intialise the runtime system
+        ! Initialise the runtime system
         ! ass-u-me no debug required
         set debug level( 0 )
 
@@ -78,7 +107,7 @@
             set debug level ( 16_ffffffff )
         %finish
 
-        initialise io
+        initialise io system
 
         ! ok, let's see which flavour of IMP program we have
         ! We defer selection of %external %routine XXX %alias "__impmain" IMP program type
@@ -87,7 +116,7 @@
         selectimptype
 
         ! don't forget to close down the I/O system
-        terminateio
+        terminate io system
 
         ! Switch off all debug now we are about to exit
         set debug level ( 0 )

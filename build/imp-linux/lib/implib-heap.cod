@@ -1,0 +1,74 @@
+
+    %external            %routine %spec impfree %c
+                                 %alias "free" ( %integer templateaddr )
+    %external %record(*) %map     %spec impmalloc %c
+                                 %alias "malloc" ( %integer s )
+
+{----------------------------------------------------------------------------}
+    !
+    ! NEW/DISPOSE routines used to acquire/free heap variables
+    ! NEW/DISPOSE routines based on C library malloc/free routines
+    !
+    ! declare heap access routines
+    !
+    %external %routine Dispose ( %name Template )
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                           ENTER 0000,1
+
+        %integer Where = Addr( Template )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0004 8B 45 08                              MOV EAX,[EBP+8]
+ 0007 89 45 F8                              MOV [EBP-8],EAX
+
+        impfree( Where )
+ 000A FF 75 F8                              PUSH WORD [EBP-8]
+ 000D E8 64 00                              CALL 'IMPFREE' (EXTERN 100)
+ 0010 83 C4 04                              ADD ESP,4
+    %end
+ 0013 C9                                    LEAVE
+ 0014 C3                                    RET
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    !
+    ! NEW/DISPOSE routines used to acquire/free heap variables
+    ! NEW/DISPOSE routines based on C library malloc/free routines
+    !
+    ! declare heap access routines
+    !
+    %external %record(*) %map New ( %name Template )
+ 0015                      L1001  EQU $
+ 0015 C8 00 00 01                           ENTER 0000,1
+        %record(*) %name Res
+        %integer Bytes = (Size Of(Template)+3) & (\3) {round to longword}
+ 0019 FF 75 0C                              PUSH WORD [EBP+12]
+ 001C FF 75 08                              PUSH WORD [EBP+8]
+ 001F E8 0E 00                              CALL 'SIZEOF' (EXTERN 14)
+ 0022 83 C4 08                              ADD ESP,8
+ 0025 05 03 00 00 00                        ADD EAX,3
+ 002A 25 FC FF FF FF                        AND EAX,-4
+ 002F 89 45 F4                              MOV [EBP-12],EAX
+
+        Res == impmalloc(Bytes)
+ 0032 FF 75 F4                              PUSH WORD [EBP-12]
+ 0035 E8 65 00                              CALL 'IMPMALLOC' (EXTERN 101)
+ 0038 83 C4 04                              ADD ESP,4
+ 003B 89 45 F8                              MOV [EBP-8],EAX
+
+        %result == Res
+ 003E 8B 45 F8                              MOV EAX,[EBP-8]
+ 0041 C9                                    LEAVE
+ 0042 C3                                    RET
+    %end
+{----------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

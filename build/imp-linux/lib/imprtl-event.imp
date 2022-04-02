@@ -4,13 +4,12 @@
     %own %record(event fm) lastevent
 
     %external %string(14) %function %spec handler name( %integer address )
-
-{------------------------------------------------------------------------------}
+{-----------------------------------------------------------------------------}
     %external %record(event fm) %map event
         %result == lastevent
     %end
-
-    %external %routine save event( %integer event, sub, info )
+{-----------------------------------------------------------------------------}
+    %external %routine save event( %integer line, event, sub, info )
         %switch esw(0:max event - 1)
         %string(16) e,s,x
         %string(255) msg,eventmsg
@@ -22,7 +21,7 @@
         eventmsg = "(".e.",".s.",".x.")"
 
         ! For the main ones we generate, try to be helpful...
-        -> esw(event) %if (0 < event) %and (event < max event)
+        -> esw(event) %if (0 < event < max event)
         -> esw(max event - 1)
     esw(0):
         %begin
@@ -94,14 +93,14 @@
         ssw(1): msg = "Capacity exceeded"
                 %if (info = 1) %then msg = msg." (String copy overflow)"
                 %if (info = 2) %then msg = msg." (String append overflow)"
-                msg=msg."."                                                          ; -> es
-        ssw(2): msg = "Array bound fault - Index = ".x                               ; -> es
-        ssw(3): msg = "Switch bound fault = ".x                                      ; -> es
-        ssw(4): msg = "Illegal event signal"                                         ; -> es
-        ssw(5): msg = "CHARNO out of range '".x."'"                                  ; -> es
-        ssw(6): msg = "TOSTRING out of range '".x."'"                                ; -> es
-        ssw(7): msg = "Illegal shift '".x."'"                                        ; -> es
-        ssw(*): msg = "Out of range fault - (".e." Sub-class = ".s.", Value = ".x.")"; -> es
+                msg=msg."."                                                      ; -> es
+        ssw(2): msg = "Array bound fault - Index = ".x                           ; -> es
+        ssw(3): msg = "Switch bound fault = ".x                                  ; -> es
+        ssw(4): msg = "Illegal event signal"                                     ; -> es
+        ssw(5): msg = "CHARNO out of range '".x."'"                              ; -> es
+        ssw(6): msg = "TOSTRING out of range '".x."'"                            ; -> es
+        ssw(7): msg = "Illegal shift '".x."'"                                    ; -> es
+        ssw(*): msg = "Out of range fault - (Event,Sub,Info)=(".e.",".s.",".x.")"; -> es
         es:
         %end
         -> esac
@@ -130,10 +129,10 @@
             -> ssw(sub&16_f)
         ssw(0):  msg = "End of input"                           ; -> es
         ssw(1):  msg = "Unexpected end of input"                ; -> es
-        ssw(2):  msg = "Couldn't open file. Error Code '".x."'" ; -> es
+        ssw(2):  msg = "Couldn't open file. Error Code (".x.")" ; -> es
         ssw(3):  msg = "File system error '".x."'"              ; -> es
-        ssw(4):  msg = "Input stream '".x."' has not been opened"  ; -> es
-        ssw(5):  msg = "Output stream '".x."' has not been opened" ; -> es
+        ssw(4):  msg = "Input stream '".x."' not opened"        ; -> es
+        ssw(5):  msg = "Output stream '".x."' not opened"       ; -> es
         ssw(9):  msg = "Bad stream# '".x."'"                    ; -> es
         ssw(10): msg = "Invalid filename for stream# '".x."'"   ; -> es
         ssw(*):  msg = "Input/Output error ".eventmsg           ; -> es
@@ -156,10 +155,11 @@
         lastevent_event = event
         lastevent_sub = sub
         lastevent_info = info
+        lastevent_line = line
         lastevent_message = msg
 
     %end
-
+{-----------------------------------------------------------------------------}
     %external %routine messageFormatA( %integer message id )
         %switch mess(1:8)
         %string(16) evt,sub,xtr
@@ -175,7 +175,8 @@
     mess(1): printstring( "SHOWEVENT: " )
              printstring( lastevent_message )
              -> esac
-    mess(2): printstring( "Start of Stack dump" )
+    mess(2): printstring( "Start of Stack dump - triggered at line=" )
+             printstring( int2ascii( event_line,10,0 ) )
              -> esac
     mess(3): printstring( "Signal No handler found for signalled event (" )
              printstring( evt )
@@ -192,13 +193,12 @@
     mess(6): printstring( "Stopping program with exit status=" )
              printstring( sub )
              -> esac
-
     mess(*): printstring( "Unknown message# given." )
              -> esac
     esac:
         newline
     %end
-
+{-----------------------------------------------------------------------------}
     %external %routine messageFormatB( %integer loc )
 
         selectoutput(0)
@@ -210,6 +210,5 @@
         printstring( "'" )
         newline
     %end
-
-{------------------------------------------------------------------------------}
+{-----------------------------------------------------------------------------}
 %endoffile

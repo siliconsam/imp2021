@@ -1,0 +1,1328 @@
+{-----------------------------------------------------------------------------}
+
+    ! We will be "tweaking" data by accessing the machine registers
+    %include "inc.386.registers"
+
+    !
+    ! We ass-u-me that:
+    ! (1) the processor is byte addressable
+    ! (2) an address is 32-bits (=4 bytes)
+    !  
+    %constinteger address size = 4
+    ! simple data-types
+    %constinteger  integertype  = 1
+    %constinteger  realtype     = 2
+    %constinteger  stringtype   = 3
+    %constinteger  recordtype   = 4
+    %constinteger  bytetype     = 5
+    %constinteger  shorttype    = 6
+    %constinteger  longtype     = 7
+    %constinteger  longrealtype = 8
+    %constinteger  arraytype    = 9
+    %constinteger  labeltype    = 10
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    !
+    ! IMP uses the concept of a Dope Vector (DV) to access arrays
+    ! A pointer to a Dope Vector is indicated as DVP
+    !
+    ! The tuple (dvp,address) represents the %name value for an array.
+    ! dvp, address are pointers to the dope vector and array data.
+    ! This function only works when invoked with an array 'name' is
+    ! passed as a parameter.
+    !
+    ! Memory layout of an array's dope vector
+    !  Low                              High
+    !  dvp
+    !  |
+    !  v
+    !  dim=n:lb1:ub1:lb2:ub2:...lbn:ubn:sizetype
+    !
+    ! Given the dope vector memory layout, various array properties can be
+    ! calculated/retrieved
+    !
+    ! Retrievable array properties
+    ! (1) dimensionality of an array
+    ! (2) size of each array entry
+    ! (3) type of each array entry
+    ! (4) lower bound of an array index
+    ! (5) upper bound of an array index
+    !
+    ! Calculated array properties
+    ! (1) number of elements in the array
+    ! (2) total size (in bytes) used for array storage (excluding DV)
+    !
+    ! call/spec the following routine/functions as
+    ! %external %integer %fn %spec XXXt %alias "_YYY" ( %name dvp )
+    ! N.B. the %name parameter on the stack is actually:
+    ! two integers dvp,address
+    !
+    !--------------------------------------------------------------------------
+    ! External declarations of retrieved array properties:
+    ! %external %integer %fn %spec array entry size( %name n )
+    ! %external %integer %fn %spec array entry type( %name n )
+    ! %external %integer %fn %spec array dimensions( %name n )
+    ! %external %integer %fn %spec array lower bound( %integer index, %name n )
+    ! %external %integer %fn %spec array upper bound( %integer index, %name n )
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! Retrieved array properties
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! This function retrieves the size of an array entry using
+    ! the associated Dope Vector
+    ! The actual address of the array is ignored!
+    !--------------------------------------------------------------------------
+    %external %integer %fn array entry size( %integer dvp,address )
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                           ENTER 0000,1
+        %integer dim
+        %integer st,staddress
+
+        ! determine if this "dvp" is a descriptor or a dope vector pointer
+        %if (dvp&1 = 1) %start
+ 0004 8B 45 0C                              MOV EAX,[EBP+12]
+ 0007 25 01 00 00 00                        AND EAX,1
+ 000C 3D 01 00 00 00                        CMP EAX,1
+ 0011 75 00                                 JNE L1001
+            ! This is a size/type/flag descriptor
+            st = dvp
+ 0013 8B 45 0C                              MOV EAX,[EBP+12]
+ 0016 89 45 F4                              MOV [EBP-12],EAX
+        %finish %else %start
+ 0019 EB 00                                 JMP L1002
+ 001B                      L1001  EQU $
+            ! This is a genuine Dope Vector address
+            ! obtain the dimensions of the array
+            dim = integer( dvp )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 001B 8B 75 0C                              MOV ESI,[EBP+12]
+ 001E 8B 06                                 MOV EAX,[ESI]
+ 0020 89 45 F8                              MOV [EBP-8],EAX
+
+            ! next obtain the address of the DV size/type value
+            staddress = dvp + (2*dim + 1)*address size
+ 0023 8B 45 F8                              MOV EAX,[EBP-8]
+ 0026 D1 E0                                 SHL EAX,1
+ 0028 40                                    INC EAX
+ 0029 C1 E0 02                              SHL EAX,2
+ 002C 03 45 0C                              ADD EAX,[EBP+12]
+ 002F 89 45 F0                              MOV [EBP-16],EAX
+
+            ! we've reached just past the range bound pairs
+            ! so get the array element size/type value
+            st = integer( staddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0032 8B 7D F0                              MOV EDI,[EBP-16]
+ 0035 8B 07                                 MOV EAX,[EDI]
+ 0037 89 45 F4                              MOV [EBP-12],EAX
+        %finish
+ 003A                      L1002  EQU $
+
+        ! Extract the size field from the descriptor
+        %result = (st >> 5)
+ 003A 8B 45 F4                              MOV EAX,[EBP-12]
+ 003D C1 E8 05                              SHR EAX,5
+ 0040 C9                                    LEAVE
+ 0041 C3                                    RET
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! This function retrieves the type of an array entry using
+    ! the associated Dope Vector
+    ! The actual address of the array is ignored!
+    !--------------------------------------------------------------------------
+    %external %integer %fn array entry type( %integer dvp,address )
+ 0042                      L1003  EQU $
+ 0042 C8 00 00 01                           ENTER 0000,1
+        %integer dim
+        %integer st,staddress
+
+        ! determine if this "dvp" is a descriptor or a dope vector pointer
+        %if (dvp&1 = 1) %start
+ 0046 8B 45 0C                              MOV EAX,[EBP+12]
+ 0049 25 01 00 00 00                        AND EAX,1
+ 004E 3D 01 00 00 00                        CMP EAX,1
+ 0053 75 00                                 JNE L1004
+            ! This is a size/type/flag descriptor
+            st = dvp
+ 0055 8B 45 0C                              MOV EAX,[EBP+12]
+ 0058 89 45 F4                              MOV [EBP-12],EAX
+        %finish %else %start
+ 005B EB 00                                 JMP L1005
+ 005D                      L1004  EQU $
+            ! This is a genuine Dope Vector address
+            ! obtain the dimensions of the array
+            dim = integer( dvp )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 005D 8B 5D 0C                              MOV EBX,[EBP+12]
+ 0060 8B 03                                 MOV EAX,[EBX]
+ 0062 89 45 F8                              MOV [EBP-8],EAX
+
+            ! next obtain the address of the DV size/type value
+            staddress = dvp + (2*dim + 1)*address size
+ 0065 8B 45 F8                              MOV EAX,[EBP-8]
+ 0068 D1 E0                                 SHL EAX,1
+ 006A 40                                    INC EAX
+ 006B C1 E0 02                              SHL EAX,2
+ 006E 03 45 0C                              ADD EAX,[EBP+12]
+ 0071 89 45 F0                              MOV [EBP-16],EAX
+
+            ! we've reached just past the range bound pairs
+            ! so get the array element size/type value
+            st = integer( staddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0074 8B 75 F0                              MOV ESI,[EBP-16]
+ 0077 8B 06                                 MOV EAX,[ESI]
+ 0079 89 45 F4                              MOV [EBP-12],EAX
+        %finish
+ 007C                      L1005  EQU $
+
+        ! Extract the type field from the descriptor
+        %result = (st>>1)&15
+ 007C 8B 45 F4                              MOV EAX,[EBP-12]
+ 007F D1 E8                                 SHR EAX,1
+ 0081 25 0F 00 00 00                        AND EAX,15
+ 0086 C9                                    LEAVE
+ 0087 C3                                    RET
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! This function retrieves the dimensionality of an array using
+    ! the associated Dope Vector
+    ! The actual address of the array is ignored!
+    !--------------------------------------------------------------------------
+    %external %integer %fn array dimensions( %integer dvp,address )
+ 0088                      L1006  EQU $
+ 0088 C8 00 00 01                           ENTER 0000,1
+        %integer dim
+
+        ! determine if this "dvp" is a descriptor or a dope vector pointer
+        %if (dvp&1 = 1) %start
+ 008C 8B 45 0C                              MOV EAX,[EBP+12]
+ 008F 25 01 00 00 00                        AND EAX,1
+ 0094 3D 01 00 00 00                        CMP EAX,1
+ 0099 75 00                                 JNE L1007
+            ! This is a size/type/flag descriptor
+            dim = 0
+ 009B C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
+        %finish %else %start
+ 00A2 EB 00                                 JMP L1008
+ 00A4                      L1007  EQU $
+            ! This is a genuine Dope Vector address
+            ! So, this is a genuine array
+
+            ! obtain the dimensions of the array
+            dim = integer( dvp )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 00A4 8B 7D 0C                              MOV EDI,[EBP+12]
+ 00A7 8B 07                                 MOV EAX,[EDI]
+ 00A9 89 45 F8                              MOV [EBP-8],EAX
+        %finish
+ 00AC                      L1008  EQU $
+
+        %result = dim
+ 00AC 8B 45 F8                              MOV EAX,[EBP-8]
+ 00AF C9                                    LEAVE
+ 00B0 C3                                    RET
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! This function retrieves the lower bound for a given array index using
+    ! the associated Dope Vector
+    ! The actual address of the array is ignored!
+    !--------------------------------------------------------------------------
+    %external %integer %fn array lower bound( %integer dvp,address,index )
+ 00B1                      L1009  EQU $
+ 00B1 C8 00 00 01                           ENTER 0000,1
+        %integer dim
+        %integer lb,lbaddress, ub,ubaddress, thebound
+        %integer i
+
+        ! determine if this "dvp" is a descriptor or a dope vector pointer
+        %if (dvp&1 = 1) %start
+ 00B5 8B 45 10                              MOV EAX,[EBP+16]
+ 00B8 25 01 00 00 00                        AND EAX,1
+ 00BD 3D 01 00 00 00                        CMP EAX,1
+ 00C2 75 00                                 JNE L1010
+            ! This is a size/type/flag descriptor
+            ! Fake up a lower bound
+            the bound = 0
+ 00C4 C7 45 E4 00 00 00 00                  MOV LONG [EBP-28],0
+        %finish %else %start
+ 00CB EB 00                                 JMP L1011
+ 00CD                      L1010  EQU $
+            ! This is a genuine Dope Vector address
+            ! So, this is a genuine array
+
+            ! obtain the dimensions of the array
+            dim = integer( dvp )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 00CD 8B 5D 10                              MOV EBX,[EBP+16]
+ 00D0 8B 03                                 MOV EAX,[EBX]
+ 00D2 89 45 F8                              MOV [EBP-8],EAX
+            ! next obtain the addresses of the lower and upper bounds
+            ! of the first dimension
+            lbaddress = dvp + address size
+ 00D5 8B 45 10                              MOV EAX,[EBP+16]
+ 00D8 05 04 00 00 00                        ADD EAX,4
+ 00DD 89 45 F0                              MOV [EBP-16],EAX
+            ubaddress = lbaddress + address size
+ 00E0 8B 45 F0                              MOV EAX,[EBP-16]
+ 00E3 05 04 00 00 00                        ADD EAX,4
+ 00E8 89 45 E8                              MOV [EBP-24],EAX
+
+            the bound = 0
+ 00EB C7 45 E4 00 00 00 00                  MOV LONG [EBP-28],0
+            ! code to iterate over the dimension ranges to:
+            ! (1) check each pair of bounds are valid (lb <= ub)
+            ! (2) retrieve the lower bound for the specified array index
+            %for i=1,1,dim %cycle
+ 00F2 8B 45 F8                              MOV EAX,[EBP-8]
+ 00F5 89 45 DC                              MOV [EBP-36],EAX
+ 00F8 C7 45 E0 00 00 00 00                  MOV LONG [EBP-32],0
+ 00FF                      L1012  EQU $
+ 00FF 8B 45 E0                              MOV EAX,[EBP-32]
+ 0102 3B 45 DC                              CMP EAX,[EBP-36]
+ 0105 74 00                                 JE L1013
+ 0107 40                                    INC EAX
+ 0108 89 45 E0                              MOV [EBP-32],EAX
+                ! General case iterates from first dimension
+                ! at i=1, point to the leftmost lower bound
+                lb = integer( lbaddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 010B 8B 75 F0                              MOV ESI,[EBP-16]
+ 010E 8B 06                                 MOV EAX,[ESI]
+ 0110 89 45 F4                              MOV [EBP-12],EAX
+
+                ! at i=1, point to the leftmost upper bound
+                ub = integer( ubaddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0113 8B 7D E8                              MOV EDI,[EBP-24]
+ 0116 8B 07                                 MOV EAX,[EDI]
+ 0118 89 45 EC                              MOV [EBP-20],EAX
+
+                %if (i = index) %then the bound = lb
+ 011B 8B 45 E0                              MOV EAX,[EBP-32]
+ 011E 3B 45 08                              CMP EAX,[EBP+8]
+ 0121 75 00                                 JNE L1014
+ 0123 8B 45 F4                              MOV EAX,[EBP-12]
+ 0126 89 45 E4                              MOV [EBP-28],EAX
+ 0129                      L1014  EQU $
+
+                ! now point to the next dimensions lb,ub values
+                ! evaluate next lower bound index
+                lbaddress = ubaddress + address size
+ 0129 8B 45 E8                              MOV EAX,[EBP-24]
+ 012C 05 04 00 00 00                        ADD EAX,4
+ 0131 89 45 F0                              MOV [EBP-16],EAX
+
+                ! evaluate next upper bound index
+                ubaddress = lbaddress + address size
+ 0134 8B 45 F0                              MOV EAX,[EBP-16]
+ 0137 05 04 00 00 00                        ADD EAX,4
+ 013C 89 45 E8                              MOV [EBP-24],EAX
+            %repeat
+ 013F EB 00                                 JMP L1012
+ 0141                      L1013  EQU $
+        %finish
+ 0141                      L1011  EQU $
+
+        %result = the bound 
+ 0141 8B 45 E4                              MOV EAX,[EBP-28]
+ 0144 C9                                    LEAVE
+ 0145 C3                                    RET
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! This function retrieves the upper bound for a given array index using
+    ! the associated Dope Vector
+    ! The actual address of the array is ignored!
+    !--------------------------------------------------------------------------
+    %external %integer %fn array upper bound( %integer dvp,address,index )
+ 0146                      L1015  EQU $
+ 0146 C8 00 00 01                           ENTER 0000,1
+        %integer dim
+        %integer lb,lbaddress, ub,ubaddress, thebound
+        %integer i
+
+        ! determine if this "dvp" is a descriptor or a dope vector pointer
+        %if (dvp&1 = 1) %start
+ 014A 8B 45 10                              MOV EAX,[EBP+16]
+ 014D 25 01 00 00 00                        AND EAX,1
+ 0152 3D 01 00 00 00                        CMP EAX,1
+ 0157 75 00                                 JNE L1016
+            ! This is a size/type/flag descriptor
+            ! Fake up an upper bound
+            the bound = 0
+ 0159 C7 45 E4 00 00 00 00                  MOV LONG [EBP-28],0
+        %finish %else %start
+ 0160 EB 00                                 JMP L1017
+ 0162                      L1016  EQU $
+            ! This is a genuine Dope Vector address
+            ! So, this is a genuine array
+
+            ! obtain the dimensions of the array
+            dim = integer( dvp )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0162 8B 5D 10                              MOV EBX,[EBP+16]
+ 0165 8B 03                                 MOV EAX,[EBX]
+ 0167 89 45 F8                              MOV [EBP-8],EAX
+            ! next obtain the addresses of the lower and upper bounds
+            ! of the first dimension
+            lbaddress = dvp + address size
+ 016A 8B 45 10                              MOV EAX,[EBP+16]
+ 016D 05 04 00 00 00                        ADD EAX,4
+ 0172 89 45 F0                              MOV [EBP-16],EAX
+            ubaddress = lbaddress + address size
+ 0175 8B 45 F0                              MOV EAX,[EBP-16]
+ 0178 05 04 00 00 00                        ADD EAX,4
+ 017D 89 45 E8                              MOV [EBP-24],EAX
+
+            the bound = 0
+ 0180 C7 45 E4 00 00 00 00                  MOV LONG [EBP-28],0
+            ! code to iterate over the dimension ranges to:
+            ! (1) check each pair of bounds are valid (lb <= ub)
+            ! (2) retrieve the specified bound for the array index
+            %for i=1,1,dim %cycle
+ 0187 8B 45 F8                              MOV EAX,[EBP-8]
+ 018A 89 45 DC                              MOV [EBP-36],EAX
+ 018D C7 45 E0 00 00 00 00                  MOV LONG [EBP-32],0
+ 0194                      L1018  EQU $
+ 0194 8B 45 E0                              MOV EAX,[EBP-32]
+ 0197 3B 45 DC                              CMP EAX,[EBP-36]
+ 019A 74 00                                 JE L1019
+ 019C 40                                    INC EAX
+ 019D 89 45 E0                              MOV [EBP-32],EAX
+                ! General case iterates from first dimension
+                ! at i=1, point to the leftmost lower bound
+                lb = integer( lbaddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 01A0 8B 75 F0                              MOV ESI,[EBP-16]
+ 01A3 8B 06                                 MOV EAX,[ESI]
+ 01A5 89 45 F4                              MOV [EBP-12],EAX
+
+                ! at i=1, point to the leftmost upper bound
+                ub = integer( ubaddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 01A8 8B 7D E8                              MOV EDI,[EBP-24]
+ 01AB 8B 07                                 MOV EAX,[EDI]
+ 01AD 89 45 EC                              MOV [EBP-20],EAX
+
+                %if (i = index) %then the bound = ub
+ 01B0 8B 45 E0                              MOV EAX,[EBP-32]
+ 01B3 3B 45 08                              CMP EAX,[EBP+8]
+ 01B6 75 00                                 JNE L1020
+ 01B8 8B 45 EC                              MOV EAX,[EBP-20]
+ 01BB 89 45 E4                              MOV [EBP-28],EAX
+ 01BE                      L1020  EQU $
+
+                ! now point to the next dimensions lb,ub values
+                ! evaluate next lower bound index
+                lbaddress = ubaddress + address size
+ 01BE 8B 45 E8                              MOV EAX,[EBP-24]
+ 01C1 05 04 00 00 00                        ADD EAX,4
+ 01C6 89 45 F0                              MOV [EBP-16],EAX
+
+                ! evaluate next upper bound index
+                ubaddress = lbaddress + address size
+ 01C9 8B 45 F0                              MOV EAX,[EBP-16]
+ 01CC 05 04 00 00 00                        ADD EAX,4
+ 01D1 89 45 E8                              MOV [EBP-24],EAX
+            %repeat
+ 01D4 EB 00                                 JMP L1018
+ 01D6                      L1019  EQU $
+        %finish
+ 01D6                      L1017  EQU $
+
+        %result = the bound
+ 01D6 8B 45 E4                              MOV EAX,[EBP-28]
+ 01D9 C9                                    LEAVE
+ 01DA C3                                    RET
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! Calculated array properties
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! Given a dope vector:
+    ! (1) calculate the offset (in bytes) of the highest element
+    ! (2) calculate the offset from A(0,...,0) of the first element
+    ! - the size of the store to allocate is therefore the difference.
+    ! We return the two 32 bit answers as one result
+    !     => "high" answer is in DX
+    !     => "low" answer is in AX.
+    ! Thus DX contains the top, AX the A(0) offset
+    ! The way we achieve this is compiler dependent,
+    ! so we declare this as VOID and then do the return in-line
+    !--------------------------------------------------------------------------
+    %external %routine impadef ( %integer %name dvp )
+ 01DB                      L1021  EQU $
+ 01DB C8 00 00 01                           ENTER 0000,1
+        %integer lb,lbAddress, ub,ubAddress, sz,szAddress
+        %integer i, dim, base, limit, row
+
+        ! The count of array dimensions is located at addr(dvp)
+        dim = dvp
+ 01DF 8B 5D 08                              MOV EBX,[EBP+8]
+ 01E2 8B 03                                 MOV EAX,[EBX]
+ 01E4 89 45 DC                              MOV [EBP-36],EAX
+
+        ! the element size is given after the last pair of lower,upper bounds
+        szAddress = addr(dvp) + addressSize*(2*dim + 1)
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 01E7 8B 45 DC                              MOV EAX,[EBP-36]
+ 01EA D1 E0                                 SHL EAX,1
+ 01EC 40                                    INC EAX
+ 01ED C1 E0 02                              SHL EAX,2
+ 01F0 03 45 08                              ADD EAX,[EBP+8]
+ 01F3 89 45 E4                              MOV [EBP-28],EAX
+
+        ! initialise the base "address" and limit "address"
+        base = 0
+ 01F6 C7 45 D8 00 00 00 00                  MOV LONG [EBP-40],0
+        limit = 0
+ 01FD C7 45 D4 00 00 00 00                  MOV LONG [EBP-44],0
+
+        ! General case iterates backwards toward first dimension
+        ! last dim upper bound is just before the szAddress
+        ubAddress = szAddress - addressSize
+ 0204 8B 45 E4                              MOV EAX,[EBP-28]
+ 0207 2D 04 00 00 00                        SUB EAX,4
+ 020C 89 45 EC                              MOV [EBP-20],EAX
+        ! a lower bound is always just before the upper bound
+        lbAddress = ubAddress - addressSize
+ 020F 8B 45 EC                              MOV EAX,[EBP-20]
+ 0212 2D 04 00 00 00                        SUB EAX,4
+ 0217 89 45 F4                              MOV [EBP-12],EAX
+
+        ! Now, iterate over each pair of a dimensions bounds
+        %for i=1,1,dim %cycle
+ 021A 8B 45 DC                              MOV EAX,[EBP-36]
+ 021D 89 45 CC                              MOV [EBP-52],EAX
+ 0220 C7 45 E0 00 00 00 00                  MOV LONG [EBP-32],0
+ 0227                      L1022  EQU $
+ 0227 8B 45 E0                              MOV EAX,[EBP-32]
+ 022A 3B 45 CC                              CMP EAX,[EBP-52]
+ 022D 74 00                                 JE L1023
+ 022F 40                                    INC EAX
+ 0230 89 45 E0                              MOV [EBP-32],EAX
+            ! NB. at i=1, we point to the rightmost dimensions lower,upper bounds
+            lb = integer( lbAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0233 8B 75 F4                              MOV ESI,[EBP-12]
+ 0236 8B 06                                 MOV EAX,[ESI]
+ 0238 89 45 F8                              MOV [EBP-8],EAX
+            ub = integer( ubAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 023B 8B 7D EC                              MOV EDI,[EBP-20]
+ 023E 8B 07                                 MOV EAX,[EDI]
+ 0240 89 45 F0                              MOV [EBP-16],EAX
+
+            ! we declare array bounds so that lb <= ub
+            ! so, check that the bounds obey that rule!
+            %signal 5, 3, 0 %unless lb <= ub
+ 0243 8B 45 F8                              MOV EAX,[EBP-8]
+ 0246 3B 45 F0                              CMP EAX,[EBP-16]
+ 0249 7E 00                                 JLE L1024
+ 024B B8 2D 01 00 00                        MOV EAX,301
+ 0250 50                                    PUSH EAX
+ 0251 B8 05 00 00 00                        MOV EAX,5
+ 0256 50                                    PUSH EAX
+ 0257 B8 03 00 00 00                        MOV EAX,3
+ 025C 50                                    PUSH EAX
+ 025D 31 C0                                 XOR EAX,EAX
+ 025F 50                                    PUSH EAX
+ 0260 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 0263 83 C4 10                              ADD ESP,16
+ 0266                      L1024  EQU $
+
+            ! calculate the number of objects in a row
+            ! NB we add one to avoid the fence post error
+            row   = (ub - lb) + 1
+ 0266 8B 45 F0                              MOV EAX,[EBP-16]
+ 0269 2B 45 F8                              SUB EAX,[EBP-8]
+ 026C 40                                    INC EAX
+ 026D 89 45 D0                              MOV [EBP-48],EAX
+            base  = base * row + lb
+ 0270 8B 45 D8                              MOV EAX,[EBP-40]
+ 0273 F7 6D D0                              IMUL WORD [EBP-48]
+ 0276 03 45 F8                              ADD EAX,[EBP-8]
+ 0279 89 45 D8                              MOV [EBP-40],EAX
+            limit = limit * row + ub
+ 027C 8B 45 D4                              MOV EAX,[EBP-44]
+ 027F F7 6D D0                              IMUL WORD [EBP-48]
+ 0282 03 45 F0                              ADD EAX,[EBP-16]
+ 0285 89 45 D4                              MOV [EBP-44],EAX
+
+            ! now point to the lower, upper bounds of the next lower array dimension
+            ubAddress = lbAddress - addressSize
+ 0288 8B 45 F4                              MOV EAX,[EBP-12]
+ 028B 2D 04 00 00 00                        SUB EAX,4
+ 0290 89 45 EC                              MOV [EBP-20],EAX
+            lbAddress = ubAddress - addressSize
+ 0293 8B 45 EC                              MOV EAX,[EBP-20]
+ 0296 2D 04 00 00 00                        SUB EAX,4
+ 029B 89 45 F4                              MOV [EBP-12],EAX
+        %repeat
+ 029E EB 00                                 JMP L1022
+ 02A0                      L1023  EQU $
+
+        ! Get the size/type descriptor
+        sz = integer( szAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 02A0 8B 5D E4                              MOV EBX,[EBP-28]
+ 02A3 8B 03                                 MOV EAX,[EBX]
+ 02A5 89 45 E8                              MOV [EBP-24],EAX
+
+        ! finally get the size of each array element
+        sz = (sz>>5)
+ 02A8 C1 6D E8 05                           SHR LONG [EBP-24],5
+
+        base = base * sz
+ 02AC 8B 45 D8                              MOV EAX,[EBP-40]
+ 02AF F7 6D E8                              IMUL WORD [EBP-24]
+ 02B2 89 45 D8                              MOV [EBP-40],EAX
+        limit = (limit + 1) * sz
+ 02B5 8B 45 D4                              MOV EAX,[EBP-44]
+ 02B8 40                                    INC EAX
+ 02B9 F7 6D E8                              IMUL WORD [EBP-24]
+ 02BC 89 45 D4                              MOV [EBP-44],EAX
+
+        *mov_ edx,limit
+ 02BF 8B 55 D4                              MOV EDX,[EBP-44]
+        *mov_ eax,base
+ 02C2 8B 45 D8                              MOV EAX,[EBP-40]
+
+        %return
+ 02C5 C9                                    LEAVE
+ 02C6 C3                                    RET
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! Array Reference function.
+    !
+    ! Array indices are pushed left to right so we get them right to left.
+    ! The last thing pushed is a pointer to the Dope Vector.
+    !
+    ! We need to fiddle with addresses because this function has a 
+    ! variable parameter count.
+    !
+    ! This parameter count depends on the number of dimensions in the array
+    ! The IMP parameters are stacked, so need to access in reverse order
+    ! Even worse, there are a variable number of index values
+    !    (One index value for each array index)
+    ! We pretend there are no stacked parameters in the function declaration
+    ! Fortunately the "last" IMP parameter (the DVP) can be used to calculate
+    ! the expected parameter count.
+    ! We actually access parameters via the "ebp" register
+    !                                      (=Base/Frame pointer)
+    ! Now assuming 4 byte = 1 integer
+    ! Remember [ebp]         = framep
+    !          [ebp+4]       = return address
+    !          [ebp+8]       = dope vector address (DVP)
+    !          [ebp+12]      = last array index = dim'th index value
+    !          [ebp+8+dim*4] = 1st array index = 1st index value
+    ! The function result is the offset that needs to be added to the
+    ! notional A(0,0,0) address to get the variable in the array
+    !
+    ! IMP declaration
+    ! %external %integer %function imparef(%integer i1 {.. idim},
+    !                                      %integer %name dvp)
+    !
+    ! Hence, the above mentioned contortions to deal with a variable count
+    ! of parameters.
+    ! Fortunately, the "last" parameter stacked (the dopevector address)
+    ! gives a clue as to the actual count of parameters.
+    !
+    ! Luckily, the IMP compiler "pops" the set of parameters on return from
+    ! this routine call.
+    ! Thus we can "pretend" this routine is declared with no parameters.
+    ! However we need to use a bit of embedded machine code to access the
+    ! actual parameters via the frame pointer
+    !--------------------------------------------------------------------------
+    %external %integer %function imparef
+ 02C7                      L1025  EQU $
+ 02C7 C8 00 00 01                           ENTER 0000,1
+        %integer framep
+        %integer %name dvp
+        %integer dvpAddress, indexAddress
+        %integer szAddress, lbAddress, ubAddress
+        %integer dim, sz, lb, ub, index
+        %integer row, result
+        %integer i
+
+        ! Get the Base/Frame Pointer
+        *mov_ framep,ebp
+ 02CB 89 6D F8                              MOV [EBP-8],EBP
+
+        ! IMP does NOT allow routines with a variable number of parameters
+        ! but we need 
+        ! parameter         1) dope vector address
+        ! parameters 2..dim+1) array index values (dim = array dimensionality)
+
+        ! Now get various data items from the dope vector
+        ! The "last" parameter stacked is the pointer to dope vector
+        ! Get the dope vector address
+        !     ("last" C parameter/"first" IMP parameter)
+        ! skip over the 'old' FramePointer and the routine's ReturnAddress
+        ! on the stack
+        dvpAddress = framep + 2*addressSize
+ 02CE 8B 45 F8                              MOV EAX,[EBP-8]
+ 02D1 05 08 00 00 00                        ADD EAX,8
+ 02D6 89 45 F0                              MOV [EBP-16],EAX
+        dvp == integer( integer( dvpAddress ) )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+ 02D9 8B 75 F0                              MOV ESI,[EBP-16]
+                                      CALL 'INTEGER' (MACRO 5)
+ 02DC 8B 36                                 MOV ESI,[ESI]
+ 02DE 89 75 F4                              MOV [EBP-12],ESI
+
+        ! get the address of the last array index
+        ! remember the index values are stacked in reverse order
+        ! The last shall be first!!!
+        indexAddress = dvpAddress + addressSize
+ 02E1 8B 45 F0                              MOV EAX,[EBP-16]
+ 02E4 05 04 00 00 00                        ADD EAX,4
+ 02E9 89 45 EC                              MOV [EBP-20],EAX
+
+        ! Now get the array dimensionality from the dope vector
+        dim = dvp
+ 02EC 8B 7D F4                              MOV EDI,[EBP-12]
+ 02EF 8B 07                                 MOV EAX,[EDI]
+ 02F1 89 45 DC                              MOV [EBP-36],EAX
+
+        ! Now get the address of the size of each array element
+        szAddress = addr(dvp) + addressSize*(2*dim + 1)
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 02F4 8B 45 DC                              MOV EAX,[EBP-36]
+ 02F7 D1 E0                                 SHL EAX,1
+ 02F9 40                                    INC EAX
+ 02FA C1 E0 02                              SHL EAX,2
+ 02FD 03 45 F4                              ADD EAX,[EBP-12]
+ 0300 89 45 E8                              MOV [EBP-24],EAX
+
+        ! get the address of the last upper bound
+        ! placed just before the location of the array element size
+        ubAddress = szAddress - addressSize
+ 0303 8B 45 E8                              MOV EAX,[EBP-24]
+ 0306 2D 04 00 00 00                        SUB EAX,4
+ 030B 89 45 E0                              MOV [EBP-32],EAX
+        ! and the address of it's associated lower bound
+        lbAddress = ubAddress - addressSize
+ 030E 8B 45 E0                              MOV EAX,[EBP-32]
+ 0311 2D 04 00 00 00                        SUB EAX,4
+ 0316 89 45 E4                              MOV [EBP-28],EAX
+
+        ! General case iterates backwards toward first dimension
+        ! For a general number of dimensions, 1 or more
+        ! we do this the hard way...
+        ! result so far
+        result = 0
+ 0319 C7 45 C4 00 00 00 00                  MOV LONG [EBP-60],0
+        ! at i=1, we start with the rightmost bounds
+        ! their addresses have been pre-calculated 
+        %for i=1,1,dim %cycle
+ 0320 8B 45 DC                              MOV EAX,[EBP-36]
+ 0323 89 45 BC                              MOV [EBP-68],EAX
+ 0326 C7 45 C0 00 00 00 00                  MOV LONG [EBP-64],0
+ 032D                      L1026  EQU $
+ 032D 8B 45 C0                              MOV EAX,[EBP-64]
+ 0330 3B 45 BC                              CMP EAX,[EBP-68]
+ 0333 74 00                                 JE L1027
+ 0335 40                                    INC EAX
+ 0336 89 45 C0                              MOV [EBP-64],EAX
+
+            lb = integer( lbAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0339 8B 5D E4                              MOV EBX,[EBP-28]
+ 033C 8B 03                                 MOV EAX,[EBX]
+ 033E 89 45 D4                              MOV [EBP-44],EAX
+            ub = integer( ubAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0341 8B 75 E0                              MOV ESI,[EBP-32]
+ 0344 8B 06                                 MOV EAX,[ESI]
+ 0346 89 45 D0                              MOV [EBP-48],EAX
+
+            ! Get the index: at i=0, point to the rightmost array index
+            index = integer( indexAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0349 8B 7D EC                              MOV EDI,[EBP-20]
+ 034C 8B 07                                 MOV EAX,[EDI]
+ 034E 89 45 CC                              MOV [EBP-52],EAX
+
+            ! Check the index to see if index in range lb:ub
+            %signal 6, 2, index %unless (lb <= index <= ub)
+ 0351 8B 45 CC                              MOV EAX,[EBP-52]
+ 0354 3B 45 D4                              CMP EAX,[EBP-44]
+ 0357 7C 00                                 JL L1028
+ 0359 3B 45 D0                              CMP EAX,[EBP-48]
+ 035C 7E 00                                 JLE L1029
+ 035E                      L1028  EQU $
+ 035E B8 AE 01 00 00                        MOV EAX,430
+ 0363 50                                    PUSH EAX
+ 0364 B8 06 00 00 00                        MOV EAX,6
+ 0369 50                                    PUSH EAX
+ 036A B8 02 00 00 00                        MOV EAX,2
+ 036F 50                                    PUSH EAX
+ 0370 8B 45 CC                              MOV EAX,[EBP-52]
+ 0373 50                                    PUSH EAX
+ 0374 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 0377 83 C4 10                              ADD ESP,16
+ 037A                      L1029  EQU $
+
+            ! calculate the number of objects in a row
+            row   = (ub - lb) + 1
+ 037A 8B 45 D0                              MOV EAX,[EBP-48]
+ 037D 2B 45 D4                              SUB EAX,[EBP-44]
+ 0380 40                                    INC EAX
+ 0381 89 45 C8                              MOV [EBP-56],EAX
+
+            ! accumulate this index count
+            result = (result * row) + index
+ 0384 8B 45 C4                              MOV EAX,[EBP-60]
+ 0387 F7 6D C8                              IMUL WORD [EBP-56]
+ 038A 03 45 CC                              ADD EAX,[EBP-52]
+ 038D 89 45 C4                              MOV [EBP-60],EAX
+
+            ! update the lb,ub,index addresses
+            ! get the previous upper bound address
+            ubAddress = lbAddress - addressSize
+ 0390 8B 45 E4                              MOV EAX,[EBP-28]
+ 0393 2D 04 00 00 00                        SUB EAX,4
+ 0398 89 45 E0                              MOV [EBP-32],EAX
+            ! get it's associated lower bound address
+            lbAddress = ubAddress - addressSize
+ 039B 8B 45 E0                              MOV EAX,[EBP-32]
+ 039E 2D 04 00 00 00                        SUB EAX,4
+ 03A3 89 45 E4                              MOV [EBP-28],EAX
+            ! hop to the next lower index address
+            ! NB the index values are in reverse order
+            indexAddress = indexAddress + addressSize
+ 03A6 83 45 EC 04                           ADD LONG [EBP-20],4
+        %repeat
+ 03AA EB 00                                 JMP L1026
+ 03AC                      L1027  EQU $
+
+        ! Get the size/type descriptor
+        sz = integer( szAddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 03AC 8B 5D E8                              MOV EBX,[EBP-24]
+ 03AF 8B 03                                 MOV EAX,[EBX]
+ 03B1 89 45 D8                              MOV [EBP-40],EAX
+
+        ! finally get the size of each array element
+        sz = (sz>>5)
+ 03B4 C1 6D D8 05                           SHR LONG [EBP-40],5
+
+        ! multiply the accumulated count by element size
+        %result = result * sz
+ 03B8 8B 45 C4                              MOV EAX,[EBP-60]
+ 03BB F7 6D D8                              IMUL WORD [EBP-40]
+ 03BE C9                                    LEAVE
+ 03BF C3                                    RET
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! type of x,size of x have 2 declaration formats
+    !
+    ! external declarations are:
+    ! %external %integer %fn %spec type of x( %name n )
+    ! %external %integer %fn %spec size of x( %name n )
+    !
+    ! internal declarations are:
+    ! %external %integer %fn type of x( %integer dvp,address )
+    ! %external %integer %fn size of x( %integer dvp,address )
+    !
+    ! For the 2 routines, the internal parameters are:
+    ! dvp = DVP or size/type/flag
+    !      if dvp is an even number
+    !          then it is a DVP (DopeVectorPointer)
+    !          where
+    !              dvp is the address of the DV (Dope Vector)
+    !      if dvp is an odd number
+    !          then it is a size/type/flag value
+    !          where
+    !              size == n1>>5
+    !              type == (n1>>1)&15
+    !              flag == n1&1
+    ! address = address of "named" variable
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! This function decodes the returned value of the typeof function to be a
+    ! corresponding string value
+    !--------------------------------------------------------------------------
+    %external %string(255) %function typeName( %integer t )
+ 03C0                      L1030  EQU $
+ 03C0 C8 00 00 01                           ENTER 0000,1
+        %string(255) s
+        %switch sw(0:15)
+
+        s = ""
+ 03C4 C6 85 FC FE FF FF 00                  MOV BYTE [EBP-260],0
+
+        -> sw(t&15)
+ 03CB 8B 45 0C                              MOV EAX,[EBP+12]
+ 03CE 25 0F 00 00 00                        AND EAX,15
+ 03D3 C1 E0 02                              SHL EAX,2
+ 03D6 89 C6                                 MOV ESI,EAX
+ 03D8 FF A6 00 00 00 00                     JMP WORD [ESI+SWTAB]
+        ! type value given in the document
+        !   "THE IMP LANGUAGE - A Reference Manual"
+        ! are the output values provided by typeof.
+        sw(0):  s = "unknown";                   -> esac
+ 03DE                      L1031  EQU $
+ 03DE 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 03E4 50                                    PUSH EAX
+ 03E5 B9 10 00 00 00                        MOV ECX,COT+16
+ 03EA 51                                    PUSH ECX
+ 03EB 68 FF 00 00 00                        PUSH 255
+ 03F0 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 03F3 83 C4 0C                              ADD ESP,12
+ 03F6 EB 00                                 JMP L1032
+        sw(1):  s = "integer";                   -> esac
+ 03F8                      L1033  EQU $
+ 03F8 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 03FE 50                                    PUSH EAX
+ 03FF B9 18 00 00 00                        MOV ECX,COT+24
+ 0404 51                                    PUSH ECX
+ 0405 68 FF 00 00 00                        PUSH 255
+ 040A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 040D 83 C4 0C                              ADD ESP,12
+ 0410 EB 00                                 JMP L1032
+        sw(2):  s = "real";                      -> esac
+ 0412                      L1034  EQU $
+ 0412 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0418 50                                    PUSH EAX
+ 0419 B9 20 00 00 00                        MOV ECX,COT+32
+ 041E 51                                    PUSH ECX
+ 041F 68 FF 00 00 00                        PUSH 255
+ 0424 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0427 83 C4 0C                              ADD ESP,12
+ 042A EB 00                                 JMP L1032
+        sw(3):  s = "string";                    -> esac
+ 042C                      L1035  EQU $
+ 042C 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0432 50                                    PUSH EAX
+ 0433 B9 25 00 00 00                        MOV ECX,COT+37
+ 0438 51                                    PUSH ECX
+ 0439 68 FF 00 00 00                        PUSH 255
+ 043E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0441 83 C4 0C                              ADD ESP,12
+ 0444 EB 00                                 JMP L1032
+        sw(4):  s = "record";                    -> esac
+ 0446                      L1036  EQU $
+ 0446 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 044C 50                                    PUSH EAX
+ 044D B9 2C 00 00 00                        MOV ECX,COT+44
+ 0452 51                                    PUSH ECX
+ 0453 68 FF 00 00 00                        PUSH 255
+ 0458 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 045B 83 C4 0C                              ADD ESP,12
+ 045E EB 00                                 JMP L1032
+        sw(5):  s = "byte";                      -> esac
+ 0460                      L1037  EQU $
+ 0460 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0466 50                                    PUSH EAX
+ 0467 B9 33 00 00 00                        MOV ECX,COT+51
+ 046C 51                                    PUSH ECX
+ 046D 68 FF 00 00 00                        PUSH 255
+ 0472 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0475 83 C4 0C                              ADD ESP,12
+ 0478 EB 00                                 JMP L1032
+        sw(6):  s = "shortinteger";              -> esac
+ 047A                      L1038  EQU $
+ 047A 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0480 50                                    PUSH EAX
+ 0481 B9 38 00 00 00                        MOV ECX,COT+56
+ 0486 51                                    PUSH ECX
+ 0487 68 FF 00 00 00                        PUSH 255
+ 048C E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 048F 83 C4 0C                              ADD ESP,12
+ 0492 EB 00                                 JMP L1032
+        sw(7):  s = "longinteger";               -> esac
+ 0494                      L1039  EQU $
+ 0494 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 049A 50                                    PUSH EAX
+ 049B B9 45 00 00 00                        MOV ECX,COT+69
+ 04A0 51                                    PUSH ECX
+ 04A1 68 FF 00 00 00                        PUSH 255
+ 04A6 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 04A9 83 C4 0C                              ADD ESP,12
+ 04AC EB 00                                 JMP L1032
+        sw(8):  s = "longreal";                  -> esac
+ 04AE                      L1040  EQU $
+ 04AE 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 04B4 50                                    PUSH EAX
+ 04B5 B9 51 00 00 00                        MOV ECX,COT+81
+ 04BA 51                                    PUSH ECX
+ 04BB 68 FF 00 00 00                        PUSH 255
+ 04C0 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 04C3 83 C4 0C                              ADD ESP,12
+ 04C6 EB 00                                 JMP L1032
+        sw(9):  s = "array";                     -> esac
+ 04C8                      L1041  EQU $
+ 04C8 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 04CE 50                                    PUSH EAX
+ 04CF B9 5A 00 00 00                        MOV ECX,COT+90
+ 04D4 51                                    PUSH ECX
+ 04D5 68 FF 00 00 00                        PUSH 255
+ 04DA E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 04DD 83 C4 0C                              ADD ESP,12
+ 04E0 EB 00                                 JMP L1032
+        sw(10): s = "label";                     -> esac
+ 04E2                      L1042  EQU $
+ 04E2 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 04E8 50                                    PUSH EAX
+ 04E9 B9 60 00 00 00                        MOV ECX,COT+96
+ 04EE 51                                    PUSH ECX
+ 04EF 68 FF 00 00 00                        PUSH 255
+ 04F4 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 04F7 83 C4 0C                              ADD ESP,12
+ 04FA EB 00                                 JMP L1032
+
+        ! Belt and braces result which warns of an invalid data-type
+        sw(*):  s = "illegal(".itos(t&15,0).")"; -> esac
+ 04FC                      L1043  EQU $
+ 04FC                      L1044  EQU $
+ 04FC                      L1045  EQU $
+ 04FC                      L1046  EQU $
+ 04FC                      L1047  EQU $
+ 04FC 8B 45 0C                              MOV EAX,[EBP+12]
+ 04FF 25 0F 00 00 00                        AND EAX,15
+ 0504 50                                    PUSH EAX
+ 0505 6A 00                                 PUSH 0
+ 0507 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
+ 050D 50                                    PUSH EAX
+ 050E E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 0511 83 C4 0C                              ADD ESP,12
+ 0514 8D 85 FC FC FF FF                     LEA EAX,[EBP-772]
+ 051A 50                                    PUSH EAX
+ 051B B8 66 00 00 00                        MOV EAX,COT+102
+ 0520 50                                    PUSH EAX
+ 0521 68 FF 00 00 00                        PUSH 255
+ 0526 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0529 83 C4 0C                              ADD ESP,12
+ 052C 8D 85 FC FC FF FF                     LEA EAX,[EBP-772]
+ 0532 50                                    PUSH EAX
+ 0533 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
+ 0539 50                                    PUSH EAX
+ 053A 68 FF 00 00 00                        PUSH 255
+ 053F E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 0542 83 C4 0C                              ADD ESP,12
+ 0545 8D 85 FC FC FF FF                     LEA EAX,[EBP-772]
+ 054B 50                                    PUSH EAX
+ 054C B8 6F 00 00 00                        MOV EAX,COT+111
+ 0551 50                                    PUSH EAX
+ 0552 68 FF 00 00 00                        PUSH 255
+ 0557 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 055A 83 C4 0C                              ADD ESP,12
+ 055D 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0563 50                                    PUSH EAX
+ 0564 8D 8D FC FC FF FF                     LEA ECX,[EBP-772]
+ 056A 51                                    PUSH ECX
+ 056B 68 FF 00 00 00                        PUSH 255
+ 0570 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0573 83 C4 0C                              ADD ESP,12
+ 0576 EB 00                                 JMP L1032
+    esac:
+ 0578                      L1032  EQU $
+        %result = s
+ 0578 8B 45 08                              MOV EAX,[EBP+8]
+ 057B 50                                    PUSH EAX
+ 057C 8D 8D FC FE FF FF                     LEA ECX,[EBP-260]
+ 0582 51                                    PUSH ECX
+ 0583 68 FF 00 00 00                        PUSH 255
+ 0588 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 058B 83 C4 0C                              ADD ESP,12
+ 058E C9                                    LEAVE
+ 058F C3                                    RET
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! This function retrieves the type of a %name using
+    ! the associated Dope Vector v Size/Type value
+    ! The actual address of the name is ignored!
+    !--------------------------------------------------------------------------
+    %external %integer %fn type of( %integer dvp,address )
+ 0590                      L1048  EQU $
+ 0590 C8 00 00 01                           ENTER 0000,1
+        ! determine if this "dvp" is a descriptor or a dope vector pointer
+        %if (dvp&1 = 1) %start
+ 0594 8B 45 0C                              MOV EAX,[EBP+12]
+ 0597 25 01 00 00 00                        AND EAX,1
+ 059C 3D 01 00 00 00                        CMP EAX,1
+ 05A1 75 00                                 JNE L1049
+            ! This is a size/type/flag descriptor
+            %result = (dvp >> 1)&15
+ 05A3 8B 45 0C                              MOV EAX,[EBP+12]
+ 05A6 D1 E8                                 SHR EAX,1
+ 05A8 25 0F 00 00 00                        AND EAX,15
+ 05AD C9                                    LEAVE
+ 05AE C3                                    RET
+        %else
+ 05AF                      L1049  EQU $
+            ! This is a genuine Dope Vector address
+            %result = 9
+ 05AF B8 09 00 00 00                        MOV EAX,9
+ 05B4 C9                                    LEAVE
+ 05B5 C3                                    RET
+        %finish
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! This function retrieves the "size" of a %name using
+    ! the associated Dope Vector v Size/Type value
+    ! The actual address of the name is ignored!
+    ! If N is a simple variable type,
+    !    then this returns the size of the simple variable
+    ! If N is an array type,
+    !    then this returns the size in bytes of the array
+    !--------------------------------------------------------------------------
+    %external %integer %fn size of( %integer dvp,address )
+ 05B6                      L1050  EQU $
+ 05B6 C8 00 00 01                           ENTER 0000,1
+        %integer dim, sz, entries
+        %integer lb,lbaddress, ub,ubaddress
+        %integer i
+
+        ! determine if this "dvp" is a descriptor or a dope vector pointer
+        %if (dvp&1 = 1) %start
+ 05BA 8B 45 0C                              MOV EAX,[EBP+12]
+ 05BD 25 01 00 00 00                        AND EAX,1
+ 05C2 3D 01 00 00 00                        CMP EAX,1
+ 05C7 75 00                                 JNE L1051
+            ! This is a size/type/flag descriptor
+            %result = (dvp >> 5)
+ 05C9 8B 45 0C                              MOV EAX,[EBP+12]
+ 05CC C1 E8 05                              SHR EAX,5
+ 05CF C9                                    LEAVE
+ 05D0 C3                                    RET
+        %else
+ 05D1                      L1051  EQU $
+            ! This is a genuine Dope Vector address
+            ! So, this is a genuine array
+
+            ! obtain the dimensions of the array
+            dim = integer( dvp )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 05D1 8B 7D 0C                              MOV EDI,[EBP+12]
+ 05D4 8B 07                                 MOV EAX,[EDI]
+ 05D6 89 45 F8                              MOV [EBP-8],EAX
+            ! next obtain the addresses of the lower and upper bounds
+            ! of the first dimension
+            lbaddress = dvp + address size
+ 05D9 8B 45 0C                              MOV EAX,[EBP+12]
+ 05DC 05 04 00 00 00                        ADD EAX,4
+ 05E1 89 45 E8                              MOV [EBP-24],EAX
+            ubaddress = lbaddress + address size
+ 05E4 8B 45 E8                              MOV EAX,[EBP-24]
+ 05E7 05 04 00 00 00                        ADD EAX,4
+ 05EC 89 45 E0                              MOV [EBP-32],EAX
+            ! An array will have at minimum, one element
+            entries  = 1
+ 05EF C7 45 F0 01 00 00 00                  MOV LONG [EBP-16],1
+
+            ! code to iterate over the dimension ranges to:
+            ! (1) check each pair of bounds are valid (lb <= ub)
+            ! (2) calculate the number of array entries
+            %for i=1,1,dim %cycle
+ 05F6 8B 45 F8                              MOV EAX,[EBP-8]
+ 05F9 89 45 D8                              MOV [EBP-40],EAX
+ 05FC C7 45 DC 00 00 00 00                  MOV LONG [EBP-36],0
+ 0603                      L1052  EQU $
+ 0603 8B 45 DC                              MOV EAX,[EBP-36]
+ 0606 3B 45 D8                              CMP EAX,[EBP-40]
+ 0609 74 00                                 JE L1053
+ 060B 40                                    INC EAX
+ 060C 89 45 DC                              MOV [EBP-36],EAX
+                ! General case iterates from first dimension
+                ! at i=1, point to the leftmost lower bound
+                lb = integer( lbaddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 060F 8B 5D E8                              MOV EBX,[EBP-24]
+ 0612 8B 03                                 MOV EAX,[EBX]
+ 0614 89 45 EC                              MOV [EBP-20],EAX
+
+                ! at i=1, point to the leftmost upper bound
+                ub = integer( ubaddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0617 8B 75 E0                              MOV ESI,[EBP-32]
+ 061A 8B 06                                 MOV EAX,[ESI]
+ 061C 89 45 E4                              MOV [EBP-28],EAX
+
+                ! we declare array bounds so that lb <= ub
+                %signal 5, 3, i %unless lb <= ub
+ 061F 8B 45 EC                              MOV EAX,[EBP-20]
+ 0622 3B 45 E4                              CMP EAX,[EBP-28]
+ 0625 7E 00                                 JLE L1054
+ 0627 B8 3E 02 00 00                        MOV EAX,574
+ 062C 50                                    PUSH EAX
+ 062D B8 05 00 00 00                        MOV EAX,5
+ 0632 50                                    PUSH EAX
+ 0633 B8 03 00 00 00                        MOV EAX,3
+ 0638 50                                    PUSH EAX
+ 0639 8B 45 DC                              MOV EAX,[EBP-36]
+ 063C 50                                    PUSH EAX
+ 063D E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 0640 83 C4 10                              ADD ESP,16
+ 0643                      L1054  EQU $
+                ! Accumulate size of objects in a row
+                ! Allowing for fence-post errors
+                ! the number of entries for dimension i is:
+                ! (ub - lb) + 1
+                ! scale up the entries count so far
+                entries = entries * ((ub - lb) + 1)
+ 0643 8B 45 E4                              MOV EAX,[EBP-28]
+ 0646 2B 45 EC                              SUB EAX,[EBP-20]
+ 0649 40                                    INC EAX
+ 064A F7 6D F0                              IMUL WORD [EBP-16]
+ 064D 89 45 F0                              MOV [EBP-16],EAX
+
+                ! now point to the next dimensions lb,ub values
+                ! evaluate next lower bound index
+                lbaddress = ubaddress + address size
+ 0650 8B 45 E0                              MOV EAX,[EBP-32]
+ 0653 05 04 00 00 00                        ADD EAX,4
+ 0658 89 45 E8                              MOV [EBP-24],EAX
+
+                ! evaluate next upper bound index
+                ubaddress = lbaddress + address size
+ 065B 8B 45 E8                              MOV EAX,[EBP-24]
+ 065E 05 04 00 00 00                        ADD EAX,4
+ 0663 89 45 E0                              MOV [EBP-32],EAX
+            %repeat
+ 0666 EB 00                                 JMP L1052
+ 0668                      L1053  EQU $
+
+            ! we've reached just past the range bound pairs
+            ! so get the array element size/type value
+            sz = integer( lbaddress )
+                                      Generating CODE for 'INTEGER' (MACRO 5)
+                                      CALL 'INTEGER' (MACRO 5)
+ 0668 8B 7D E8                              MOV EDI,[EBP-24]
+ 066B 8B 07                                 MOV EAX,[EDI]
+ 066D 89 45 F4                              MOV [EBP-12],EAX
+
+            ! extract the size from the descriptor
+            sz = (sz>>5)
+ 0670 C1 6D F4 05                           SHR LONG [EBP-12],5
+
+            ! calculate the total size (in bytes) of the array
+            %result = entries * sz
+ 0674 8B 45 F0                              MOV EAX,[EBP-16]
+ 0677 F7 6D F4                              IMUL WORD [EBP-12]
+ 067A C9                                    LEAVE
+ 067B C3                                    RET
+        %finish
+    %end
+    !--------------------------------------------------------------------------
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+ 0000 01 00                                 db 01,00 ; ..
+ 0002 00 00                                 db 00,00 ; ..
+ 0004 00 00                                 db 00,00 ; ..
+ 0006 00 00                                 db 00,00 ; ..
+ 0008 0F 00                                 db 0F,00 ; ..
+ 000A 00 00                                 db 00,00 ; ..
+ 000C 0D 00                                 db 0D,00 ; ..
+ 000E 00 00                                 db 00,00 ; ..
+ 0010 07 75                                 db 07,75 ; .u
+ 0012 6E 6B                                 db 6E,6B ; nk
+ 0014 6E 6F                                 db 6E,6F ; no
+ 0016 77 6E                                 db 77,6E ; wn
+ 0018 07 69                                 db 07,69 ; .i
+ 001A 6E 74                                 db 6E,74 ; nt
+ 001C 65 67                                 db 65,67 ; eg
+ 001E 65 72                                 db 65,72 ; er
+ 0020 04 72                                 db 04,72 ; .r
+ 0022 65 61                                 db 65,61 ; ea
+ 0024 6C 06                                 db 6C,06 ; l.
+ 0026 73 74                                 db 73,74 ; st
+ 0028 72 69                                 db 72,69 ; ri
+ 002A 6E 67                                 db 6E,67 ; ng
+ 002C 06 72                                 db 06,72 ; .r
+ 002E 65 63                                 db 65,63 ; ec
+ 0030 6F 72                                 db 6F,72 ; or
+ 0032 64 04                                 db 64,04 ; d.
+ 0034 62 79                                 db 62,79 ; by
+ 0036 74 65                                 db 74,65 ; te
+ 0038 0C 73                                 db 0C,73 ; .s
+ 003A 68 6F                                 db 68,6F ; ho
+ 003C 72 74                                 db 72,74 ; rt
+ 003E 69 6E                                 db 69,6E ; in
+ 0040 74 65                                 db 74,65 ; te
+ 0042 67 65                                 db 67,65 ; ge
+ 0044 72 0B                                 db 72,0B ; r.
+ 0046 6C 6F                                 db 6C,6F ; lo
+ 0048 6E 67                                 db 6E,67 ; ng
+ 004A 69 6E                                 db 69,6E ; in
+ 004C 74 65                                 db 74,65 ; te
+ 004E 67 65                                 db 67,65 ; ge
+ 0050 72 08                                 db 72,08 ; r.
+ 0052 6C 6F                                 db 6C,6F ; lo
+ 0054 6E 67                                 db 6E,67 ; ng
+ 0056 72 65                                 db 72,65 ; re
+ 0058 61 6C                                 db 61,6C ; al
+ 005A 05 61                                 db 05,61 ; .a
+ 005C 72 72                                 db 72,72 ; rr
+ 005E 61 79                                 db 61,79 ; ay
+ 0060 05 6C                                 db 05,6C ; .l
+ 0062 61 62                                 db 61,62 ; ab
+ 0064 65 6C                                 db 65,6C ; el
+ 0066 08 69                                 db 08,69 ; .i
+ 0068 6C 6C                                 db 6C,6C ; ll
+ 006A 65 67                                 db 65,67 ; eg
+ 006C 61 6C                                 db 61,6C ; al
+ 006E 28 01                                 db 28,01 ; (.
+ 0070 29 00                                 db 29,00 ; ).
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+ 0000 07 04                                 db 07,04 ; ..
+ 0002 09 04                                 db 09,04 ; ..
+ 0004 0A 04                                 db 0A,04 ; ..
+ 0006 0B 04                                 db 0B,04 ; ..
+ 0008 0C 04                                 db 0C,04 ; ..
+ 000A 0D 04                                 db 0D,04 ; ..
+ 000C 0E 04                                 db 0E,04 ; ..
+ 000E 0F 04                                 db 0F,04 ; ..
+ 0010 10 04                                 db 10,04 ; ..
+ 0012 11 04                                 db 11,04 ; ..
+ 0014 12 04                                 db 12,04 ; ..
+ 0016 13 04                                 db 13,04 ; ..
+ 0018 14 04                                 db 14,04 ; ..
+ 001A 15 04                                 db 15,04 ; ..
+ 001C 16 04                                 db 16,04 ; ..
+ 001E 17 04                                 db 17,04 ; ..
+      _SWTAB   ENDS

@@ -3,21 +3,48 @@
     ! Copyright 2002 NB Information Limited
     ! Enhanced JD McMullin 2021
 
-    ! Types extracted from general names
+    %constinteger integersize   = 4
+    %constinteger realsize      = 4
+    ! we don't define stringsize as it could be in range 1..255
+    ! we don't define recordsize as it depends on the record format
+    %constinteger bytesize      = 1
+    %constinteger longrealsize  = 8
+
     ! Curious naming strategy because we don't want to clobber
     ! the built-in functions and maps like "integer" or "int"
-    %constinteger  intgr  = 1
-    %constinteger  float  = 2
-    %constinteger  strng  = 3
-    %constinteger  byte   = 6
-    %constinteger  double = 8
+    ! Types extracted from general names
+    %constinteger      integertype = 1
+    %constinteger         realtype = 2
+    %constinteger       stringtype = 3
+    %constinteger         bytetype = 5
+    %constinteger shortintegertype = 6
+    %constinteger     longrealtype = 8
 
     ! Limits
-    %constinteger  MaxInt = ((-1)>>1)
-    %constinteger  MaxByte = 255
-    %constlongreal MaxFloat = 3.3@38
+    %constinteger        MaxInt = ((-1)>>1)
+    %constinteger      MaxShort = ((-1)>>16)
+    %constinteger       MaxByte = 255
+    %constlongreal     MaxFloat = 3.3@38
+    %constinteger  MaxStringLen = 255
 
-    %external %routine Read( %name ptr)
+    %predicate whitespace( %integer ch )
+        %true %if (ch = ' ')
+        %true %if (ch = 8)
+        %true %if (ch = NL)
+        %true %if (ch = 13)
+        %false
+    %end
+
+    %predicate acceptabletype( %integer type )
+        %true %if (type = integertype)
+        %true %if (type = realtype)
+        %true %if (type = stringtype)
+        %true %if (type = bytetype)
+        %true %if (type = longrealtype)
+        %false
+    %end
+
+    %external %routine Read( %name ptr )
         %string(255)  s
         %integer ch
         %integer sign, digit, len, adr, type, base, found
@@ -30,24 +57,30 @@
         adr = addr(ptr)
         type = type of(ptr)
 
-        %unless intgr <= type <= strng %or type = byte %or type = double %start
-            %signal 5,5,type
-        %finish
+        %signal 5,5,type %unless acceptabletype(type)
 
         ! skip white space
-        skip symbol %while next symbol = ' ' %or next symbol = 8 %or next symbol = NL %or next symbol = 13
+        skip symbol %while whitespace(next symbol)
 
-        %if type = strng %start
+        ! First deal with the string type
+        %if (type = stringtype) %start
+
+            ! grab the "string" into a holding area (%string s)
             length(s) = 0
             %cycle
                 ch = next symbol
-                %exit %if ch = ' ' %or ch = NL %or ch = 8
-                length(s) = length(s) + 1
-                charno(s,length(s)) = ch
+                %exit %if whitespace(ch)
+                ! A check to see we are not overflowing the string s
+                ! if so, we silently ignore this char 
+                %if (length(s) < MaxStringLen) %start
+                    length(s) = length(s) + 1
+                    charno(s,length(s)) = ch
+                %finish
                 skip symbol
             %repeat
 
-            %signal 6,1 %if length(s) > len
+            ! Check the string s will NOT overflow the target variable
+            %signal 6,1 %if (length(s) > len)
 
             ! Now to put the string just "read", into the variable specified
             %for i = 0,1,length(s) %cycle
@@ -59,13 +92,13 @@
             %return
         %finish
 
-        ! The rest (int/real/byte/lreal) all expect a number
+        ! The rest (integer/real/byte/longreal) all expect a number
         ! We collect it in a longreal so that we can correctly read
         ! an integer into a real that is bigger than MaxInt
         base = 10
         sign = 0
 
-        readsymbol(sign) %if next symbol = '-' %or next symbol = '+'
+        readsymbol(sign) %if (next symbol = '-') %or (next symbol = '+')
 
         %cycle
             r = 0
@@ -73,48 +106,56 @@
 
             %cycle
                 ch = next symbol
-                %if '0' <= ch <= '9' %start
+                %if ('0' <= ch <= '9') %start
                     digit = ch - '0'
                 %else %if 'A' <= ch & 95 <= 'Z'
                     digit = ch & 95 - 'A' + 10
                 %finish %else %exit
-                %exit %if digit >= Base
+                %exit %if (digit >= Base)
                 found = 1
                 skip symbol
                 r = r * Base + digit
             %repeat
 
-            %exit %if ch # '_' %or r = 0
+            %exit %if (ch # '_') %or (r = 0)
 
             base = int(r)
             skipsymbol
         %repeat
 
         ! here we've got an integer in R - if that's what we want, exit now
-        %if type = intgr %or type = byte %start
+        ! So, for a %integer
+        %if (type = integertype) %start
 
-            %signal 3,1,ch %if found = 0; ! no digits?  Then report the char we found
+            %signal 3,1,ch %if (found = 0); ! no digits?  then report the char we found
 
-            %if type = intgr %start
-                %if r > MaxInt %then %signal 1,1
-                %if sign = '-' %then r = -r
+            %if (type = integertype) %start
+                %if (r > MaxInt) %then %signal 1,1
+                %if (sign = '-') %then r = -r
                 integer(adr) = int(r)
-            %else
-                %if r > MaxByte %or sign = '-' %then %signal 1,1
-                byte integer(adr) = int(r)
             %finish
             %return
         %finish
 
+        ! So, for a %byte
+        %if (type = bytetype) %start
+
+            %signal 3,1,ch %if (found = 0); ! no digits?  then report the char we found
+
+            %if (r > MaxByte) %or (sign = '-') %then %signal 1,1
+            byte integer(adr) = int(r)
+            %return
+        %finish
+
         ! If we're still here, we are collecting a floating point number
-        %if ch = '.' %start
+        %if (ch = '.') %start
             skip symbol
             frac = 0
             exp = 10
 
             %cycle
                 ch = next symbol
-                %exit %unless '0' <= ch <= '9'
+                %exit %unless ('0' <= ch <= '9')
                 frac = frac + (ch - '0')/exp
                 exp = exp*10
                 found = 1
@@ -127,20 +168,19 @@
         ! We should really worry about @Exponent at this point...
         ! ... add that to the to-do list!
 
-        %signal 3,1,ch %if found = 0
+        %signal 3,1,ch %if (found = 0)
 
-        %if type = float %and r > MaxFloat %then %signal 1,2
+        %if (type = realtype) %and (r > MaxFloat) %then %signal 1,2
 
-        %if sign = '-' %start
+        %if (sign = '-') %start
             r = -r
         %finish
 
-        %if type = float %start
+        %if (type = realtype) %start
             real(adr) = r
         %else
             long real(adr) = r
         %finish
     %end
-
 {----------------------------------------------------------------------------}
 %endoffile

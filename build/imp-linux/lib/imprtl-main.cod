@@ -16,8 +16,8 @@
     %external %routine %spec impmain %alias "__impmain"
 
     %external %integer %function %spec split io list ( %string(255) io list )
-    %external %routine %spec initialise io
-    %external %routine %spec terminate io
+    %external %routine %spec initialise io system
+    %external %routine %spec terminate io system
 
     ! This acts as a "wrapper" routine around the "__impmain" routine
     ! Forward declarations (just to ensure routine trap tables follow in order)
@@ -28,587 +28,748 @@
     ! The external symbol name "_main" (or "main" for Unix/Linux) is used
     ! to ensure IMP programs can be used in Windows/Unix/Linux environments
     ! that provide a c interface
-    %external %routine StartImp %alias "main" (%integer %name envp, %integer %name argv, %integer argc )
+    %external %routine StartImp %c
  0000                      L1001  EQU $
- 0000 C8 00 00 01                     ENTER 0000,1
+ 0000 C8 00 00 01                           ENTER 0000,1
+                %alias "main" (%integer %name envp,
+                               %integer %name argv,
+                               %integer argc )
 
-        %on %event 6,9,10 %start
- 0004 89 65 F8                        MOV [EBP-8],ESP
- 0007 EB 00                           JMP L1002
+!        %on %event 6,9,10 %start
+        %on %event 9,10 %start
+ 0004 89 65 F8                              MOV [EBP-8],ESP
+ 0007 EB 00                                 JMP L1002
  0009                      L1003  EQU $
- 0009 8B 65 F8                        MOV ESP,[EBP-8]
-            %integer eventno, sub, info
+ 0009 8B 65 F8                              MOV ESP,[EBP-8]
+            %integer eventno, sub, info, line
             %string(255) msg
 
             eventno = event_event
- 000C E8 0D 00                        CALL 'EVENT' (EXTERN 13)
- 000F 8B 00                           MOV EAX,[EAX]
- 0011 89 45 F4                        MOV [EBP-12],EAX
+ 000C E8 15 00                              CALL 'EVENT' (EXTERN 21)
+ 000F 8B 00                                 MOV EAX,[EAX]
+ 0011 89 45 F4                              MOV [EBP-12],EAX
             sub = event_sub
- 0014 E8 0D 00                        CALL 'EVENT' (EXTERN 13)
- 0017 8B 40 04                        MOV EAX,[EAX+4]
- 001A 89 45 F0                        MOV [EBP-16],EAX
+ 0014 E8 15 00                              CALL 'EVENT' (EXTERN 21)
+ 0017 8B 40 04                              MOV EAX,[EAX+4]
+ 001A 89 45 F0                              MOV [EBP-16],EAX
             info = event_info
- 001D E8 0D 00                        CALL 'EVENT' (EXTERN 13)
- 0020 8B 40 08                        MOV EAX,[EAX+8]
- 0023 89 45 EC                        MOV [EBP-20],EAX
+ 001D E8 15 00                              CALL 'EVENT' (EXTERN 21)
+ 0020 8B 40 08                              MOV EAX,[EAX+8]
+ 0023 89 45 EC                              MOV [EBP-20],EAX
+            line = event_line
+ 0026 E8 15 00                              CALL 'EVENT' (EXTERN 21)
+ 0029 8B 40 0C                              MOV EAX,[EAX+12]
+ 002C 89 45 E8                              MOV [EBP-24],EAX
             msg = event_message
- 0026 E8 0D 00                        CALL 'EVENT' (EXTERN 13)
- 0029 8D 8D EC FE FF FF               LEA ECX,[EBP-276]
- 002F 51                              PUSH ECX
- 0030 8D 40 0C                        LEA EAX,[EAX+12]
- 0033 50                              PUSH EAX
- 0034 68 FF 00 00 00                  PUSH 255
- 0039 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 003C 83 C4 0C                        ADD ESP,12
+ 002F E8 15 00                              CALL 'EVENT' (EXTERN 21)
+ 0032 8D 8D E8 FE FF FF                     LEA ECX,[EBP-280]
+ 0038 51                                    PUSH ECX
+ 0039 8D 40 10                              LEA EAX,[EAX+16]
+ 003C 50                                    PUSH EAX
+ 003D 68 FF 00 00 00                        PUSH 255
+ 0042 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0045 83 C4 0C                              ADD ESP,12
 
             debugnewline
- 003F E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
-            debugstring( "**** Arrgh! Last chance event handler has been triggered." );debugnewline
- 0042 81 EC 00 01 00 00               SUB ESP,256
- 0048 89 E0                           MOV EAX,ESP
- 004A 50                              PUSH EAX
- 004B B8 00 00 00 00                  MOV EAX,COT+0
- 0050 50                              PUSH EAX
- 0051 68 FF 00 00 00                  PUSH 255
- 0056 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0059 83 C4 0C                        ADD ESP,12
- 005C E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 005F 81 C4 00 01 00 00               ADD ESP,256
- 0065 E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
-            debugstring( "**** Triggered by error event (".itos(eventno,0).",".itos(sub,0).",".itos(info,0)."). Error message '".msg."'" );debugnewline
- 0068 FF 75 F4                        PUSH WORD [EBP-12]
- 006B 6A 00                           PUSH 0
- 006D 8D 85 EC FD FF FF               LEA EAX,[EBP-532]
- 0073 50                              PUSH EAX
- 0074 E8 39 00                        CALL 'ITOS' (EXTERN 57)
- 0077 83 C4 0C                        ADD ESP,12
- 007A 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 0080 50                              PUSH EAX
- 0081 B8 3A 00 00 00                  MOV EAX,COT+58
- 0086 50                              PUSH EAX
- 0087 68 FF 00 00 00                  PUSH 255
- 008C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 008F 83 C4 0C                        ADD ESP,12
- 0092 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 0098 50                              PUSH EAX
- 0099 8D 85 EC FD FF FF               LEA EAX,[EBP-532]
- 009F 50                              PUSH EAX
- 00A0 68 FF 00 00 00                  PUSH 255
- 00A5 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 00A8 83 C4 0C                        ADD ESP,12
- 00AB 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 00B1 50                              PUSH EAX
- 00B2 B8 5A 00 00 00                  MOV EAX,COT+90
- 00B7 50                              PUSH EAX
- 00B8 68 FF 00 00 00                  PUSH 255
- 00BD E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 00C0 83 C4 0C                        ADD ESP,12
- 00C3 FF 75 F0                        PUSH WORD [EBP-16]
- 00C6 6A 00                           PUSH 0
- 00C8 8D 85 EC FB FF FF               LEA EAX,[EBP-1044]
- 00CE 50                              PUSH EAX
- 00CF E8 39 00                        CALL 'ITOS' (EXTERN 57)
- 00D2 83 C4 0C                        ADD ESP,12
- 00D5 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 00DB 50                              PUSH EAX
- 00DC 8D 85 EC FB FF FF               LEA EAX,[EBP-1044]
- 00E2 50                              PUSH EAX
- 00E3 68 FF 00 00 00                  PUSH 255
- 00E8 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 00EB 83 C4 0C                        ADD ESP,12
- 00EE 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 00F4 50                              PUSH EAX
- 00F5 B8 5C 00 00 00                  MOV EAX,COT+92
- 00FA 50                              PUSH EAX
- 00FB 68 FF 00 00 00                  PUSH 255
- 0100 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 0103 83 C4 0C                        ADD ESP,12
- 0106 FF 75 EC                        PUSH WORD [EBP-20]
- 0109 6A 00                           PUSH 0
- 010B 8D 85 EC FA FF FF               LEA EAX,[EBP-1300]
- 0111 50                              PUSH EAX
- 0112 E8 39 00                        CALL 'ITOS' (EXTERN 57)
- 0115 83 C4 0C                        ADD ESP,12
- 0118 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 011E 50                              PUSH EAX
- 011F 8D 85 EC FA FF FF               LEA EAX,[EBP-1300]
- 0125 50                              PUSH EAX
- 0126 68 FF 00 00 00                  PUSH 255
- 012B E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 012E 83 C4 0C                        ADD ESP,12
- 0131 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 0137 50                              PUSH EAX
- 0138 B8 5E 00 00 00                  MOV EAX,COT+94
- 013D 50                              PUSH EAX
- 013E 68 FF 00 00 00                  PUSH 255
- 0143 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 0146 83 C4 0C                        ADD ESP,12
- 0149 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 014F 50                              PUSH EAX
- 0150 8D 85 EC FE FF FF               LEA EAX,[EBP-276]
- 0156 50                              PUSH EAX
- 0157 68 FF 00 00 00                  PUSH 255
- 015C E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 015F 83 C4 0C                        ADD ESP,12
- 0162 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 0168 50                              PUSH EAX
- 0169 B8 71 00 00 00                  MOV EAX,COT+113
- 016E 50                              PUSH EAX
- 016F 68 FF 00 00 00                  PUSH 255
- 0174 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 0177 83 C4 0C                        ADD ESP,12
- 017A 81 EC 00 01 00 00               SUB ESP,256
- 0180 89 E0                           MOV EAX,ESP
- 0182 50                              PUSH EAX
- 0183 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 0189 50                              PUSH EAX
- 018A 68 FF 00 00 00                  PUSH 255
- 018F E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0192 83 C4 0C                        ADD ESP,12
- 0195 E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 0198 81 C4 00 01 00 00               ADD ESP,256
- 019E E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 0048 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+            debugstring( "**** Arrgh!" )
+ 004B 81 EC 00 01 00 00                     SUB ESP,256
+ 0051 89 E0                                 MOV EAX,ESP
+ 0053 50                                    PUSH EAX
+ 0054 B8 00 00 00 00                        MOV EAX,COT+0
+ 0059 50                                    PUSH EAX
+ 005A 68 FF 00 00 00                        PUSH 255
+ 005F E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0062 83 C4 0C                              ADD ESP,12
+ 0065 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0068 81 C4 00 01 00 00                     ADD ESP,256
+            debugstring( " Last chance event handler triggered from line=" )
+ 006E 81 EC 00 01 00 00                     SUB ESP,256
+ 0074 89 E0                                 MOV EAX,ESP
+ 0076 50                                    PUSH EAX
+ 0077 B8 0C 00 00 00                        MOV EAX,COT+12
+ 007C 50                                    PUSH EAX
+ 007D 68 FF 00 00 00                        PUSH 255
+ 0082 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0085 83 C4 0C                              ADD ESP,12
+ 0088 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 008B 81 C4 00 01 00 00                     ADD ESP,256
+            debugstring( itos(line,0) )
+ 0091 FF 75 E8                              PUSH WORD [EBP-24]
+ 0094 6A 00                                 PUSH 0
+ 0096 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 009C 50                                    PUSH EAX
+ 009D E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 00A0 83 C4 0C                              ADD ESP,12
+ 00A3 81 EC 00 01 00 00                     SUB ESP,256
+ 00A9 89 E0                                 MOV EAX,ESP
+ 00AB 50                                    PUSH EAX
+ 00AC 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 00B2 50                                    PUSH EAX
+ 00B3 68 FF 00 00 00                        PUSH 255
+ 00B8 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 00BB 83 C4 0C                              ADD ESP,12
+ 00BE E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 00C1 81 C4 00 01 00 00                     ADD ESP,256
+            debugnewline
+ 00C7 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+            debugstring( "**** Triggered by error (event,sub,extra)=" )
+ 00CA 81 EC 00 01 00 00                     SUB ESP,256
+ 00D0 89 E0                                 MOV EAX,ESP
+ 00D2 50                                    PUSH EAX
+ 00D3 B8 3C 00 00 00                        MOV EAX,COT+60
+ 00D8 50                                    PUSH EAX
+ 00D9 68 FF 00 00 00                        PUSH 255
+ 00DE E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 00E1 83 C4 0C                              ADD ESP,12
+ 00E4 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 00E7 81 C4 00 01 00 00                     ADD ESP,256
+            debugstring( "(" )
+ 00ED 81 EC 00 01 00 00                     SUB ESP,256
+ 00F3 89 E0                                 MOV EAX,ESP
+ 00F5 50                                    PUSH EAX
+ 00F6 B8 67 00 00 00                        MOV EAX,COT+103
+ 00FB 50                                    PUSH EAX
+ 00FC 68 FF 00 00 00                        PUSH 255
+ 0101 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0104 83 C4 0C                              ADD ESP,12
+ 0107 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 010A 81 C4 00 01 00 00                     ADD ESP,256
+            debugstring( itos(eventno,0).",".itos(sub,0).",".itos(info,0) )
+ 0110 FF 75 F4                              PUSH WORD [EBP-12]
+ 0113 6A 00                                 PUSH 0
+ 0115 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 011B 50                                    PUSH EAX
+ 011C E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 011F 83 C4 0C                              ADD ESP,12
+ 0122 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 0128 50                                    PUSH EAX
+ 0129 B8 69 00 00 00                        MOV EAX,COT+105
+ 012E 50                                    PUSH EAX
+ 012F 68 FF 00 00 00                        PUSH 255
+ 0134 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 0137 83 C4 0C                              ADD ESP,12
+ 013A FF 75 F0                              PUSH WORD [EBP-16]
+ 013D 6A 00                                 PUSH 0
+ 013F 8D 85 E8 FC FF FF                     LEA EAX,[EBP-792]
+ 0145 50                                    PUSH EAX
+ 0146 E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 0149 83 C4 0C                              ADD ESP,12
+ 014C 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 0152 50                                    PUSH EAX
+ 0153 8D 85 E8 FC FF FF                     LEA EAX,[EBP-792]
+ 0159 50                                    PUSH EAX
+ 015A 68 FF 00 00 00                        PUSH 255
+ 015F E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 0162 83 C4 0C                              ADD ESP,12
+ 0165 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 016B 50                                    PUSH EAX
+ 016C B8 6B 00 00 00                        MOV EAX,COT+107
+ 0171 50                                    PUSH EAX
+ 0172 68 FF 00 00 00                        PUSH 255
+ 0177 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 017A 83 C4 0C                              ADD ESP,12
+ 017D FF 75 EC                              PUSH WORD [EBP-20]
+ 0180 6A 00                                 PUSH 0
+ 0182 8D 85 E8 FB FF FF                     LEA EAX,[EBP-1048]
+ 0188 50                                    PUSH EAX
+ 0189 E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 018C 83 C4 0C                              ADD ESP,12
+ 018F 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 0195 50                                    PUSH EAX
+ 0196 8D 85 E8 FB FF FF                     LEA EAX,[EBP-1048]
+ 019C 50                                    PUSH EAX
+ 019D 68 FF 00 00 00                        PUSH 255
+ 01A2 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 01A5 83 C4 0C                              ADD ESP,12
+ 01A8 81 EC 00 01 00 00                     SUB ESP,256
+ 01AE 89 E0                                 MOV EAX,ESP
+ 01B0 50                                    PUSH EAX
+ 01B1 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 01B7 50                                    PUSH EAX
+ 01B8 68 FF 00 00 00                        PUSH 255
+ 01BD E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 01C0 83 C4 0C                              ADD ESP,12
+ 01C3 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 01C6 81 C4 00 01 00 00                     ADD ESP,256
+            debugstring( ")" )
+ 01CC 81 EC 00 01 00 00                     SUB ESP,256
+ 01D2 89 E0                                 MOV EAX,ESP
+ 01D4 50                                    PUSH EAX
+ 01D5 B8 6D 00 00 00                        MOV EAX,COT+109
+ 01DA 50                                    PUSH EAX
+ 01DB 68 FF 00 00 00                        PUSH 255
+ 01E0 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 01E3 83 C4 0C                              ADD ESP,12
+ 01E6 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 01E9 81 C4 00 01 00 00                     ADD ESP,256
+            debugnewline
+ 01EF E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+            debugstring( "     Error message is '".msg."'" )
+ 01F2 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 01F8 50                                    PUSH EAX
+ 01F9 B8 6F 00 00 00                        MOV EAX,COT+111
+ 01FE 50                                    PUSH EAX
+ 01FF 68 FF 00 00 00                        PUSH 255
+ 0204 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0207 83 C4 0C                              ADD ESP,12
+ 020A 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 0210 50                                    PUSH EAX
+ 0211 8D 85 E8 FE FF FF                     LEA EAX,[EBP-280]
+ 0217 50                                    PUSH EAX
+ 0218 68 FF 00 00 00                        PUSH 255
+ 021D E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 0220 83 C4 0C                              ADD ESP,12
+ 0223 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 0229 50                                    PUSH EAX
+ 022A B8 87 00 00 00                        MOV EAX,COT+135
+ 022F 50                                    PUSH EAX
+ 0230 68 FF 00 00 00                        PUSH 255
+ 0235 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 0238 83 C4 0C                              ADD ESP,12
+ 023B 81 EC 00 01 00 00                     SUB ESP,256
+ 0241 89 E0                                 MOV EAX,ESP
+ 0243 50                                    PUSH EAX
+ 0244 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 024A 50                                    PUSH EAX
+ 024B 68 FF 00 00 00                        PUSH 255
+ 0250 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0253 83 C4 0C                              ADD ESP,12
+ 0256 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0259 81 C4 00 01 00 00                     ADD ESP,256
+            debugnewline
+ 025F E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
 
             %if eventno=6 %and sub = 2 %and info = 1 %start
- 01A1 8B 45 F4                        MOV EAX,[EBP-12]
- 01A4 3D 06 00 00 00                  CMP EAX,6
- 01A9 75 00                           JNE L1004
- 01AB 8B 45 F0                        MOV EAX,[EBP-16]
- 01AE 3D 02 00 00 00                  CMP EAX,2
- 01B3 75 00                           JNE L1004
- 01B5 8B 45 EC                        MOV EAX,[EBP-20]
- 01B8 3D 01 00 00 00                  CMP EAX,1
- 01BD 75 00                           JNE L1004
-                debugstring("**** Error likely caused by missing command line parameters for input/output file(s)");debug newline
- 01BF 81 EC 00 01 00 00               SUB ESP,256
- 01C5 89 E0                           MOV EAX,ESP
- 01C7 50                              PUSH EAX
- 01C8 B8 73 00 00 00                  MOV EAX,COT+115
- 01CD 50                              PUSH EAX
- 01CE 68 FF 00 00 00                  PUSH 255
- 01D3 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 01D6 83 C4 0C                        ADD ESP,12
- 01D9 E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 01DC 81 C4 00 01 00 00               ADD ESP,256
- 01E2 E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 0262 8B 45 F4                              MOV EAX,[EBP-12]
+ 0265 3D 06 00 00 00                        CMP EAX,6
+ 026A 75 00                                 JNE L1004
+ 026C 8B 45 F0                              MOV EAX,[EBP-16]
+ 026F 3D 02 00 00 00                        CMP EAX,2
+ 0274 75 00                                 JNE L1004
+ 0276 8B 45 EC                              MOV EAX,[EBP-20]
+ 0279 3D 01 00 00 00                        CMP EAX,1
+ 027E 75 00                                 JNE L1004
+                debugstring("**** Likely cause of error: ")
+ 0280 81 EC 00 01 00 00                     SUB ESP,256
+ 0286 89 E0                                 MOV EAX,ESP
+ 0288 50                                    PUSH EAX
+ 0289 B8 89 00 00 00                        MOV EAX,COT+137
+ 028E 50                                    PUSH EAX
+ 028F 68 FF 00 00 00                        PUSH 255
+ 0294 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0297 83 C4 0C                              ADD ESP,12
+ 029A E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 029D 81 C4 00 01 00 00                     ADD ESP,256
+                debugstring("Missing command line parameter(s) ")
+ 02A3 81 EC 00 01 00 00                     SUB ESP,256
+ 02A9 89 E0                                 MOV EAX,ESP
+ 02AB 50                                    PUSH EAX
+ 02AC B8 A6 00 00 00                        MOV EAX,COT+166
+ 02B1 50                                    PUSH EAX
+ 02B2 68 FF 00 00 00                        PUSH 255
+ 02B7 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 02BA 83 C4 0C                              ADD ESP,12
+ 02BD E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 02C0 81 C4 00 01 00 00                     ADD ESP,256
+                debugstring("for input/output file(s)")
+ 02C6 81 EC 00 01 00 00                     SUB ESP,256
+ 02CC 89 E0                                 MOV EAX,ESP
+ 02CE 50                                    PUSH EAX
+ 02CF B8 C9 00 00 00                        MOV EAX,COT+201
+ 02D4 50                                    PUSH EAX
+ 02D5 68 FF 00 00 00                        PUSH 255
+ 02DA E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 02DD 83 C4 0C                              ADD ESP,12
+ 02E0 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 02E3 81 C4 00 01 00 00                     ADD ESP,256
+                debug newline
+ 02E9 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
             %finish
- 01E5                      L1004  EQU $
+ 02EC                      L1004  EQU $
 
             %if eventno = 9 %start
- 01E5 8B 45 F4                        MOV EAX,[EBP-12]
- 01E8 3D 09 00 00 00                  CMP EAX,9
- 01ED 75 00                           JNE L1005
+ 02EC 8B 45 F4                              MOV EAX,[EBP-12]
+ 02EF 3D 09 00 00 00                        CMP EAX,9
+ 02F4 75 00                                 JNE L1005
+                %if (sub = 4) %or (sub = 5) %start
+ 02F6 8B 45 F0                              MOV EAX,[EBP-16]
+ 02F9 3D 04 00 00 00                        CMP EAX,4
+ 02FE 74 00                                 JE L1006
+ 0300 8B 45 F0                              MOV EAX,[EBP-16]
+ 0303 3D 05 00 00 00                        CMP EAX,5
+ 0308 75 00                                 JNE L1007
+ 030A                      L1006  EQU $
+                    debugstring("**** Likely cause of error: ")
+ 030A 81 EC 00 01 00 00                     SUB ESP,256
+ 0310 89 E0                                 MOV EAX,ESP
+ 0312 50                                    PUSH EAX
+ 0313 B8 E2 00 00 00                        MOV EAX,COT+226
+ 0318 50                                    PUSH EAX
+ 0319 68 FF 00 00 00                        PUSH 255
+ 031E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0321 83 C4 0C                              ADD ESP,12
+ 0324 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0327 81 C4 00 01 00 00                     ADD ESP,256
+                    debugstring("Missing/invalid command line parameter for ")
+ 032D 81 EC 00 01 00 00                     SUB ESP,256
+ 0333 89 E0                                 MOV EAX,ESP
+ 0335 50                                    PUSH EAX
+ 0336 B8 FF 00 00 00                        MOV EAX,COT+255
+ 033B 50                                    PUSH EAX
+ 033C 68 FF 00 00 00                        PUSH 255
+ 0341 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0344 83 C4 0C                              ADD ESP,12
+ 0347 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 034A 81 C4 00 01 00 00                     ADD ESP,256
+                %finish
+ 0350                      L1007  EQU $
                 %if (sub = 4) %start
- 01EF 8B 45 F0                        MOV EAX,[EBP-16]
- 01F2 3D 04 00 00 00                  CMP EAX,4
- 01F7 75 00                           JNE L1006
-                    debugstring("**** Error likely caused by missing/invalid command line parameters for input file(s)");debug newline
- 01F9 81 EC 00 01 00 00               SUB ESP,256
- 01FF 89 E0                           MOV EAX,ESP
- 0201 50                              PUSH EAX
- 0202 B8 C8 00 00 00                  MOV EAX,COT+200
- 0207 50                              PUSH EAX
- 0208 68 FF 00 00 00                  PUSH 255
- 020D E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0210 83 C4 0C                        ADD ESP,12
- 0213 E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 0216 81 C4 00 01 00 00               ADD ESP,256
- 021C E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 0350 8B 45 F0                              MOV EAX,[EBP-16]
+ 0353 3D 04 00 00 00                        CMP EAX,4
+ 0358 75 00                                 JNE L1008
+                    debugstring("input ")
+ 035A 81 EC 00 01 00 00                     SUB ESP,256
+ 0360 89 E0                                 MOV EAX,ESP
+ 0362 50                                    PUSH EAX
+ 0363 B8 2B 01 00 00                        MOV EAX,COT+299
+ 0368 50                                    PUSH EAX
+ 0369 68 FF 00 00 00                        PUSH 255
+ 036E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0371 83 C4 0C                              ADD ESP,12
+ 0374 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0377 81 C4 00 01 00 00                     ADD ESP,256
+                    debug newline
+ 037D E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
                 %finish
- 021F                      L1006  EQU $
+ 0380                      L1008  EQU $
                 %if (sub = 5) %start
- 021F 8B 45 F0                        MOV EAX,[EBP-16]
- 0222 3D 05 00 00 00                  CMP EAX,5
- 0227 75 00                           JNE L1007
-                    debugstring("**** Error likely caused by missing/invalid command line parameters for output files(s)");debug newline
- 0229 81 EC 00 01 00 00               SUB ESP,256
- 022F 89 E0                           MOV EAX,ESP
- 0231 50                              PUSH EAX
- 0232 B8 1E 01 00 00                  MOV EAX,COT+286
- 0237 50                              PUSH EAX
- 0238 68 FF 00 00 00                  PUSH 255
- 023D E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0240 83 C4 0C                        ADD ESP,12
- 0243 E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 0246 81 C4 00 01 00 00               ADD ESP,256
- 024C E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 0380 8B 45 F0                              MOV EAX,[EBP-16]
+ 0383 3D 05 00 00 00                        CMP EAX,5
+ 0388 75 00                                 JNE L1009
+                    debugstring("output ")
+ 038A 81 EC 00 01 00 00                     SUB ESP,256
+ 0390 89 E0                                 MOV EAX,ESP
+ 0392 50                                    PUSH EAX
+ 0393 B8 32 01 00 00                        MOV EAX,COT+306
+ 0398 50                                    PUSH EAX
+ 0399 68 FF 00 00 00                        PUSH 255
+ 039E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 03A1 83 C4 0C                              ADD ESP,12
+ 03A4 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 03A7 81 C4 00 01 00 00                     ADD ESP,256
+                    debug newline
+ 03AD E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
                 %finish
- 024F                      L1007  EQU $
+ 03B0                      L1009  EQU $
+                %if (sub = 4) %or (sub = 5) %start
+ 03B0 8B 45 F0                              MOV EAX,[EBP-16]
+ 03B3 3D 04 00 00 00                        CMP EAX,4
+ 03B8 74 00                                 JE L1010
+ 03BA 8B 45 F0                              MOV EAX,[EBP-16]
+ 03BD 3D 05 00 00 00                        CMP EAX,5
+ 03C2 75 00                                 JNE L1011
+ 03C4                      L1010  EQU $
+                    debugstring("file(s)")
+ 03C4 81 EC 00 01 00 00                     SUB ESP,256
+ 03CA 89 E0                                 MOV EAX,ESP
+ 03CC 50                                    PUSH EAX
+ 03CD B8 3A 01 00 00                        MOV EAX,COT+314
+ 03D2 50                                    PUSH EAX
+ 03D3 68 FF 00 00 00                        PUSH 255
+ 03D8 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 03DB 83 C4 0C                              ADD ESP,12
+ 03DE E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 03E1 81 C4 00 01 00 00                     ADD ESP,256
+                %finish
+ 03E7                      L1011  EQU $
+
             %finish
- 024F                      L1005  EQU $
+ 03E7                      L1005  EQU $
 
             %if eventno = 10 %start
- 024F 8B 45 F4                        MOV EAX,[EBP-12]
- 0252 3D 0A 00 00 00                  CMP EAX,10
- 0257 75 00                           JNE L1008
-                debugstring("**** Error caused by missing/invalid command line parameter(s)");debug newline
- 0259 81 EC 00 01 00 00               SUB ESP,256
- 025F 89 E0                           MOV EAX,ESP
- 0261 50                              PUSH EAX
- 0262 B8 76 01 00 00                  MOV EAX,COT+374
- 0267 50                              PUSH EAX
- 0268 68 FF 00 00 00                  PUSH 255
- 026D E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0270 83 C4 0C                        ADD ESP,12
- 0273 E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 0276 81 C4 00 01 00 00               ADD ESP,256
- 027C E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 03E7 8B 45 F4                              MOV EAX,[EBP-12]
+ 03EA 3D 0A 00 00 00                        CMP EAX,10
+ 03EF 75 00                                 JNE L1012
+                debugstring("**** Likely cause of error: ")
+ 03F1 81 EC 00 01 00 00                     SUB ESP,256
+ 03F7 89 E0                                 MOV EAX,ESP
+ 03F9 50                                    PUSH EAX
+ 03FA B8 42 01 00 00                        MOV EAX,COT+322
+ 03FF 50                                    PUSH EAX
+ 0400 68 FF 00 00 00                        PUSH 255
+ 0405 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0408 83 C4 0C                              ADD ESP,12
+ 040B E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 040E 81 C4 00 01 00 00                     ADD ESP,256
+                debugstring("Missing/invalid command line parameter(s)")
+ 0414 81 EC 00 01 00 00                     SUB ESP,256
+ 041A 89 E0                                 MOV EAX,ESP
+ 041C 50                                    PUSH EAX
+ 041D B8 5F 01 00 00                        MOV EAX,COT+351
+ 0422 50                                    PUSH EAX
+ 0423 68 FF 00 00 00                        PUSH 255
+ 0428 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 042B 83 C4 0C                              ADD ESP,12
+ 042E E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0431 81 C4 00 01 00 00                     ADD ESP,256
+                debug newline
+ 0437 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
             %finish
- 027F                      L1008  EQU $
+ 043A                      L1012  EQU $
 
             debugnewline
- 027F E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 043A E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
 
             %stop
- 0282 E8 0C 00                        CALL '_IMPSTOP' (EXTERN 12)
+ 043D E8 0C 00                              CALL '_IMPSTOP' (EXTERN 12)
 
         %finish
- 0285                      L1002  EQU $
+ 0440                      L1002  EQU $
 
         arguments == argv
- 0285 8B 45 0C                        MOV EAX,[EBP+12]
- 0288 89 05 00 00 00 00               MOV [DATA+0000],EAX
+ 0440 8B 45 0C                              MOV EAX,[EBP+12]
+ 0443 89 05 00 00 00 00                     MOV [DATA+0000],EAX
         environs == envp
- 028E 8B 45 10                        MOV EAX,[EBP+16]
- 0291 89 05 04 00 00 00               MOV [DATA+0004],EAX
+ 0449 8B 45 10                              MOV EAX,[EBP+16]
+ 044C 89 05 04 00 00 00                     MOV [DATA+0004],EAX
 
-        ! Intialise the runtime system
+        ! Initialise the runtime system
         ! ass-u-me no debug required
         set debug level( 0 )
- 0297 6A 00                           PUSH 0
- 0299 E8 40 00                        CALL 'SETDEBUGLEVEL' (EXTERN 64)
- 029C 83 C4 04                        ADD ESP,4
+ 0452 6A 00                                 PUSH 0
+ 0454 E8 47 00                              CALL 'SETDEBUGLEVEL' (EXTERN 71)
+ 0457 83 C4 04                              ADD ESP,4
 
         %if (length( getenv( getenvindex( "IMP_DEBUG" ) ) ) # 0) %start
- 029F 81 EC 00 01 00 00               SUB ESP,256
- 02A5 89 E0                           MOV EAX,ESP
- 02A7 50                              PUSH EAX
- 02A8 B8 B5 01 00 00                  MOV EAX,COT+437
- 02AD 50                              PUSH EAX
- 02AE 68 FF 00 00 00                  PUSH 255
- 02B3 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 02B6 83 C4 0C                        ADD ESP,12
- 02B9 E8 4A 00                        CALL 'GETENVINDEX' (EXTERN 74)
- 02BC 81 C4 00 01 00 00               ADD ESP,256
- 02C2 50                              PUSH EAX
- 02C3 8D 85 EC FC FF FF               LEA EAX,[EBP-788]
- 02C9 50                              PUSH EAX
- 02CA E8 49 00                        CALL 'GETENV' (EXTERN 73)
- 02CD 83 C4 08                        ADD ESP,8
+ 045A 81 EC 00 01 00 00                     SUB ESP,256
+ 0460 89 E0                                 MOV EAX,ESP
+ 0462 50                                    PUSH EAX
+ 0463 B8 89 01 00 00                        MOV EAX,COT+393
+ 0468 50                                    PUSH EAX
+ 0469 68 FF 00 00 00                        PUSH 255
+ 046E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0471 83 C4 0C                              ADD ESP,12
+ 0474 E8 51 00                              CALL 'GETENVINDEX' (EXTERN 81)
+ 0477 81 C4 00 01 00 00                     ADD ESP,256
+ 047D 50                                    PUSH EAX
+ 047E 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
+ 0484 50                                    PUSH EAX
+ 0485 E8 50 00                              CALL 'GETENV' (EXTERN 80)
+ 0488 83 C4 08                              ADD ESP,8
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 02D0 31 C0                           XOR EAX,EAX
- 02D2 8A 85 EC FC FF FF               MOV AL,[EBP-788]
- 02D8 3D 00 00 00 00                  CMP EAX,0
- 02DD 74 00                           JE L1009
+ 048B 31 C0                                 XOR EAX,EAX
+ 048D 8A 85 E8 FD FF FF                     MOV AL,[EBP-536]
+ 0493 3D 00 00 00 00                        CMP EAX,0
+ 0498 74 00                                 JE L1013
             ! ok, we want ALL debug levels
             set debug level ( 16_ffffffff )
- 02DF 6A FF                           PUSH -1
- 02E1 E8 40 00                        CALL 'SETDEBUGLEVEL' (EXTERN 64)
- 02E4 83 C4 04                        ADD ESP,4
+ 049A 6A FF                                 PUSH -1
+ 049C E8 47 00                              CALL 'SETDEBUGLEVEL' (EXTERN 71)
+ 049F 83 C4 04                              ADD ESP,4
         %finish
- 02E7                      L1009  EQU $
+ 04A2                      L1013  EQU $
 
-        initialise io
- 02E7 E8 5F 00                        CALL 'INITIALISEIO' (EXTERN 95)
+        initialise io system
+ 04A2 E8 66 00                              CALL 'INITIALISEIOSYSTEM' (EXTERN 102)
 
         ! ok, let's see which flavour of IMP program we have
         ! We defer selection of %external %routine XXX %alias "__impmain" IMP program type
         ! so that potentially extra ways of calling the compiler generated IMP program code
         ! can be implemented
         selectimptype
- 02EA E8 00 00                        CALL 'SELECTIMPTYPE' (INTERNAL L1000 )
+ 04A5 E8 00 00                              CALL 'SELECTIMPTYPE' (INTERNAL L1000 )
 
         ! don't forget to close down the I/O system
-        terminateio
- 02ED E8 60 00                        CALL 'TERMINATEIO' (EXTERN 96)
+        terminate io system
+ 04A8 E8 67 00                              CALL 'TERMINATEIOSYSTEM' (EXTERN 103)
 
         ! Switch off all debug now we are about to exit
         set debug level ( 0 )
- 02F0 6A 00                           PUSH 0
- 02F2 E8 40 00                        CALL 'SETDEBUGLEVEL' (EXTERN 64)
- 02F5 83 C4 04                        ADD ESP,4
+ 04AB 6A 00                                 PUSH 0
+ 04AD E8 47 00                              CALL 'SETDEBUGLEVEL' (EXTERN 71)
+ 04B0 83 C4 04                              ADD ESP,4
 
         ! If the IMP program exits through %endofprog then report success to the shell
         exit(0)
- 02F8 6A 00                           PUSH 0
- 02FA E8 5C 00                        CALL 'EXIT' (EXTERN 92)
- 02FD 83 C4 04                        ADD ESP,4
+ 04B3 6A 00                                 PUSH 0
+ 04B5 E8 63 00                              CALL 'EXIT' (EXTERN 99)
+ 04B8 83 C4 04                              ADD ESP,4
     %end
- 0300 C9                              LEAVE
- 0301 C3                              RET
+ 04BB C9                                    LEAVE
+ 04BC C3                                    RET
 
     ! Enable access to the environment variables
     ! Used by routines in "imprtl-system"
     %external %integer %name %function getenvironment
- 0302                      L1010  EQU $
- 0302 C8 00 00 01                     ENTER 0000,1
+ 04BD                      L1014  EQU $
+ 04BD C8 00 00 01                           ENTER 0000,1
         %result == environs
- 0306 A1 04 00 00 00                  MOV EAX,[DATA+0004]
- 030B C9                              LEAVE
- 030C C3                              RET
+ 04C1 A1 04 00 00 00                        MOV EAX,[DATA+0004]
+ 04C6 C9                                    LEAVE
+ 04C7 C3                                    RET
     %end
 
     ! Enable access to the command line parameters
     ! Used by routines in "imprtl-system"
     %external %integer %name %function getarguments
- 030D                      L1011  EQU $
- 030D C8 00 00 01                     ENTER 0000,1
+ 04C8                      L1015  EQU $
+ 04C8 C8 00 00 01                           ENTER 0000,1
         %result == arguments
- 0311 A1 00 00 00 00                  MOV EAX,[DATA+0000]
- 0316 C9                              LEAVE
- 0317 C3                              RET
+ 04CC A1 00 00 00 00                        MOV EAX,[DATA+0000]
+ 04D1 C9                                    LEAVE
+ 04D2 C3                                    RET
     %end
 
     ! for a %begin ... %end IMP program, indicate the expected command line parameters
     %routine usage
- 0318                      L1012  EQU $
- 0318 C8 00 00 01                     ENTER 0000,1
+ 04D3                      L1016  EQU $
+ 04D3 C8 00 00 01                           ENTER 0000,1
         debugstring( "Usage: <imp program> [in1[,in2[,in3]]]".tostring(FILE SEP)."[out1[,out2[,out3]]] [debug]" )
                                       Generating CODE for 'TO STRING' (MACRO 3)
                                       CALL 'TO STRING' (MACRO 3)
- 031C 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 0322 50                              PUSH EAX
- 0323 B8 BF 01 00 00                  MOV EAX,COT+447
- 0328 50                              PUSH EAX
- 0329 68 FF 00 00 00                  PUSH 255
- 032E E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0331 83 C4 0C                        ADD ESP,12
- 0334 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 033A 50                              PUSH EAX
- 033B B8 E6 01 00 00                  MOV EAX,COT+486
- 0340 50                              PUSH EAX
- 0341 68 FF 00 00 00                  PUSH 255
- 0346 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 0349 83 C4 0C                        ADD ESP,12
- 034C 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 0352 50                              PUSH EAX
- 0353 B8 E8 01 00 00                  MOV EAX,COT+488
- 0358 50                              PUSH EAX
- 0359 68 FF 00 00 00                  PUSH 255
- 035E E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 0361 83 C4 0C                        ADD ESP,12
- 0364 81 EC 00 01 00 00               SUB ESP,256
- 036A 89 E0                           MOV EAX,ESP
- 036C 50                              PUSH EAX
- 036D 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 0373 50                              PUSH EAX
- 0374 68 FF 00 00 00                  PUSH 255
- 0379 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 037C 83 C4 0C                        ADD ESP,12
- 037F E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 0382 81 C4 00 01 00 00               ADD ESP,256
+ 04D7 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 04DD 50                                    PUSH EAX
+ 04DE B8 93 01 00 00                        MOV EAX,COT+403
+ 04E3 50                                    PUSH EAX
+ 04E4 68 FF 00 00 00                        PUSH 255
+ 04E9 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 04EC 83 C4 0C                              ADD ESP,12
+ 04EF 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 04F5 50                                    PUSH EAX
+ 04F6 B8 BA 01 00 00                        MOV EAX,COT+442
+ 04FB 50                                    PUSH EAX
+ 04FC 68 FF 00 00 00                        PUSH 255
+ 0501 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 0504 83 C4 0C                              ADD ESP,12
+ 0507 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 050D 50                                    PUSH EAX
+ 050E B8 BC 01 00 00                        MOV EAX,COT+444
+ 0513 50                                    PUSH EAX
+ 0514 68 FF 00 00 00                        PUSH 255
+ 0519 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 051C 83 C4 0C                              ADD ESP,12
+ 051F 81 EC 00 01 00 00                     SUB ESP,256
+ 0525 89 E0                                 MOV EAX,ESP
+ 0527 50                                    PUSH EAX
+ 0528 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 052E 50                                    PUSH EAX
+ 052F 68 FF 00 00 00                        PUSH 255
+ 0534 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0537 83 C4 0C                              ADD ESP,12
+ 053A E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 053D 81 C4 00 01 00 00                     ADD ESP,256
         debug newline
- 0388 E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 0543 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
         debugstring( "   NB: the '".tostring(FILE SEP)."' separates the input files from the output files" )
                                       Generating CODE for 'TO STRING' (MACRO 3)
                                       CALL 'TO STRING' (MACRO 3)
- 038B 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 0391 50                              PUSH EAX
- 0392 B8 05 02 00 00                  MOV EAX,COT+517
- 0397 50                              PUSH EAX
- 0398 68 FF 00 00 00                  PUSH 255
- 039D E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 03A0 83 C4 0C                        ADD ESP,12
- 03A3 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 03A9 50                              PUSH EAX
- 03AA B8 12 02 00 00                  MOV EAX,COT+530
- 03AF 50                              PUSH EAX
- 03B0 68 FF 00 00 00                  PUSH 255
- 03B5 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 03B8 83 C4 0C                        ADD ESP,12
- 03BB 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 03C1 50                              PUSH EAX
- 03C2 B8 14 02 00 00                  MOV EAX,COT+532
- 03C7 50                              PUSH EAX
- 03C8 68 FF 00 00 00                  PUSH 255
- 03CD E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 03D0 83 C4 0C                        ADD ESP,12
- 03D3 81 EC 00 01 00 00               SUB ESP,256
- 03D9 89 E0                           MOV EAX,ESP
- 03DB 50                              PUSH EAX
- 03DC 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 03E2 50                              PUSH EAX
- 03E3 68 FF 00 00 00                  PUSH 255
- 03E8 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 03EB 83 C4 0C                        ADD ESP,12
- 03EE E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 03F1 81 C4 00 01 00 00               ADD ESP,256
+ 0546 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 054C 50                                    PUSH EAX
+ 054D B8 D9 01 00 00                        MOV EAX,COT+473
+ 0552 50                                    PUSH EAX
+ 0553 68 FF 00 00 00                        PUSH 255
+ 0558 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 055B 83 C4 0C                              ADD ESP,12
+ 055E 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0564 50                                    PUSH EAX
+ 0565 B8 E6 01 00 00                        MOV EAX,COT+486
+ 056A 50                                    PUSH EAX
+ 056B 68 FF 00 00 00                        PUSH 255
+ 0570 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 0573 83 C4 0C                              ADD ESP,12
+ 0576 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 057C 50                                    PUSH EAX
+ 057D B8 E8 01 00 00                        MOV EAX,COT+488
+ 0582 50                                    PUSH EAX
+ 0583 68 FF 00 00 00                        PUSH 255
+ 0588 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 058B 83 C4 0C                              ADD ESP,12
+ 058E 81 EC 00 01 00 00                     SUB ESP,256
+ 0594 89 E0                                 MOV EAX,ESP
+ 0596 50                                    PUSH EAX
+ 0597 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 059D 50                                    PUSH EAX
+ 059E 68 FF 00 00 00                        PUSH 255
+ 05A3 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 05A6 83 C4 0C                              ADD ESP,12
+ 05A9 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 05AC 81 C4 00 01 00 00                     ADD ESP,256
         debug newline
- 03F7 E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 05B2 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
         debugstring( "   NB: debug triggers extra run time debug messages)" )
- 03FA 81 EC 00 01 00 00               SUB ESP,256
- 0400 89 E0                           MOV EAX,ESP
- 0402 50                              PUSH EAX
- 0403 B8 46 02 00 00                  MOV EAX,COT+582
- 0408 50                              PUSH EAX
- 0409 68 FF 00 00 00                  PUSH 255
- 040E E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0411 83 C4 0C                        ADD ESP,12
- 0414 E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 0417 81 C4 00 01 00 00               ADD ESP,256
+ 05B5 81 EC 00 01 00 00                     SUB ESP,256
+ 05BB 89 E0                                 MOV EAX,ESP
+ 05BD 50                                    PUSH EAX
+ 05BE B8 1A 02 00 00                        MOV EAX,COT+538
+ 05C3 50                                    PUSH EAX
+ 05C4 68 FF 00 00 00                        PUSH 255
+ 05C9 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 05CC 83 C4 0C                              ADD ESP,12
+ 05CF E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 05D2 81 C4 00 01 00 00                     ADD ESP,256
         debug newline
- 041D E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 05D8 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
         debugstring( "   NB: For debug activation (even if there are no I/O files requested) the '".tostring(FILE SEP)."' is mandatory" )
                                       Generating CODE for 'TO STRING' (MACRO 3)
                                       CALL 'TO STRING' (MACRO 3)
- 0420 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 0426 50                              PUSH EAX
- 0427 B8 7B 02 00 00                  MOV EAX,COT+635
- 042C 50                              PUSH EAX
- 042D 68 FF 00 00 00                  PUSH 255
- 0432 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0435 83 C4 0C                        ADD ESP,12
- 0438 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 043E 50                              PUSH EAX
- 043F B8 C8 02 00 00                  MOV EAX,COT+712
- 0444 50                              PUSH EAX
- 0445 68 FF 00 00 00                  PUSH 255
- 044A E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 044D 83 C4 0C                        ADD ESP,12
- 0450 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 0456 50                              PUSH EAX
- 0457 B8 CA 02 00 00                  MOV EAX,COT+714
- 045C 50                              PUSH EAX
- 045D 68 FF 00 00 00                  PUSH 255
- 0462 E8 05 00                        CALL '_IMPSTRCAT' (EXTERN 5)
- 0465 83 C4 0C                        ADD ESP,12
- 0468 81 EC 00 01 00 00               SUB ESP,256
- 046E 89 E0                           MOV EAX,ESP
- 0470 50                              PUSH EAX
- 0471 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 0477 50                              PUSH EAX
- 0478 68 FF 00 00 00                  PUSH 255
- 047D E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0480 83 C4 0C                        ADD ESP,12
- 0483 E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 0486 81 C4 00 01 00 00               ADD ESP,256
+ 05DB 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 05E1 50                                    PUSH EAX
+ 05E2 B8 4F 02 00 00                        MOV EAX,COT+591
+ 05E7 50                                    PUSH EAX
+ 05E8 68 FF 00 00 00                        PUSH 255
+ 05ED E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 05F0 83 C4 0C                              ADD ESP,12
+ 05F3 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 05F9 50                                    PUSH EAX
+ 05FA B8 9C 02 00 00                        MOV EAX,COT+668
+ 05FF 50                                    PUSH EAX
+ 0600 68 FF 00 00 00                        PUSH 255
+ 0605 E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 0608 83 C4 0C                              ADD ESP,12
+ 060B 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0611 50                                    PUSH EAX
+ 0612 B8 9E 02 00 00                        MOV EAX,COT+670
+ 0617 50                                    PUSH EAX
+ 0618 68 FF 00 00 00                        PUSH 255
+ 061D E8 05 00                              CALL '_IMPSTRCAT' (EXTERN 5)
+ 0620 83 C4 0C                              ADD ESP,12
+ 0623 81 EC 00 01 00 00                     SUB ESP,256
+ 0629 89 E0                                 MOV EAX,ESP
+ 062B 50                                    PUSH EAX
+ 062C 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0632 50                                    PUSH EAX
+ 0633 68 FF 00 00 00                        PUSH 255
+ 0638 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 063B 83 C4 0C                              ADD ESP,12
+ 063E E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0641 81 C4 00 01 00 00                     ADD ESP,256
         debug newline
- 048C E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 0647 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
         exit(1)
- 048F 6A 01                           PUSH 1
- 0491 E8 5C 00                        CALL 'EXIT' (EXTERN 92)
- 0494 83 C4 04                        ADD ESP,4
+ 064A 6A 01                                 PUSH 1
+ 064C E8 63 00                              CALL 'EXIT' (EXTERN 99)
+ 064F 83 C4 04                              ADD ESP,4
     %end
- 0497 C9                              LEAVE
- 0498 C3                              RET
+ 0652 C9                                    LEAVE
+ 0653 C3                                    RET
 
     ! Kludge to see if the program is a %begin .. %end block with file parameters
     %predicate runmode(%string(255) arg1)
- 0499                      L1013  EQU $
- 0499 C8 00 00 01                     ENTER 0000,1
+ 0654                      L1017  EQU $
+ 0654 C8 00 00 01                           ENTER 0000,1
         %string(255) s,a,b,c
 
         s = arg1
- 049D 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 04A3 50                              PUSH EAX
- 04A4 8D 4D 08                        LEA ECX,[EBP+8]
- 04A7 51                              PUSH ECX
- 04A8 68 FF 00 00 00                  PUSH 255
- 04AD E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 04B0 83 C4 0C                        ADD ESP,12
+ 0658 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 065E 50                                    PUSH EAX
+ 065F 8D 4D 08                              LEA ECX,[EBP+8]
+ 0662 51                                    PUSH ECX
+ 0663 68 FF 00 00 00                        PUSH 255
+ 0668 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 066B 83 C4 0C                              ADD ESP,12
         length( a ) = 0
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 04B3 C6 85 FC FD FF FF 00            MOV BYTE [EBP-516],0
+ 066E C6 85 FC FD FF FF 00                  MOV BYTE [EBP-516],0
         b = tostring(FILE SEP)
                                       Generating CODE for 'TO STRING' (MACRO 3)
                                       CALL 'TO STRING' (MACRO 3)
- 04BA 8D 85 FC FC FF FF               LEA EAX,[EBP-772]
- 04C0 50                              PUSH EAX
- 04C1 B9 D9 02 00 00                  MOV ECX,COT+729
- 04C6 51                              PUSH ECX
- 04C7 68 FF 00 00 00                  PUSH 255
- 04CC E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 04CF 83 C4 0C                        ADD ESP,12
+ 0675 8D 85 FC FC FF FF                     LEA EAX,[EBP-772]
+ 067B 50                                    PUSH EAX
+ 067C B9 AD 02 00 00                        MOV ECX,COT+685
+ 0681 51                                    PUSH ECX
+ 0682 68 FF 00 00 00                        PUSH 255
+ 0687 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 068A 83 C4 0C                              ADD ESP,12
         length( c ) = 0
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 04D2 C6 85 FC FB FF FF 00            MOV BYTE [EBP-1028],0
+ 068D C6 85 FC FB FF FF 00                  MOV BYTE [EBP-1028],0
 
         ! ok, now check to see if the first program parameter indicates a file list
         s->a.(b).c
- 04D9 8D 85 FC FB FF FF               LEA EAX,[EBP-1028]
- 04DF 50                              PUSH EAX
- 04E0 8D 85 FC FC FF FF               LEA EAX,[EBP-772]
- 04E6 50                              PUSH EAX
- 04E7 8D 85 FC FD FF FF               LEA EAX,[EBP-516]
- 04ED 50                              PUSH EAX
- 04EE 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 04F4 50                              PUSH EAX
- 04F5 E8 07 00                        CALL '_IMPSTRRES' (EXTERN 7)
- 04F8 83 C4 10                        ADD ESP,16
+ 0694 8D 85 FC FB FF FF                     LEA EAX,[EBP-1028]
+ 069A 50                                    PUSH EAX
+ 069B 8D 85 FC FC FF FF                     LEA EAX,[EBP-772]
+ 06A1 50                                    PUSH EAX
+ 06A2 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
+ 06A8 50                                    PUSH EAX
+ 06A9 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 06AF 50                                    PUSH EAX
+ 06B0 E8 07 00                              CALL '_IMPSTRRES' (EXTERN 7)
+ 06B3 83 C4 10                              ADD ESP,16
 
         %false %if (s = a)        ;! no FILE SEP found
- 04FB 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 0501 50                              PUSH EAX
- 0502 8D 8D FC FD FF FF               LEA ECX,[EBP-516]
- 0508 51                              PUSH ECX
- 0509 89 85 F8 FB FF FF               MOV [EBP-1032],EAX
- 050F 89 8D F4 FB FF FF               MOV [EBP-1036],ECX
- 0515 E8 08 00                        CALL '_IMPSTRCMP' (EXTERN 8)
- 0518 83 C4 08                        ADD ESP,8
- 051B 3D 00 00 00 00                  CMP EAX,0
- 0520 75 00                           JNE L1014
- 0522 B8 00 00 00 00                  MOV EAX,0
- 0527 C9                              LEAVE
- 0528 C3                              RET
- 0529                      L1014  EQU $
+ 06B6 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 06BC 50                                    PUSH EAX
+ 06BD 8D 8D FC FD FF FF                     LEA ECX,[EBP-516]
+ 06C3 51                                    PUSH ECX
+ 06C4 89 85 F8 FB FF FF                     MOV [EBP-1032],EAX
+ 06CA 89 8D F4 FB FF FF                     MOV [EBP-1036],ECX
+ 06D0 E8 08 00                              CALL '_IMPSTRCMP' (EXTERN 8)
+ 06D3 83 C4 08                              ADD ESP,8
+ 06D6 3D 00 00 00 00                        CMP EAX,0
+ 06DB 75 00                                 JNE L1018
+ 06DD B8 00 00 00 00                        MOV EAX,0
+ 06E2 C9                                    LEAVE
+ 06E3 C3                                    RET
+ 06E4                      L1018  EQU $
         %true %if (s = b)         ;! a FILE SEP found (but, no I/O files requested) could want to invoke debug?
- 0529 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 052F 50                              PUSH EAX
- 0530 8D 8D FC FC FF FF               LEA ECX,[EBP-772]
- 0536 51                              PUSH ECX
- 0537 89 85 F0 FB FF FF               MOV [EBP-1040],EAX
- 053D 89 8D EC FB FF FF               MOV [EBP-1044],ECX
- 0543 E8 08 00                        CALL '_IMPSTRCMP' (EXTERN 8)
- 0546 83 C4 08                        ADD ESP,8
- 0549 3D 00 00 00 00                  CMP EAX,0
- 054E 75 00                           JNE L1015
- 0550 B8 FF FF FF FF                  MOV EAX,-1
- 0555 C9                              LEAVE
- 0556 C3                              RET
- 0557                      L1015  EQU $
+ 06E4 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 06EA 50                                    PUSH EAX
+ 06EB 8D 8D FC FC FF FF                     LEA ECX,[EBP-772]
+ 06F1 51                                    PUSH ECX
+ 06F2 89 85 F0 FB FF FF                     MOV [EBP-1040],EAX
+ 06F8 89 8D EC FB FF FF                     MOV [EBP-1044],ECX
+ 06FE E8 08 00                              CALL '_IMPSTRCMP' (EXTERN 8)
+ 0701 83 C4 08                              ADD ESP,8
+ 0704 3D 00 00 00 00                        CMP EAX,0
+ 0709 75 00                                 JNE L1019
+ 070B B8 FF FF FF FF                        MOV EAX,-1
+ 0710 C9                                    LEAVE
+ 0711 C3                                    RET
+ 0712                      L1019  EQU $
         %true %if (length(a) > 0) ;! input files found
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0557 31 C0                           XOR EAX,EAX
- 0559 8A 85 FC FD FF FF               MOV AL,[EBP-516]
- 055F 3D 00 00 00 00                  CMP EAX,0
- 0564 7E 00                           JLE L1016
- 0566 B8 FF FF FF FF                  MOV EAX,-1
- 056B C9                              LEAVE
- 056C C3                              RET
- 056D                      L1016  EQU $
+ 0712 31 C0                                 XOR EAX,EAX
+ 0714 8A 85 FC FD FF FF                     MOV AL,[EBP-516]
+ 071A 3D 00 00 00 00                        CMP EAX,0
+ 071F 7E 00                                 JLE L1020
+ 0721 B8 FF FF FF FF                        MOV EAX,-1
+ 0726 C9                                    LEAVE
+ 0727 C3                                    RET
+ 0728                      L1020  EQU $
         %true %if (length(c) > 0) ;! output files found
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 056D 31 C0                           XOR EAX,EAX
- 056F 8A 85 FC FB FF FF               MOV AL,[EBP-1028]
- 0575 3D 00 00 00 00                  CMP EAX,0
- 057A 7E 00                           JLE L1017
- 057C B8 FF FF FF FF                  MOV EAX,-1
- 0581 C9                              LEAVE
- 0582 C3                              RET
- 0583                      L1017  EQU $
+ 0728 31 C0                                 XOR EAX,EAX
+ 072A 8A 85 FC FB FF FF                     MOV AL,[EBP-1028]
+ 0730 3D 00 00 00 00                        CMP EAX,0
+ 0735 7E 00                                 JLE L1021
+ 0737 B8 FF FF FF FF                        MOV EAX,-1
+ 073C C9                                    LEAVE
+ 073D C3                                    RET
+ 073E                      L1021  EQU $
 
         %false                    ;! it looks like this is not a %begin .. %end program
- 0583 B8 00 00 00 00                  MOV EAX,0
- 0588 C9                              LEAVE
- 0589 C3                              RET
+ 073E B8 00 00 00 00                        MOV EAX,0
+ 0743 C9                                    LEAVE
+ 0744 C3                                    RET
     %end
 
     ! This activates a %begin ... %end IMP program
     ! This is in a separate routine to allow future enhancements
     %routine imptype1
- 058A                      L1018  EQU $
- 058A C8 00 00 01                     ENTER 0000,1
+ 0745                      L1022  EQU $
+ 0745 C8 00 00 01                           ENTER 0000,1
         %integer errcount = 0
- 058E C7 45 F8 00 00 00 00            MOV WORD [EBP-8],0
+ 0749 C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
         %integer argcount = getargcount
- 0595 E8 4B 00                        CALL 'GETARGCOUNT' (EXTERN 75)
- 0598 89 45 F4                        MOV [EBP-12],EAX
+ 0750 E8 52 00                              CALL 'GETARGCOUNT' (EXTERN 82)
+ 0753 89 45 F4                              MOV [EBP-12],EAX
 
         ! Type 1 IMP PROGRAM?
         ! Ok, this is a suspected %begin ... %end IMP program
@@ -621,212 +782,212 @@
         ! if this type of IMP program is written.
         ! The only command line access possible would then be in this module
         %if (argcount > 1) %start
- 059B 8B 45 F4                        MOV EAX,[EBP-12]
- 059E 3D 01 00 00 00                  CMP EAX,1
- 05A3 7E 00                           JLE L1019
+ 0756 8B 45 F4                              MOV EAX,[EBP-12]
+ 0759 3D 01 00 00 00                        CMP EAX,1
+ 075E 7E 00                                 JLE L1023
             ! Check we don't have too many parameters
             %if (argcount > 3) %start
- 05A5 8B 45 F4                        MOV EAX,[EBP-12]
- 05A8 3D 03 00 00 00                  CMP EAX,3
- 05AD 7E 00                           JLE L1020
+ 0760 8B 45 F4                              MOV EAX,[EBP-12]
+ 0763 3D 03 00 00 00                        CMP EAX,3
+ 0768 7E 00                                 JLE L1024
                 usage
- 05AF E8 00 00                        CALL 'USAGE' (INTERNAL L1012 )
+ 076A E8 00 00                              CALL 'USAGE' (INTERNAL L1016 )
                 errcount = errcount + 1
- 05B2 FF 45 F8                        INC WORD [EBP-8]
+ 076D FF 45 F8                              INC WORD [EBP-8]
             %finish %else %start
- 05B5 EB 00                           JMP L1021
- 05B7                      L1020  EQU $
+ 0770 EB 00                                 JMP L1025
+ 0772                      L1024  EQU $
                 ! We may want to debug the I/O initialisation
                 ! if so, then uncomment the next line
 !                set debug level( debug mode ! DBGIO ! DBGPRIM )
                 %if (split io list( getarg(1) ) # 0) %then errcount = errcount + 1;
- 05B7 6A 01                           PUSH 1
- 05B9 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
- 05BF 50                              PUSH EAX
- 05C0 E8 4C 00                        CALL 'GETARG' (EXTERN 76)
- 05C3 83 C4 08                        ADD ESP,8
- 05C6 81 EC 00 01 00 00               SUB ESP,256
- 05CC 89 E0                           MOV EAX,ESP
- 05CE 50                              PUSH EAX
- 05CF 8D 85 F4 FE FF FF               LEA EAX,[EBP-268]
- 05D5 50                              PUSH EAX
- 05D6 68 FF 00 00 00                  PUSH 255
- 05DB E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 05DE 83 C4 0C                        ADD ESP,12
- 05E1 E8 5E 00                        CALL 'SPLITIOLIST' (EXTERN 94)
- 05E4 81 C4 00 01 00 00               ADD ESP,256
- 05EA 3D 00 00 00 00                  CMP EAX,0
- 05EF 74 00                           JE L1022
- 05F1 FF 45 F8                        INC WORD [EBP-8]
- 05F4                      L1022  EQU $
+ 0772 6A 01                                 PUSH 1
+ 0774 8D 85 F4 FE FF FF                     LEA EAX,[EBP-268]
+ 077A 50                                    PUSH EAX
+ 077B E8 53 00                              CALL 'GETARG' (EXTERN 83)
+ 077E 83 C4 08                              ADD ESP,8
+ 0781 81 EC 00 01 00 00                     SUB ESP,256
+ 0787 89 E0                                 MOV EAX,ESP
+ 0789 50                                    PUSH EAX
+ 078A 8D 85 F4 FE FF FF                     LEA EAX,[EBP-268]
+ 0790 50                                    PUSH EAX
+ 0791 68 FF 00 00 00                        PUSH 255
+ 0796 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0799 83 C4 0C                              ADD ESP,12
+ 079C E8 65 00                              CALL 'SPLITIOLIST' (EXTERN 101)
+ 079F 81 C4 00 01 00 00                     ADD ESP,256
+ 07A5 3D 00 00 00 00                        CMP EAX,0
+ 07AA 74 00                                 JE L1026
+ 07AC FF 45 F8                              INC WORD [EBP-8]
+ 07AF                      L1026  EQU $
             %finish
- 05F4                      L1021  EQU $
+ 07AF                      L1025  EQU $
         %finish
- 05F4                      L1019  EQU $
+ 07AF                      L1023  EQU $
 
         %if (errcount = 0) %start
- 05F4 8B 45 F8                        MOV EAX,[EBP-8]
- 05F7 3D 00 00 00 00                  CMP EAX,0
- 05FC 75 00                           JNE L1023
+ 07AF 8B 45 F8                              MOV EAX,[EBP-8]
+ 07B2 3D 00 00 00 00                        CMP EAX,0
+ 07B7 75 00                                 JNE L1027
             ! check for debug mode
             %if (argcount > 2) %then set debug level( debug mode ! DBGMAIN ! DBGPROG ! DBGCORE )
- 05FE 8B 45 F4                        MOV EAX,[EBP-12]
- 0601 3D 02 00 00 00                  CMP EAX,2
- 0606 7E 00                           JLE L1024
- 0608 E8 3F 00                        CALL 'DEBUGMODE' (EXTERN 63)
- 060B 0D 02 00 00 00                  OR EAX,2
- 0610 0D 01 00 00 00                  OR EAX,1
- 0615 0D 20 00 00 00                  OR EAX,32
- 061A 50                              PUSH EAX
- 061B E8 40 00                        CALL 'SETDEBUGLEVEL' (EXTERN 64)
- 061E 83 C4 04                        ADD ESP,4
- 0621                      L1024  EQU $
+ 07B9 8B 45 F4                              MOV EAX,[EBP-12]
+ 07BC 3D 02 00 00 00                        CMP EAX,2
+ 07C1 7E 00                                 JLE L1028
+ 07C3 E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 07C6 0D 02 00 00 00                        OR EAX,2
+ 07CB 0D 01 00 00 00                        OR EAX,1
+ 07D0 0D 20 00 00 00                        OR EAX,32
+ 07D5 50                                    PUSH EAX
+ 07D6 E8 47 00                              CALL 'SETDEBUGLEVEL' (EXTERN 71)
+ 07D9 83 C4 04                              ADD ESP,4
+ 07DC                      L1028  EQU $
 
             %if ((debug mode & DBGMAIN) # 0) %start
- 0621 E8 3F 00                        CALL 'DEBUGMODE' (EXTERN 63)
- 0624 25 02 00 00 00                  AND EAX,2
- 0629 3D 00 00 00 00                  CMP EAX,0
- 062E 74 00                           JE L1025
+ 07DC E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 07DF 25 02 00 00 00                        AND EAX,2
+ 07E4 3D 00 00 00 00                        CMP EAX,0
+ 07E9 74 00                                 JE L1029
                 debug string( "IMPMAINX: About to enter the IMP program")
- 0630 81 EC 00 01 00 00               SUB ESP,256
- 0636 89 E0                           MOV EAX,ESP
- 0638 50                              PUSH EAX
- 0639 B8 DB 02 00 00                  MOV EAX,COT+731
- 063E 50                              PUSH EAX
- 063F 68 FF 00 00 00                  PUSH 255
- 0644 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 0647 83 C4 0C                        ADD ESP,12
- 064A E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 064D 81 C4 00 01 00 00               ADD ESP,256
+ 07EB 81 EC 00 01 00 00                     SUB ESP,256
+ 07F1 89 E0                                 MOV EAX,ESP
+ 07F3 50                                    PUSH EAX
+ 07F4 B8 AF 02 00 00                        MOV EAX,COT+687
+ 07F9 50                                    PUSH EAX
+ 07FA 68 FF 00 00 00                        PUSH 255
+ 07FF E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0802 83 C4 0C                              ADD ESP,12
+ 0805 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0808 81 C4 00 01 00 00                     ADD ESP,256
                 debug newline
- 0653 E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 080E E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
             %finish
- 0656                      L1025  EQU $
+ 0811                      L1029  EQU $
 
             ! ok, let's go IMPing!!
             impmain
- 0656 E8 5D 00                        CALL 'IMPMAIN' (EXTERN 93)
+ 0811 E8 64 00                              CALL 'IMPMAIN' (EXTERN 100)
 
             %if ((debug mode & DBGMAIN) # 0) %start
- 0659 E8 3F 00                        CALL 'DEBUGMODE' (EXTERN 63)
- 065C 25 02 00 00 00                  AND EAX,2
- 0661 3D 00 00 00 00                  CMP EAX,0
- 0666 74 00                           JE L1026
+ 0814 E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 0817 25 02 00 00 00                        AND EAX,2
+ 081C 3D 00 00 00 00                        CMP EAX,0
+ 0821 74 00                                 JE L1030
                 debug string( "IMPMAINX: Completed the IMP program")
- 0668 81 EC 00 01 00 00               SUB ESP,256
- 066E 89 E0                           MOV EAX,ESP
- 0670 50                              PUSH EAX
- 0671 B8 04 03 00 00                  MOV EAX,COT+772
- 0676 50                              PUSH EAX
- 0677 68 FF 00 00 00                  PUSH 255
- 067C E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 067F 83 C4 0C                        ADD ESP,12
- 0682 E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 0685 81 C4 00 01 00 00               ADD ESP,256
+ 0823 81 EC 00 01 00 00                     SUB ESP,256
+ 0829 89 E0                                 MOV EAX,ESP
+ 082B 50                                    PUSH EAX
+ 082C B8 D8 02 00 00                        MOV EAX,COT+728
+ 0831 50                                    PUSH EAX
+ 0832 68 FF 00 00 00                        PUSH 255
+ 0837 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 083A 83 C4 0C                              ADD ESP,12
+ 083D E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0840 81 C4 00 01 00 00                     ADD ESP,256
                 debug newline
- 068B E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 0846 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
             %finish
- 068E                      L1026  EQU $
+ 0849                      L1030  EQU $
         %finish
- 068E                      L1023  EQU $
+ 0849                      L1027  EQU $
     %end
- 068E C9                              LEAVE
- 068F C3                              RET
+ 0849 C9                                    LEAVE
+ 084A C3                                    RET
 
     ! This activates a suspected %external %routine XXX %alias "__impmain" ... %end IMP program
     ! This is in a separate routine to allow future enhancements
     %routine imptype2
- 0690                      L1027  EQU $
- 0690 C8 00 00 01                     ENTER 0000,1
+ 084B                      L1031  EQU $
+ 084B C8 00 00 01                           ENTER 0000,1
 
         ! Type 2 IMP PROGRAM?
         ! Ok, this is a suspected %external %routine XXX %alias "__impmain" ... %end
         ! It is the IMP programmers responsibility to open files and read the command line
 
         %if ((debug mode & DBGMAIN) # 0) %start
- 0694 E8 3F 00                        CALL 'DEBUGMODE' (EXTERN 63)
- 0697 25 02 00 00 00                  AND EAX,2
- 069C 3D 00 00 00 00                  CMP EAX,0
- 06A1 74 00                           JE L1028
+ 084F E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 0852 25 02 00 00 00                        AND EAX,2
+ 0857 3D 00 00 00 00                        CMP EAX,0
+ 085C 74 00                                 JE L1032
             debug string( "IMPMAIN: About to enter the IMP program")
- 06A3 81 EC 00 01 00 00               SUB ESP,256
- 06A9 89 E0                           MOV EAX,ESP
- 06AB 50                              PUSH EAX
- 06AC B8 28 03 00 00                  MOV EAX,COT+808
- 06B1 50                              PUSH EAX
- 06B2 68 FF 00 00 00                  PUSH 255
- 06B7 E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 06BA 83 C4 0C                        ADD ESP,12
- 06BD E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 06C0 81 C4 00 01 00 00               ADD ESP,256
+ 085E 81 EC 00 01 00 00                     SUB ESP,256
+ 0864 89 E0                                 MOV EAX,ESP
+ 0866 50                                    PUSH EAX
+ 0867 B8 FC 02 00 00                        MOV EAX,COT+764
+ 086C 50                                    PUSH EAX
+ 086D 68 FF 00 00 00                        PUSH 255
+ 0872 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0875 83 C4 0C                              ADD ESP,12
+ 0878 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 087B 81 C4 00 01 00 00                     ADD ESP,256
             debug newline
- 06C6 E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 0881 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
         %finish
- 06C9                      L1028  EQU $
+ 0884                      L1032  EQU $
 
         ! ok, let's go IMPing!!
         impmain
- 06C9 E8 5D 00                        CALL 'IMPMAIN' (EXTERN 93)
+ 0884 E8 64 00                              CALL 'IMPMAIN' (EXTERN 100)
 
         %if ((debug mode & DBGMAIN) # 0) %start
- 06CC E8 3F 00                        CALL 'DEBUGMODE' (EXTERN 63)
- 06CF 25 02 00 00 00                  AND EAX,2
- 06D4 3D 00 00 00 00                  CMP EAX,0
- 06D9 74 00                           JE L1029
+ 0887 E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 088A 25 02 00 00 00                        AND EAX,2
+ 088F 3D 00 00 00 00                        CMP EAX,0
+ 0894 74 00                                 JE L1033
             debug string( "IMPMAIN: Completed the IMP program")
- 06DB 81 EC 00 01 00 00               SUB ESP,256
- 06E1 89 E0                           MOV EAX,ESP
- 06E3 50                              PUSH EAX
- 06E4 B8 50 03 00 00                  MOV EAX,COT+848
- 06E9 50                              PUSH EAX
- 06EA 68 FF 00 00 00                  PUSH 255
- 06EF E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 06F2 83 C4 0C                        ADD ESP,12
- 06F5 E8 2C 00                        CALL 'DEBUGSTRING' (EXTERN 44)
- 06F8 81 C4 00 01 00 00               ADD ESP,256
+ 0896 81 EC 00 01 00 00                     SUB ESP,256
+ 089C 89 E0                                 MOV EAX,ESP
+ 089E 50                                    PUSH EAX
+ 089F B8 24 03 00 00                        MOV EAX,COT+804
+ 08A4 50                                    PUSH EAX
+ 08A5 68 FF 00 00 00                        PUSH 255
+ 08AA E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 08AD 83 C4 0C                              ADD ESP,12
+ 08B0 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 08B3 81 C4 00 01 00 00                     ADD ESP,256
             debug newline
- 06FE E8 2D 00                        CALL 'DEBUGNEWLINE' (EXTERN 45)
+ 08B9 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
         %finish
- 0701                      L1029  EQU $
+ 08BC                      L1033  EQU $
     %end
- 0701 C9                              LEAVE
- 0702 C3                              RET
+ 08BC C9                                    LEAVE
+ 08BD C3                                    RET
 
     %routine selectimptype
- 0703                      L1000  EQU $
- 0703 C8 00 00 01                     ENTER 0000,1
+ 08BE                      L1000  EQU $
+ 08BE C8 00 00 01                           ENTER 0000,1
         %if runmode( getarg(1) ) %start
- 0707 6A 01                           PUSH 1
- 0709 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 070F 50                              PUSH EAX
- 0710 E8 4C 00                        CALL 'GETARG' (EXTERN 76)
- 0713 83 C4 08                        ADD ESP,8
- 0716 81 EC 00 01 00 00               SUB ESP,256
- 071C 89 E0                           MOV EAX,ESP
- 071E 50                              PUSH EAX
- 071F 8D 85 FC FE FF FF               LEA EAX,[EBP-260]
- 0725 50                              PUSH EAX
- 0726 68 FF 00 00 00                  PUSH 255
- 072B E8 03 00                        CALL '_IMPSTRCPY' (EXTERN 3)
- 072E 83 C4 0C                        ADD ESP,12
- 0731 E8 00 00                        CALL 'RUNMODE' (INTERNAL L1013 )
- 0734 81 C4 00 01 00 00               ADD ESP,256
- 073A 3D 00 00 00 00                  CMP EAX,0
- 073F 74 00                           JE L1030
+ 08C2 6A 01                                 PUSH 1
+ 08C4 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 08CA 50                                    PUSH EAX
+ 08CB E8 53 00                              CALL 'GETARG' (EXTERN 83)
+ 08CE 83 C4 08                              ADD ESP,8
+ 08D1 81 EC 00 01 00 00                     SUB ESP,256
+ 08D7 89 E0                                 MOV EAX,ESP
+ 08D9 50                                    PUSH EAX
+ 08DA 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 08E0 50                                    PUSH EAX
+ 08E1 68 FF 00 00 00                        PUSH 255
+ 08E6 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 08E9 83 C4 0C                              ADD ESP,12
+ 08EC E8 00 00                              CALL 'RUNMODE' (INTERNAL L1017 )
+ 08EF 81 C4 00 01 00 00                     ADD ESP,256
+ 08F5 3D 00 00 00 00                        CMP EAX,0
+ 08FA 74 00                                 JE L1034
             ! Type 1 IMP PROGRAM?
             imptype1
- 0741 E8 00 00                        CALL 'IMPTYPE1' (INTERNAL L1018 )
+ 08FC E8 00 00                              CALL 'IMPTYPE1' (INTERNAL L1022 )
         %finish %else %start
- 0744 EB 00                           JMP L1031
- 0746                      L1030  EQU $
+ 08FF EB 00                                 JMP L1035
+ 0901                      L1034  EQU $
             ! Type 2 IMP PROGRAM?
             imptype2
- 0746 E8 00 00                        CALL 'IMPTYPE2' (INTERNAL L1027 )
+ 0901 E8 00 00                              CALL 'IMPTYPE2' (INTERNAL L1031 )
         %finish
- 0749                      L1031  EQU $
+ 0904                      L1035  EQU $
     %end
- 0749 C9                              LEAVE
- 074A C3                              RET
+ 0904 C9                                    LEAVE
+ 0905 C3                                    RET
 
     ! External Library routines implemented in C
     ! N.B. These routines need an alias name referring to the actual C routine
@@ -851,640 +1012,618 @@
     %external %routine     %spec prim flush           %alias "fflush" ( %integer handle )
 
     %external %routine exit( %integer status )
- 074B                      L1032  EQU $
- 074B C8 00 00 01                     ENTER 0000,1
+ 0906                      L1036  EQU $
+ 0906 C8 00 00 01                           ENTER 0000,1
         prim exit( status )
- 074F FF 75 08                        PUSH WORD [EBP+8]
- 0752 E8 61 00                        CALL 'PRIMEXIT' (EXTERN 97)
- 0755 83 C4 04                        ADD ESP,4
+ 090A FF 75 08                              PUSH WORD [EBP+8]
+ 090D E8 68 00                              CALL 'PRIMEXIT' (EXTERN 104)
+ 0910 83 C4 04                              ADD ESP,4
     %end
- 0758 C9                              LEAVE
- 0759 C3                              RET
+ 0913 C9                                    LEAVE
+ 0914 C3                                    RET
 
     %external %integer %fn get error
- 075A                      L1033  EQU $
- 075A C8 00 00 01                     ENTER 0000,1
+ 0915                      L1037  EQU $
+ 0915 C8 00 00 01                           ENTER 0000,1
         %result = prim get err
- 075E E8 62 00                        CALL 'PRIMGETERR' (EXTERN 98)
- 0761 C9                              LEAVE
- 0762 C3                              RET
+ 0919 E8 69 00                              CALL 'PRIMGETERR' (EXTERN 105)
+ 091C C9                                    LEAVE
+ 091D C3                                    RET
     %end
 
     %external %integer %fn getstderrhandle
- 0763                      L1034  EQU $
- 0763 C8 00 00 01                     ENTER 0000,1
+ 091E                      L1038  EQU $
+ 091E C8 00 00 01                           ENTER 0000,1
         %result = prim geterrhandle
- 0767 E8 63 00                        CALL 'PRIMGETERRHANDLE' (EXTERN 99)
- 076A C9                              LEAVE
- 076B C3                              RET
+ 0922 E8 6A 00                              CALL 'PRIMGETERRHANDLE' (EXTERN 106)
+ 0925 C9                                    LEAVE
+ 0926 C3                                    RET
     %end
 
     %external %integer %fn getstdinhandle
- 076C                      L1035  EQU $
- 076C C8 00 00 01                     ENTER 0000,1
+ 0927                      L1039  EQU $
+ 0927 C8 00 00 01                           ENTER 0000,1
         %result = prim getinhandle
- 0770 E8 64 00                        CALL 'PRIMGETINHANDLE' (EXTERN 100)
- 0773 C9                              LEAVE
- 0774 C3                              RET
+ 092B E8 6B 00                              CALL 'PRIMGETINHANDLE' (EXTERN 107)
+ 092E C9                                    LEAVE
+ 092F C3                                    RET
     %end
 
     %external %integer %fn getstdouthandle
- 0775                      L1036  EQU $
- 0775 C8 00 00 01                     ENTER 0000,1
+ 0930                      L1040  EQU $
+ 0930 C8 00 00 01                           ENTER 0000,1
         %result = prim getouthandle
- 0779 E8 65 00                        CALL 'PRIMGETOUTHANDLE' (EXTERN 101)
- 077C C9                              LEAVE
- 077D C3                              RET
+ 0934 E8 6C 00                              CALL 'PRIMGETOUTHANDLE' (EXTERN 108)
+ 0937 C9                                    LEAVE
+ 0938 C3                                    RET
     %end
 
     %external %routine put double( %integer handle, %long %real d )
- 077E                      L1037  EQU $
- 077E C8 00 00 01                     ENTER 0000,1
+ 0939                      L1041  EQU $
+ 0939 C8 00 00 01                           ENTER 0000,1
         prim write double( handle, d )
- 0782 FF 75 10                        PUSH WORD [EBP+16]
- 0785 DD 45 08                        FLD QWORD [EBP+8]
- 0788 83 EC 08                        SUB ESP,8
- 078B 89 E6                           MOV ESI,ESP
- 078D DD 1E                           FSTP QWORD [ESI]
- 078F E8 66 00                        CALL 'PRIMWRITEDOUBLE' (EXTERN 102)
- 0792 83 C4 0C                        ADD ESP,12
+ 093D FF 75 10                              PUSH WORD [EBP+16]
+ 0940 DD 45 08                              FLD QWORD [EBP+8]
+ 0943 83 EC 08                              SUB ESP,8
+ 0946 89 E6                                 MOV ESI,ESP
+ 0948 DD 1E                                 FSTP QWORD [ESI]
+ 094A E8 6D 00                              CALL 'PRIMWRITEDOUBLE' (EXTERN 109)
+ 094D 83 C4 0C                              ADD ESP,12
     %end
- 0795 C9                              LEAVE
- 0796 C3                              RET
+ 0950 C9                                    LEAVE
+ 0951 C3                                    RET
 
     %external %integer %fn openfile ( %integer mode address, %integer file name address )
- 0797                      L1038  EQU $
- 0797 C8 00 00 01                     ENTER 0000,1
+ 0952                      L1042  EQU $
+ 0952 C8 00 00 01                           ENTER 0000,1
         %result = prim openfile( mode address, file name address )
- 079B FF 75 0C                        PUSH WORD [EBP+12]
- 079E FF 75 08                        PUSH WORD [EBP+8]
- 07A1 E8 67 00                        CALL 'PRIMOPENFILE' (EXTERN 103)
- 07A4 83 C4 08                        ADD ESP,8
- 07A7 C9                              LEAVE
- 07A8 C3                              RET
+ 0956 FF 75 0C                              PUSH WORD [EBP+12]
+ 0959 FF 75 08                              PUSH WORD [EBP+8]
+ 095C E8 6E 00                              CALL 'PRIMOPENFILE' (EXTERN 110)
+ 095F 83 C4 08                              ADD ESP,8
+ 0962 C9                                    LEAVE
+ 0963 C3                                    RET
     %end
 
     %external %integer %fn tell ( %integer handle )
- 07A9                      L1039  EQU $
- 07A9 C8 00 00 01                     ENTER 0000,1
+ 0964                      L1043  EQU $
+ 0964 C8 00 00 01                           ENTER 0000,1
         %result = prim tell( handle )
- 07AD FF 75 08                        PUSH WORD [EBP+8]
- 07B0 E8 68 00                        CALL 'PRIMTELL' (EXTERN 104)
- 07B3 83 C4 04                        ADD ESP,4
- 07B6 C9                              LEAVE
- 07B7 C3                              RET
+ 0968 FF 75 08                              PUSH WORD [EBP+8]
+ 096B E8 6F 00                              CALL 'PRIMTELL' (EXTERN 111)
+ 096E 83 C4 04                              ADD ESP,4
+ 0971 C9                                    LEAVE
+ 0972 C3                                    RET
     %end
 
     %external %routine file rewind( %integer handle )
- 07B8                      L1040  EQU $
- 07B8 C8 00 00 01                     ENTER 0000,1
+ 0973                      L1044  EQU $
+ 0973 C8 00 00 01                           ENTER 0000,1
         prim file rewind( handle )
- 07BC FF 75 08                        PUSH WORD [EBP+8]
- 07BF E8 69 00                        CALL 'PRIMFILEREWIND' (EXTERN 105)
- 07C2 83 C4 04                        ADD ESP,4
+ 0977 FF 75 08                              PUSH WORD [EBP+8]
+ 097A E8 70 00                              CALL 'PRIMFILEREWIND' (EXTERN 112)
+ 097D 83 C4 04                              ADD ESP,4
     %end
- 07C5 C9                              LEAVE
- 07C6 C3                              RET
+ 0980 C9                                    LEAVE
+ 0981 C3                                    RET
 
     %external %routine file seek ( %integer handle, displacement, pos )
- 07C7                      L1041  EQU $
- 07C7 C8 00 00 01                     ENTER 0000,1
+ 0982                      L1045  EQU $
+ 0982 C8 00 00 01                           ENTER 0000,1
         prim file seek( handle, displacement, pos )
- 07CB FF 75 10                        PUSH WORD [EBP+16]
- 07CE FF 75 0C                        PUSH WORD [EBP+12]
- 07D1 FF 75 08                        PUSH WORD [EBP+8]
- 07D4 E8 6A 00                        CALL 'PRIMFILESEEK' (EXTERN 106)
- 07D7 83 C4 0C                        ADD ESP,12
+ 0986 FF 75 10                              PUSH WORD [EBP+16]
+ 0989 FF 75 0C                              PUSH WORD [EBP+12]
+ 098C FF 75 08                              PUSH WORD [EBP+8]
+ 098F E8 71 00                              CALL 'PRIMFILESEEK' (EXTERN 113)
+ 0992 83 C4 0C                              ADD ESP,12
     %end
- 07DA C9                              LEAVE
- 07DB C3                              RET
+ 0995 C9                                    LEAVE
+ 0996 C3                                    RET
 
     %external %routine close( %integer handle )
- 07DC                      L1042  EQU $
- 07DC C8 00 00 01                     ENTER 0000,1
+ 0997                      L1046  EQU $
+ 0997 C8 00 00 01                           ENTER 0000,1
         prim close( handle )
- 07E0 FF 75 08                        PUSH WORD [EBP+8]
- 07E3 E8 6B 00                        CALL 'PRIMCLOSE' (EXTERN 107)
- 07E6 83 C4 04                        ADD ESP,4
+ 099B FF 75 08                              PUSH WORD [EBP+8]
+ 099E E8 72 00                              CALL 'PRIMCLOSE' (EXTERN 114)
+ 09A1 83 C4 04                              ADD ESP,4
     %end
- 07E9 C9                              LEAVE
- 07EA C3                              RET
+ 09A4 C9                                    LEAVE
+ 09A5 C3                                    RET
 
     %external %integer %fn readbytes( %integer handle, count, itemsz, %byte %name buffer )
- 07EB                      L1043  EQU $
- 07EB C8 00 00 01                     ENTER 0000,1
+ 09A6                      L1047  EQU $
+ 09A6 C8 00 00 01                           ENTER 0000,1
         %result = prim readbytes( handle, count, itemsz, buffer )
- 07EF FF 75 14                        PUSH WORD [EBP+20]
- 07F2 FF 75 10                        PUSH WORD [EBP+16]
- 07F5 FF 75 0C                        PUSH WORD [EBP+12]
- 07F8 FF 75 08                        PUSH WORD [EBP+8]
- 07FB E8 6C 00                        CALL 'PRIMREADBYTES' (EXTERN 108)
- 07FE 83 C4 10                        ADD ESP,16
- 0801 C9                              LEAVE
- 0802 C3                              RET
+ 09AA FF 75 14                              PUSH WORD [EBP+20]
+ 09AD FF 75 10                              PUSH WORD [EBP+16]
+ 09B0 FF 75 0C                              PUSH WORD [EBP+12]
+ 09B3 FF 75 08                              PUSH WORD [EBP+8]
+ 09B6 E8 73 00                              CALL 'PRIMREADBYTES' (EXTERN 115)
+ 09B9 83 C4 10                              ADD ESP,16
+ 09BC C9                                    LEAVE
+ 09BD C3                                    RET
     %end
 
     %external %integer %fn writebytes( %integer handle, count, itemsz,%byte %name buffer )
- 0803                      L1044  EQU $
- 0803 C8 00 00 01                     ENTER 0000,1
+ 09BE                      L1048  EQU $
+ 09BE C8 00 00 01                           ENTER 0000,1
         %result = prim writebytes( handle, count, itemsz, buffer )
- 0807 FF 75 14                        PUSH WORD [EBP+20]
- 080A FF 75 10                        PUSH WORD [EBP+16]
- 080D FF 75 0C                        PUSH WORD [EBP+12]
- 0810 FF 75 08                        PUSH WORD [EBP+8]
- 0813 E8 6D 00                        CALL 'PRIMWRITEBYTES' (EXTERN 109)
- 0816 83 C4 10                        ADD ESP,16
- 0819 C9                              LEAVE
- 081A C3                              RET
+ 09C2 FF 75 14                              PUSH WORD [EBP+20]
+ 09C5 FF 75 10                              PUSH WORD [EBP+16]
+ 09C8 FF 75 0C                              PUSH WORD [EBP+12]
+ 09CB FF 75 08                              PUSH WORD [EBP+8]
+ 09CE E8 74 00                              CALL 'PRIMWRITEBYTES' (EXTERN 116)
+ 09D1 83 C4 10                              ADD ESP,16
+ 09D4 C9                                    LEAVE
+ 09D5 C3                                    RET
     %end
 
     %external %integer %fn get char( %integer handle )
- 081B                      L1045  EQU $
- 081B C8 00 00 01                     ENTER 0000,1
+ 09D6                      L1049  EQU $
+ 09D6 C8 00 00 01                           ENTER 0000,1
         %result = prim get char( handle )
- 081F FF 75 08                        PUSH WORD [EBP+8]
- 0822 E8 6E 00                        CALL 'PRIMGETCHAR' (EXTERN 110)
- 0825 83 C4 04                        ADD ESP,4
- 0828 C9                              LEAVE
- 0829 C3                              RET
+ 09DA FF 75 08                              PUSH WORD [EBP+8]
+ 09DD E8 75 00                              CALL 'PRIMGETCHAR' (EXTERN 117)
+ 09E0 83 C4 04                              ADD ESP,4
+ 09E3 C9                                    LEAVE
+ 09E4 C3                                    RET
     %end
 
     %external %routine put char( %integer handle,ch )
- 082A                      L1046  EQU $
- 082A C8 00 00 01                     ENTER 0000,1
+ 09E5                      L1050  EQU $
+ 09E5 C8 00 00 01                           ENTER 0000,1
         prim put char( handle,ch )
- 082E FF 75 0C                        PUSH WORD [EBP+12]
- 0831 FF 75 08                        PUSH WORD [EBP+8]
- 0834 E8 6F 00                        CALL 'PRIMPUTCHAR' (EXTERN 111)
- 0837 83 C4 08                        ADD ESP,8
+ 09E9 FF 75 0C                              PUSH WORD [EBP+12]
+ 09EC FF 75 08                              PUSH WORD [EBP+8]
+ 09EF E8 76 00                              CALL 'PRIMPUTCHAR' (EXTERN 118)
+ 09F2 83 C4 08                              ADD ESP,8
     %end
- 083A C9                              LEAVE
- 083B C3                              RET
+ 09F5 C9                                    LEAVE
+ 09F6 C3                                    RET
 
     %external %routine flush( %integer handle )
- 083C                      L1047  EQU $
- 083C C8 00 00 01                     ENTER 0000,1
+ 09F7                      L1051  EQU $
+ 09F7 C8 00 00 01                           ENTER 0000,1
         prim flush( handle )
- 0840 FF 75 08                        PUSH WORD [EBP+8]
- 0843 E8 70 00                        CALL 'PRIMFLUSH' (EXTERN 112)
- 0846 83 C4 04                        ADD ESP,4
+ 09FB FF 75 08                              PUSH WORD [EBP+8]
+ 09FE E8 77 00                              CALL 'PRIMFLUSH' (EXTERN 119)
+ 0A01 83 C4 04                              ADD ESP,4
     %end
- 0849 C9                              LEAVE
- 084A C3                              RET
+ 0A04 C9                                    LEAVE
+ 0A05 C3                                    RET
 
 %endoffile
       _TEXT  ENDS
       CONST  SEGMENT WORD PUBLIC 'CONST'
- 0000 39 2A                           db 39,2A ; 9*
- 0002 2A 2A                           db 2A,2A ; **
- 0004 2A 20                           db 2A,20 ; *.
- 0006 41 72                           db 41,72 ; Ar
- 0008 72 67                           db 72,67 ; rg
- 000A 68 21                           db 68,21 ; h!
- 000C 20 4C                           db 20,4C ; .L
- 000E 61 73                           db 61,73 ; as
- 0010 74 20                           db 74,20 ; t.
- 0012 63 68                           db 63,68 ; ch
- 0014 61 6E                           db 61,6E ; an
- 0016 63 65                           db 63,65 ; ce
- 0018 20 65                           db 20,65 ; .e
- 001A 76 65                           db 76,65 ; ve
- 001C 6E 74                           db 6E,74 ; nt
- 001E 20 68                           db 20,68 ; .h
- 0020 61 6E                           db 61,6E ; an
- 0022 64 6C                           db 64,6C ; dl
- 0024 65 72                           db 65,72 ; er
- 0026 20 68                           db 20,68 ; .h
- 0028 61 73                           db 61,73 ; as
- 002A 20 62                           db 20,62 ; .b
- 002C 65 65                           db 65,65 ; ee
- 002E 6E 20                           db 6E,20 ; n.
- 0030 74 72                           db 74,72 ; tr
- 0032 69 67                           db 69,67 ; ig
- 0034 67 65                           db 67,65 ; ge
- 0036 72 65                           db 72,65 ; re
- 0038 64 2E                           db 64,2E ; d.
- 003A 1F 2A                           db 1F,2A ; .*
- 003C 2A 2A                           db 2A,2A ; **
- 003E 2A 20                           db 2A,20 ; *.
- 0040 54 72                           db 54,72 ; Tr
- 0042 69 67                           db 69,67 ; ig
- 0044 67 65                           db 67,65 ; ge
- 0046 72 65                           db 72,65 ; re
- 0048 64 20                           db 64,20 ; d.
- 004A 62 79                           db 62,79 ; by
- 004C 20 65                           db 20,65 ; .e
- 004E 72 72                           db 72,72 ; rr
- 0050 6F 72                           db 6F,72 ; or
- 0052 20 65                           db 20,65 ; .e
- 0054 76 65                           db 76,65 ; ve
- 0056 6E 74                           db 6E,74 ; nt
- 0058 20 28                           db 20,28 ; .(
- 005A 01 2C                           db 01,2C ; .,
- 005C 01 2C                           db 01,2C ; .,
- 005E 12 29                           db 12,29 ; .)
- 0060 2E 20                           db 2E,20 ; ..
- 0062 45 72                           db 45,72 ; Er
- 0064 72 6F                           db 72,6F ; ro
- 0066 72 20                           db 72,20 ; r.
- 0068 6D 65                           db 6D,65 ; me
- 006A 73 73                           db 73,73 ; ss
- 006C 61 67                           db 61,67 ; ag
- 006E 65 20                           db 65,20 ; e.
- 0070 27 01                           db 27,01 ; '.
- 0072 27 54                           db 27,54 ; 'T
- 0074 2A 2A                           db 2A,2A ; **
- 0076 2A 2A                           db 2A,2A ; **
- 0078 20 45                           db 20,45 ; .E
- 007A 72 72                           db 72,72 ; rr
- 007C 6F 72                           db 6F,72 ; or
- 007E 20 6C                           db 20,6C ; .l
- 0080 69 6B                           db 69,6B ; ik
- 0082 65 6C                           db 65,6C ; el
- 0084 79 20                           db 79,20 ; y.
- 0086 63 61                           db 63,61 ; ca
- 0088 75 73                           db 75,73 ; us
- 008A 65 64                           db 65,64 ; ed
- 008C 20 62                           db 20,62 ; .b
- 008E 79 20                           db 79,20 ; y.
- 0090 6D 69                           db 6D,69 ; mi
- 0092 73 73                           db 73,73 ; ss
- 0094 69 6E                           db 69,6E ; in
- 0096 67 20                           db 67,20 ; g.
- 0098 63 6F                           db 63,6F ; co
- 009A 6D 6D                           db 6D,6D ; mm
- 009C 61 6E                           db 61,6E ; an
- 009E 64 20                           db 64,20 ; d.
- 00A0 6C 69                           db 6C,69 ; li
- 00A2 6E 65                           db 6E,65 ; ne
- 00A4 20 70                           db 20,70 ; .p
- 00A6 61 72                           db 61,72 ; ar
- 00A8 61 6D                           db 61,6D ; am
- 00AA 65 74                           db 65,74 ; et
- 00AC 65 72                           db 65,72 ; er
- 00AE 73 20                           db 73,20 ; s.
- 00B0 66 6F                           db 66,6F ; fo
- 00B2 72 20                           db 72,20 ; r.
- 00B4 69 6E                           db 69,6E ; in
- 00B6 70 75                           db 70,75 ; pu
- 00B8 74 2F                           db 74,2F ; t/
- 00BA 6F 75                           db 6F,75 ; ou
- 00BC 74 70                           db 74,70 ; tp
- 00BE 75 74                           db 75,74 ; ut
- 00C0 20 66                           db 20,66 ; .f
- 00C2 69 6C                           db 69,6C ; il
- 00C4 65 28                           db 65,28 ; e(
- 00C6 73 29                           db 73,29 ; s)
- 00C8 55 2A                           db 55,2A ; U*
- 00CA 2A 2A                           db 2A,2A ; **
- 00CC 2A 20                           db 2A,20 ; *.
- 00CE 45 72                           db 45,72 ; Er
- 00D0 72 6F                           db 72,6F ; ro
- 00D2 72 20                           db 72,20 ; r.
- 00D4 6C 69                           db 6C,69 ; li
- 00D6 6B 65                           db 6B,65 ; ke
- 00D8 6C 79                           db 6C,79 ; ly
- 00DA 20 63                           db 20,63 ; .c
- 00DC 61 75                           db 61,75 ; au
- 00DE 73 65                           db 73,65 ; se
- 00E0 64 20                           db 64,20 ; d.
- 00E2 62 79                           db 62,79 ; by
- 00E4 20 6D                           db 20,6D ; .m
- 00E6 69 73                           db 69,73 ; is
- 00E8 73 69                           db 73,69 ; si
- 00EA 6E 67                           db 6E,67 ; ng
- 00EC 2F 69                           db 2F,69 ; /i
- 00EE 6E 76                           db 6E,76 ; nv
- 00F0 61 6C                           db 61,6C ; al
- 00F2 69 64                           db 69,64 ; id
- 00F4 20 63                           db 20,63 ; .c
- 00F6 6F 6D                           db 6F,6D ; om
- 00F8 6D 61                           db 6D,61 ; ma
- 00FA 6E 64                           db 6E,64 ; nd
- 00FC 20 6C                           db 20,6C ; .l
- 00FE 69 6E                           db 69,6E ; in
- 0100 65 20                           db 65,20 ; e.
- 0102 70 61                           db 70,61 ; pa
- 0104 72 61                           db 72,61 ; ra
- 0106 6D 65                           db 6D,65 ; me
- 0108 74 65                           db 74,65 ; te
- 010A 72 73                           db 72,73 ; rs
- 010C 20 66                           db 20,66 ; .f
- 010E 6F 72                           db 6F,72 ; or
- 0110 20 69                           db 20,69 ; .i
- 0112 6E 70                           db 6E,70 ; np
- 0114 75 74                           db 75,74 ; ut
- 0116 20 66                           db 20,66 ; .f
- 0118 69 6C                           db 69,6C ; il
- 011A 65 28                           db 65,28 ; e(
- 011C 73 29                           db 73,29 ; s)
- 011E 57 2A                           db 57,2A ; W*
- 0120 2A 2A                           db 2A,2A ; **
- 0122 2A 20                           db 2A,20 ; *.
- 0124 45 72                           db 45,72 ; Er
- 0126 72 6F                           db 72,6F ; ro
- 0128 72 20                           db 72,20 ; r.
- 012A 6C 69                           db 6C,69 ; li
- 012C 6B 65                           db 6B,65 ; ke
- 012E 6C 79                           db 6C,79 ; ly
- 0130 20 63                           db 20,63 ; .c
- 0132 61 75                           db 61,75 ; au
- 0134 73 65                           db 73,65 ; se
- 0136 64 20                           db 64,20 ; d.
- 0138 62 79                           db 62,79 ; by
- 013A 20 6D                           db 20,6D ; .m
- 013C 69 73                           db 69,73 ; is
- 013E 73 69                           db 73,69 ; si
- 0140 6E 67                           db 6E,67 ; ng
- 0142 2F 69                           db 2F,69 ; /i
- 0144 6E 76                           db 6E,76 ; nv
- 0146 61 6C                           db 61,6C ; al
- 0148 69 64                           db 69,64 ; id
- 014A 20 63                           db 20,63 ; .c
- 014C 6F 6D                           db 6F,6D ; om
- 014E 6D 61                           db 6D,61 ; ma
- 0150 6E 64                           db 6E,64 ; nd
- 0152 20 6C                           db 20,6C ; .l
- 0154 69 6E                           db 69,6E ; in
- 0156 65 20                           db 65,20 ; e.
- 0158 70 61                           db 70,61 ; pa
- 015A 72 61                           db 72,61 ; ra
- 015C 6D 65                           db 6D,65 ; me
- 015E 74 65                           db 74,65 ; te
- 0160 72 73                           db 72,73 ; rs
- 0162 20 66                           db 20,66 ; .f
- 0164 6F 72                           db 6F,72 ; or
- 0166 20 6F                           db 20,6F ; .o
- 0168 75 74                           db 75,74 ; ut
- 016A 70 75                           db 70,75 ; pu
- 016C 74 20                           db 74,20 ; t.
- 016E 66 69                           db 66,69 ; fi
- 0170 6C 65                           db 6C,65 ; le
- 0172 73 28                           db 73,28 ; s(
- 0174 73 29                           db 73,29 ; s)
- 0176 3E 2A                           db 3E,2A ; >*
- 0178 2A 2A                           db 2A,2A ; **
- 017A 2A 20                           db 2A,20 ; *.
- 017C 45 72                           db 45,72 ; Er
- 017E 72 6F                           db 72,6F ; ro
- 0180 72 20                           db 72,20 ; r.
- 0182 63 61                           db 63,61 ; ca
- 0184 75 73                           db 75,73 ; us
- 0186 65 64                           db 65,64 ; ed
- 0188 20 62                           db 20,62 ; .b
- 018A 79 20                           db 79,20 ; y.
- 018C 6D 69                           db 6D,69 ; mi
- 018E 73 73                           db 73,73 ; ss
- 0190 69 6E                           db 69,6E ; in
- 0192 67 2F                           db 67,2F ; g/
- 0194 69 6E                           db 69,6E ; in
- 0196 76 61                           db 76,61 ; va
- 0198 6C 69                           db 6C,69 ; li
- 019A 64 20                           db 64,20 ; d.
- 019C 63 6F                           db 63,6F ; co
- 019E 6D 6D                           db 6D,6D ; mm
- 01A0 61 6E                           db 61,6E ; an
- 01A2 64 20                           db 64,20 ; d.
- 01A4 6C 69                           db 6C,69 ; li
- 01A6 6E 65                           db 6E,65 ; ne
- 01A8 20 70                           db 20,70 ; .p
- 01AA 61 72                           db 61,72 ; ar
- 01AC 61 6D                           db 61,6D ; am
- 01AE 65 74                           db 65,74 ; et
- 01B0 65 72                           db 65,72 ; er
- 01B2 28 73                           db 28,73 ; (s
- 01B4 29 09                           db 29,09 ; ).
- 01B6 49 4D                           db 49,4D ; IM
- 01B8 50 5F                           db 50,5F ; P_
- 01BA 44 45                           db 44,45 ; DE
- 01BC 42 55                           db 42,55 ; BU
- 01BE 47 26                           db 47,26 ; G&
- 01C0 55 73                           db 55,73 ; Us
- 01C2 61 67                           db 61,67 ; ag
- 01C4 65 3A                           db 65,3A ; e:
- 01C6 20 3C                           db 20,3C ; .<
- 01C8 69 6D                           db 69,6D ; im
- 01CA 70 20                           db 70,20 ; p.
- 01CC 70 72                           db 70,72 ; pr
- 01CE 6F 67                           db 6F,67 ; og
- 01D0 72 61                           db 72,61 ; ra
- 01D2 6D 3E                           db 6D,3E ; m>
- 01D4 20 5B                           db 20,5B ; .[
- 01D6 69 6E                           db 69,6E ; in
- 01D8 31 5B                           db 31,5B ; 1[
- 01DA 2C 69                           db 2C,69 ; ,i
- 01DC 6E 32                           db 6E,32 ; n2
- 01DE 5B 2C                           db 5B,2C ; [,
- 01E0 69 6E                           db 69,6E ; in
- 01E2 33 5D                           db 33,5D ; 3]
- 01E4 5D 5D                           db 5D,5D ; ]]
- 01E6 01 3D                           db 01,3D ; .=
- 01E8 1C 5B                           db 1C,5B ; .[
- 01EA 6F 75                           db 6F,75 ; ou
- 01EC 74 31                           db 74,31 ; t1
- 01EE 5B 2C                           db 5B,2C ; [,
- 01F0 6F 75                           db 6F,75 ; ou
- 01F2 74 32                           db 74,32 ; t2
- 01F4 5B 2C                           db 5B,2C ; [,
- 01F6 6F 75                           db 6F,75 ; ou
- 01F8 74 33                           db 74,33 ; t3
- 01FA 5D 5D                           db 5D,5D ; ]]
- 01FC 5D 20                           db 5D,20 ; ].
- 01FE 5B 64                           db 5B,64 ; [d
- 0200 65 62                           db 65,62 ; eb
- 0202 75 67                           db 75,67 ; ug
- 0204 5D 0C                           db 5D,0C ; ].
- 0206 20 20                           db 20,20 ; ..
- 0208 20 4E                           db 20,4E ; .N
- 020A 42 3A                           db 42,3A ; B:
- 020C 20 74                           db 20,74 ; .t
- 020E 68 65                           db 68,65 ; he
- 0210 20 27                           db 20,27 ; .'
- 0212 01 3D                           db 01,3D ; .=
- 0214 31 27                           db 31,27 ; 1'
- 0216 20 73                           db 20,73 ; .s
- 0218 65 70                           db 65,70 ; ep
- 021A 61 72                           db 61,72 ; ar
- 021C 61 74                           db 61,74 ; at
- 021E 65 73                           db 65,73 ; es
- 0220 20 74                           db 20,74 ; .t
- 0222 68 65                           db 68,65 ; he
- 0224 20 69                           db 20,69 ; .i
- 0226 6E 70                           db 6E,70 ; np
- 0228 75 74                           db 75,74 ; ut
- 022A 20 66                           db 20,66 ; .f
- 022C 69 6C                           db 69,6C ; il
- 022E 65 73                           db 65,73 ; es
- 0230 20 66                           db 20,66 ; .f
- 0232 72 6F                           db 72,6F ; ro
- 0234 6D 20                           db 6D,20 ; m.
- 0236 74 68                           db 74,68 ; th
- 0238 65 20                           db 65,20 ; e.
- 023A 6F 75                           db 6F,75 ; ou
- 023C 74 70                           db 74,70 ; tp
- 023E 75 74                           db 75,74 ; ut
- 0240 20 66                           db 20,66 ; .f
- 0242 69 6C                           db 69,6C ; il
- 0244 65 73                           db 65,73 ; es
- 0246 34 20                           db 34,20 ; 4.
- 0248 20 20                           db 20,20 ; ..
- 024A 4E 42                           db 4E,42 ; NB
- 024C 3A 20                           db 3A,20 ; :.
- 024E 64 65                           db 64,65 ; de
- 0250 62 75                           db 62,75 ; bu
- 0252 67 20                           db 67,20 ; g.
- 0254 74 72                           db 74,72 ; tr
- 0256 69 67                           db 69,67 ; ig
- 0258 67 65                           db 67,65 ; ge
- 025A 72 73                           db 72,73 ; rs
- 025C 20 65                           db 20,65 ; .e
- 025E 78 74                           db 78,74 ; xt
- 0260 72 61                           db 72,61 ; ra
- 0262 20 72                           db 20,72 ; .r
- 0264 75 6E                           db 75,6E ; un
- 0266 20 74                           db 20,74 ; .t
- 0268 69 6D                           db 69,6D ; im
- 026A 65 20                           db 65,20 ; e.
- 026C 64 65                           db 64,65 ; de
- 026E 62 75                           db 62,75 ; bu
- 0270 67 20                           db 67,20 ; g.
- 0272 6D 65                           db 6D,65 ; me
- 0274 73 73                           db 73,73 ; ss
- 0276 61 67                           db 61,67 ; ag
- 0278 65 73                           db 65,73 ; es
- 027A 29 4C                           db 29,4C ; )L
- 027C 20 20                           db 20,20 ; ..
- 027E 20 4E                           db 20,4E ; .N
- 0280 42 3A                           db 42,3A ; B:
- 0282 20 46                           db 20,46 ; .F
- 0284 6F 72                           db 6F,72 ; or
- 0286 20 64                           db 20,64 ; .d
- 0288 65 62                           db 65,62 ; eb
- 028A 75 67                           db 75,67 ; ug
- 028C 20 61                           db 20,61 ; .a
- 028E 63 74                           db 63,74 ; ct
- 0290 69 76                           db 69,76 ; iv
- 0292 61 74                           db 61,74 ; at
- 0294 69 6F                           db 69,6F ; io
- 0296 6E 20                           db 6E,20 ; n.
- 0298 28 65                           db 28,65 ; (e
- 029A 76 65                           db 76,65 ; ve
- 029C 6E 20                           db 6E,20 ; n.
- 029E 69 66                           db 69,66 ; if
- 02A0 20 74                           db 20,74 ; .t
- 02A2 68 65                           db 68,65 ; he
- 02A4 72 65                           db 72,65 ; re
- 02A6 20 61                           db 20,61 ; .a
- 02A8 72 65                           db 72,65 ; re
- 02AA 20 6E                           db 20,6E ; .n
- 02AC 6F 20                           db 6F,20 ; o.
- 02AE 49 2F                           db 49,2F ; I/
- 02B0 4F 20                           db 4F,20 ; O.
- 02B2 66 69                           db 66,69 ; fi
- 02B4 6C 65                           db 6C,65 ; le
- 02B6 73 20                           db 73,20 ; s.
- 02B8 72 65                           db 72,65 ; re
- 02BA 71 75                           db 71,75 ; qu
- 02BC 65 73                           db 65,73 ; es
- 02BE 74 65                           db 74,65 ; te
- 02C0 64 29                           db 64,29 ; d)
- 02C2 20 74                           db 20,74 ; .t
- 02C4 68 65                           db 68,65 ; he
- 02C6 20 27                           db 20,27 ; .'
- 02C8 01 3D                           db 01,3D ; .=
- 02CA 0E 27                           db 0E,27 ; .'
- 02CC 20 69                           db 20,69 ; .i
- 02CE 73 20                           db 73,20 ; s.
- 02D0 6D 61                           db 6D,61 ; ma
- 02D2 6E 64                           db 6E,64 ; nd
- 02D4 61 74                           db 61,74 ; at
- 02D6 6F 72                           db 6F,72 ; or
- 02D8 79 01                           db 79,01 ; y.
- 02DA 3D 28                           db 3D,28 ; =(
- 02DC 49 4D                           db 49,4D ; IM
- 02DE 50 4D                           db 50,4D ; PM
- 02E0 41 49                           db 41,49 ; AI
- 02E2 4E 58                           db 4E,58 ; NX
- 02E4 3A 20                           db 3A,20 ; :.
- 02E6 41 62                           db 41,62 ; Ab
- 02E8 6F 75                           db 6F,75 ; ou
- 02EA 74 20                           db 74,20 ; t.
- 02EC 74 6F                           db 74,6F ; to
- 02EE 20 65                           db 20,65 ; .e
- 02F0 6E 74                           db 6E,74 ; nt
- 02F2 65 72                           db 65,72 ; er
- 02F4 20 74                           db 20,74 ; .t
- 02F6 68 65                           db 68,65 ; he
- 02F8 20 49                           db 20,49 ; .I
- 02FA 4D 50                           db 4D,50 ; MP
- 02FC 20 70                           db 20,70 ; .p
- 02FE 72 6F                           db 72,6F ; ro
- 0300 67 72                           db 67,72 ; gr
- 0302 61 6D                           db 61,6D ; am
- 0304 23 49                           db 23,49 ; #I
- 0306 4D 50                           db 4D,50 ; MP
- 0308 4D 41                           db 4D,41 ; MA
- 030A 49 4E                           db 49,4E ; IN
- 030C 58 3A                           db 58,3A ; X:
- 030E 20 43                           db 20,43 ; .C
- 0310 6F 6D                           db 6F,6D ; om
- 0312 70 6C                           db 70,6C ; pl
- 0314 65 74                           db 65,74 ; et
- 0316 65 64                           db 65,64 ; ed
- 0318 20 74                           db 20,74 ; .t
- 031A 68 65                           db 68,65 ; he
- 031C 20 49                           db 20,49 ; .I
- 031E 4D 50                           db 4D,50 ; MP
- 0320 20 70                           db 20,70 ; .p
- 0322 72 6F                           db 72,6F ; ro
- 0324 67 72                           db 67,72 ; gr
- 0326 61 6D                           db 61,6D ; am
- 0328 27 49                           db 27,49 ; 'I
- 032A 4D 50                           db 4D,50 ; MP
- 032C 4D 41                           db 4D,41 ; MA
- 032E 49 4E                           db 49,4E ; IN
- 0330 3A 20                           db 3A,20 ; :.
- 0332 41 62                           db 41,62 ; Ab
- 0334 6F 75                           db 6F,75 ; ou
- 0336 74 20                           db 74,20 ; t.
- 0338 74 6F                           db 74,6F ; to
- 033A 20 65                           db 20,65 ; .e
- 033C 6E 74                           db 6E,74 ; nt
- 033E 65 72                           db 65,72 ; er
- 0340 20 74                           db 20,74 ; .t
- 0342 68 65                           db 68,65 ; he
- 0344 20 49                           db 20,49 ; .I
- 0346 4D 50                           db 4D,50 ; MP
- 0348 20 70                           db 20,70 ; .p
- 034A 72 6F                           db 72,6F ; ro
- 034C 67 72                           db 67,72 ; gr
- 034E 61 6D                           db 61,6D ; am
- 0350 22 49                           db 22,49 ; "I
- 0352 4D 50                           db 4D,50 ; MP
- 0354 4D 41                           db 4D,41 ; MA
- 0356 49 4E                           db 49,4E ; IN
- 0358 3A 20                           db 3A,20 ; :.
- 035A 43 6F                           db 43,6F ; Co
- 035C 6D 70                           db 6D,70 ; mp
- 035E 6C 65                           db 6C,65 ; le
- 0360 74 65                           db 74,65 ; te
- 0362 64 20                           db 64,20 ; d.
- 0364 74 68                           db 74,68 ; th
- 0366 65 20                           db 65,20 ; e.
- 0368 49 4D                           db 49,4D ; IM
- 036A 50 20                           db 50,20 ; P.
- 036C 70 72                           db 70,72 ; pr
- 036E 6F 67                           db 6F,67 ; og
- 0370 72 61                           db 72,61 ; ra
- 0372 6D 00                           db 6D,00 ; m.
+ 0000 0B 2A                                 db 0B,2A ; .*
+ 0002 2A 2A                                 db 2A,2A ; **
+ 0004 2A 20                                 db 2A,20 ; *.
+ 0006 41 72                                 db 41,72 ; Ar
+ 0008 72 67                                 db 72,67 ; rg
+ 000A 68 21                                 db 68,21 ; h!
+ 000C 2F 20                                 db 2F,20 ; /.
+ 000E 4C 61                                 db 4C,61 ; La
+ 0010 73 74                                 db 73,74 ; st
+ 0012 20 63                                 db 20,63 ; .c
+ 0014 68 61                                 db 68,61 ; ha
+ 0016 6E 63                                 db 6E,63 ; nc
+ 0018 65 20                                 db 65,20 ; e.
+ 001A 65 76                                 db 65,76 ; ev
+ 001C 65 6E                                 db 65,6E ; en
+ 001E 74 20                                 db 74,20 ; t.
+ 0020 68 61                                 db 68,61 ; ha
+ 0022 6E 64                                 db 6E,64 ; nd
+ 0024 6C 65                                 db 6C,65 ; le
+ 0026 72 20                                 db 72,20 ; r.
+ 0028 74 72                                 db 74,72 ; tr
+ 002A 69 67                                 db 69,67 ; ig
+ 002C 67 65                                 db 67,65 ; ge
+ 002E 72 65                                 db 72,65 ; re
+ 0030 64 20                                 db 64,20 ; d.
+ 0032 66 72                                 db 66,72 ; fr
+ 0034 6F 6D                                 db 6F,6D ; om
+ 0036 20 6C                                 db 20,6C ; .l
+ 0038 69 6E                                 db 69,6E ; in
+ 003A 65 3D                                 db 65,3D ; e=
+ 003C 2A 2A                                 db 2A,2A ; **
+ 003E 2A 2A                                 db 2A,2A ; **
+ 0040 2A 20                                 db 2A,20 ; *.
+ 0042 54 72                                 db 54,72 ; Tr
+ 0044 69 67                                 db 69,67 ; ig
+ 0046 67 65                                 db 67,65 ; ge
+ 0048 72 65                                 db 72,65 ; re
+ 004A 64 20                                 db 64,20 ; d.
+ 004C 62 79                                 db 62,79 ; by
+ 004E 20 65                                 db 20,65 ; .e
+ 0050 72 72                                 db 72,72 ; rr
+ 0052 6F 72                                 db 6F,72 ; or
+ 0054 20 28                                 db 20,28 ; .(
+ 0056 65 76                                 db 65,76 ; ev
+ 0058 65 6E                                 db 65,6E ; en
+ 005A 74 2C                                 db 74,2C ; t,
+ 005C 73 75                                 db 73,75 ; su
+ 005E 62 2C                                 db 62,2C ; b,
+ 0060 65 78                                 db 65,78 ; ex
+ 0062 74 72                                 db 74,72 ; tr
+ 0064 61 29                                 db 61,29 ; a)
+ 0066 3D 01                                 db 3D,01 ; =.
+ 0068 28 01                                 db 28,01 ; (.
+ 006A 2C 01                                 db 2C,01 ; ,.
+ 006C 2C 01                                 db 2C,01 ; ,.
+ 006E 29 17                                 db 29,17 ; ).
+ 0070 20 20                                 db 20,20 ; ..
+ 0072 20 20                                 db 20,20 ; ..
+ 0074 20 45                                 db 20,45 ; .E
+ 0076 72 72                                 db 72,72 ; rr
+ 0078 6F 72                                 db 6F,72 ; or
+ 007A 20 6D                                 db 20,6D ; .m
+ 007C 65 73                                 db 65,73 ; es
+ 007E 73 61                                 db 73,61 ; sa
+ 0080 67 65                                 db 67,65 ; ge
+ 0082 20 69                                 db 20,69 ; .i
+ 0084 73 20                                 db 73,20 ; s.
+ 0086 27 01                                 db 27,01 ; '.
+ 0088 27 1C                                 db 27,1C ; '.
+ 008A 2A 2A                                 db 2A,2A ; **
+ 008C 2A 2A                                 db 2A,2A ; **
+ 008E 20 4C                                 db 20,4C ; .L
+ 0090 69 6B                                 db 69,6B ; ik
+ 0092 65 6C                                 db 65,6C ; el
+ 0094 79 20                                 db 79,20 ; y.
+ 0096 63 61                                 db 63,61 ; ca
+ 0098 75 73                                 db 75,73 ; us
+ 009A 65 20                                 db 65,20 ; e.
+ 009C 6F 66                                 db 6F,66 ; of
+ 009E 20 65                                 db 20,65 ; .e
+ 00A0 72 72                                 db 72,72 ; rr
+ 00A2 6F 72                                 db 6F,72 ; or
+ 00A4 3A 20                                 db 3A,20 ; :.
+ 00A6 22 4D                                 db 22,4D ; "M
+ 00A8 69 73                                 db 69,73 ; is
+ 00AA 73 69                                 db 73,69 ; si
+ 00AC 6E 67                                 db 6E,67 ; ng
+ 00AE 20 63                                 db 20,63 ; .c
+ 00B0 6F 6D                                 db 6F,6D ; om
+ 00B2 6D 61                                 db 6D,61 ; ma
+ 00B4 6E 64                                 db 6E,64 ; nd
+ 00B6 20 6C                                 db 20,6C ; .l
+ 00B8 69 6E                                 db 69,6E ; in
+ 00BA 65 20                                 db 65,20 ; e.
+ 00BC 70 61                                 db 70,61 ; pa
+ 00BE 72 61                                 db 72,61 ; ra
+ 00C0 6D 65                                 db 6D,65 ; me
+ 00C2 74 65                                 db 74,65 ; te
+ 00C4 72 28                                 db 72,28 ; r(
+ 00C6 73 29                                 db 73,29 ; s)
+ 00C8 20 18                                 db 20,18 ; ..
+ 00CA 66 6F                                 db 66,6F ; fo
+ 00CC 72 20                                 db 72,20 ; r.
+ 00CE 69 6E                                 db 69,6E ; in
+ 00D0 70 75                                 db 70,75 ; pu
+ 00D2 74 2F                                 db 74,2F ; t/
+ 00D4 6F 75                                 db 6F,75 ; ou
+ 00D6 74 70                                 db 74,70 ; tp
+ 00D8 75 74                                 db 75,74 ; ut
+ 00DA 20 66                                 db 20,66 ; .f
+ 00DC 69 6C                                 db 69,6C ; il
+ 00DE 65 28                                 db 65,28 ; e(
+ 00E0 73 29                                 db 73,29 ; s)
+ 00E2 1C 2A                                 db 1C,2A ; .*
+ 00E4 2A 2A                                 db 2A,2A ; **
+ 00E6 2A 20                                 db 2A,20 ; *.
+ 00E8 4C 69                                 db 4C,69 ; Li
+ 00EA 6B 65                                 db 6B,65 ; ke
+ 00EC 6C 79                                 db 6C,79 ; ly
+ 00EE 20 63                                 db 20,63 ; .c
+ 00F0 61 75                                 db 61,75 ; au
+ 00F2 73 65                                 db 73,65 ; se
+ 00F4 20 6F                                 db 20,6F ; .o
+ 00F6 66 20                                 db 66,20 ; f.
+ 00F8 65 72                                 db 65,72 ; er
+ 00FA 72 6F                                 db 72,6F ; ro
+ 00FC 72 3A                                 db 72,3A ; r:
+ 00FE 20 2B                                 db 20,2B ; .+
+ 0100 4D 69                                 db 4D,69 ; Mi
+ 0102 73 73                                 db 73,73 ; ss
+ 0104 69 6E                                 db 69,6E ; in
+ 0106 67 2F                                 db 67,2F ; g/
+ 0108 69 6E                                 db 69,6E ; in
+ 010A 76 61                                 db 76,61 ; va
+ 010C 6C 69                                 db 6C,69 ; li
+ 010E 64 20                                 db 64,20 ; d.
+ 0110 63 6F                                 db 63,6F ; co
+ 0112 6D 6D                                 db 6D,6D ; mm
+ 0114 61 6E                                 db 61,6E ; an
+ 0116 64 20                                 db 64,20 ; d.
+ 0118 6C 69                                 db 6C,69 ; li
+ 011A 6E 65                                 db 6E,65 ; ne
+ 011C 20 70                                 db 20,70 ; .p
+ 011E 61 72                                 db 61,72 ; ar
+ 0120 61 6D                                 db 61,6D ; am
+ 0122 65 74                                 db 65,74 ; et
+ 0124 65 72                                 db 65,72 ; er
+ 0126 20 66                                 db 20,66 ; .f
+ 0128 6F 72                                 db 6F,72 ; or
+ 012A 20 06                                 db 20,06 ; ..
+ 012C 69 6E                                 db 69,6E ; in
+ 012E 70 75                                 db 70,75 ; pu
+ 0130 74 20                                 db 74,20 ; t.
+ 0132 07 6F                                 db 07,6F ; .o
+ 0134 75 74                                 db 75,74 ; ut
+ 0136 70 75                                 db 70,75 ; pu
+ 0138 74 20                                 db 74,20 ; t.
+ 013A 07 66                                 db 07,66 ; .f
+ 013C 69 6C                                 db 69,6C ; il
+ 013E 65 28                                 db 65,28 ; e(
+ 0140 73 29                                 db 73,29 ; s)
+ 0142 1C 2A                                 db 1C,2A ; .*
+ 0144 2A 2A                                 db 2A,2A ; **
+ 0146 2A 20                                 db 2A,20 ; *.
+ 0148 4C 69                                 db 4C,69 ; Li
+ 014A 6B 65                                 db 6B,65 ; ke
+ 014C 6C 79                                 db 6C,79 ; ly
+ 014E 20 63                                 db 20,63 ; .c
+ 0150 61 75                                 db 61,75 ; au
+ 0152 73 65                                 db 73,65 ; se
+ 0154 20 6F                                 db 20,6F ; .o
+ 0156 66 20                                 db 66,20 ; f.
+ 0158 65 72                                 db 65,72 ; er
+ 015A 72 6F                                 db 72,6F ; ro
+ 015C 72 3A                                 db 72,3A ; r:
+ 015E 20 29                                 db 20,29 ; .)
+ 0160 4D 69                                 db 4D,69 ; Mi
+ 0162 73 73                                 db 73,73 ; ss
+ 0164 69 6E                                 db 69,6E ; in
+ 0166 67 2F                                 db 67,2F ; g/
+ 0168 69 6E                                 db 69,6E ; in
+ 016A 76 61                                 db 76,61 ; va
+ 016C 6C 69                                 db 6C,69 ; li
+ 016E 64 20                                 db 64,20 ; d.
+ 0170 63 6F                                 db 63,6F ; co
+ 0172 6D 6D                                 db 6D,6D ; mm
+ 0174 61 6E                                 db 61,6E ; an
+ 0176 64 20                                 db 64,20 ; d.
+ 0178 6C 69                                 db 6C,69 ; li
+ 017A 6E 65                                 db 6E,65 ; ne
+ 017C 20 70                                 db 20,70 ; .p
+ 017E 61 72                                 db 61,72 ; ar
+ 0180 61 6D                                 db 61,6D ; am
+ 0182 65 74                                 db 65,74 ; et
+ 0184 65 72                                 db 65,72 ; er
+ 0186 28 73                                 db 28,73 ; (s
+ 0188 29 09                                 db 29,09 ; ).
+ 018A 49 4D                                 db 49,4D ; IM
+ 018C 50 5F                                 db 50,5F ; P_
+ 018E 44 45                                 db 44,45 ; DE
+ 0190 42 55                                 db 42,55 ; BU
+ 0192 47 26                                 db 47,26 ; G&
+ 0194 55 73                                 db 55,73 ; Us
+ 0196 61 67                                 db 61,67 ; ag
+ 0198 65 3A                                 db 65,3A ; e:
+ 019A 20 3C                                 db 20,3C ; .<
+ 019C 69 6D                                 db 69,6D ; im
+ 019E 70 20                                 db 70,20 ; p.
+ 01A0 70 72                                 db 70,72 ; pr
+ 01A2 6F 67                                 db 6F,67 ; og
+ 01A4 72 61                                 db 72,61 ; ra
+ 01A6 6D 3E                                 db 6D,3E ; m>
+ 01A8 20 5B                                 db 20,5B ; .[
+ 01AA 69 6E                                 db 69,6E ; in
+ 01AC 31 5B                                 db 31,5B ; 1[
+ 01AE 2C 69                                 db 2C,69 ; ,i
+ 01B0 6E 32                                 db 6E,32 ; n2
+ 01B2 5B 2C                                 db 5B,2C ; [,
+ 01B4 69 6E                                 db 69,6E ; in
+ 01B6 33 5D                                 db 33,5D ; 3]
+ 01B8 5D 5D                                 db 5D,5D ; ]]
+ 01BA 01 3D                                 db 01,3D ; .=
+ 01BC 1C 5B                                 db 1C,5B ; .[
+ 01BE 6F 75                                 db 6F,75 ; ou
+ 01C0 74 31                                 db 74,31 ; t1
+ 01C2 5B 2C                                 db 5B,2C ; [,
+ 01C4 6F 75                                 db 6F,75 ; ou
+ 01C6 74 32                                 db 74,32 ; t2
+ 01C8 5B 2C                                 db 5B,2C ; [,
+ 01CA 6F 75                                 db 6F,75 ; ou
+ 01CC 74 33                                 db 74,33 ; t3
+ 01CE 5D 5D                                 db 5D,5D ; ]]
+ 01D0 5D 20                                 db 5D,20 ; ].
+ 01D2 5B 64                                 db 5B,64 ; [d
+ 01D4 65 62                                 db 65,62 ; eb
+ 01D6 75 67                                 db 75,67 ; ug
+ 01D8 5D 0C                                 db 5D,0C ; ].
+ 01DA 20 20                                 db 20,20 ; ..
+ 01DC 20 4E                                 db 20,4E ; .N
+ 01DE 42 3A                                 db 42,3A ; B:
+ 01E0 20 74                                 db 20,74 ; .t
+ 01E2 68 65                                 db 68,65 ; he
+ 01E4 20 27                                 db 20,27 ; .'
+ 01E6 01 3D                                 db 01,3D ; .=
+ 01E8 31 27                                 db 31,27 ; 1'
+ 01EA 20 73                                 db 20,73 ; .s
+ 01EC 65 70                                 db 65,70 ; ep
+ 01EE 61 72                                 db 61,72 ; ar
+ 01F0 61 74                                 db 61,74 ; at
+ 01F2 65 73                                 db 65,73 ; es
+ 01F4 20 74                                 db 20,74 ; .t
+ 01F6 68 65                                 db 68,65 ; he
+ 01F8 20 69                                 db 20,69 ; .i
+ 01FA 6E 70                                 db 6E,70 ; np
+ 01FC 75 74                                 db 75,74 ; ut
+ 01FE 20 66                                 db 20,66 ; .f
+ 0200 69 6C                                 db 69,6C ; il
+ 0202 65 73                                 db 65,73 ; es
+ 0204 20 66                                 db 20,66 ; .f
+ 0206 72 6F                                 db 72,6F ; ro
+ 0208 6D 20                                 db 6D,20 ; m.
+ 020A 74 68                                 db 74,68 ; th
+ 020C 65 20                                 db 65,20 ; e.
+ 020E 6F 75                                 db 6F,75 ; ou
+ 0210 74 70                                 db 74,70 ; tp
+ 0212 75 74                                 db 75,74 ; ut
+ 0214 20 66                                 db 20,66 ; .f
+ 0216 69 6C                                 db 69,6C ; il
+ 0218 65 73                                 db 65,73 ; es
+ 021A 34 20                                 db 34,20 ; 4.
+ 021C 20 20                                 db 20,20 ; ..
+ 021E 4E 42                                 db 4E,42 ; NB
+ 0220 3A 20                                 db 3A,20 ; :.
+ 0222 64 65                                 db 64,65 ; de
+ 0224 62 75                                 db 62,75 ; bu
+ 0226 67 20                                 db 67,20 ; g.
+ 0228 74 72                                 db 74,72 ; tr
+ 022A 69 67                                 db 69,67 ; ig
+ 022C 67 65                                 db 67,65 ; ge
+ 022E 72 73                                 db 72,73 ; rs
+ 0230 20 65                                 db 20,65 ; .e
+ 0232 78 74                                 db 78,74 ; xt
+ 0234 72 61                                 db 72,61 ; ra
+ 0236 20 72                                 db 20,72 ; .r
+ 0238 75 6E                                 db 75,6E ; un
+ 023A 20 74                                 db 20,74 ; .t
+ 023C 69 6D                                 db 69,6D ; im
+ 023E 65 20                                 db 65,20 ; e.
+ 0240 64 65                                 db 64,65 ; de
+ 0242 62 75                                 db 62,75 ; bu
+ 0244 67 20                                 db 67,20 ; g.
+ 0246 6D 65                                 db 6D,65 ; me
+ 0248 73 73                                 db 73,73 ; ss
+ 024A 61 67                                 db 61,67 ; ag
+ 024C 65 73                                 db 65,73 ; es
+ 024E 29 4C                                 db 29,4C ; )L
+ 0250 20 20                                 db 20,20 ; ..
+ 0252 20 4E                                 db 20,4E ; .N
+ 0254 42 3A                                 db 42,3A ; B:
+ 0256 20 46                                 db 20,46 ; .F
+ 0258 6F 72                                 db 6F,72 ; or
+ 025A 20 64                                 db 20,64 ; .d
+ 025C 65 62                                 db 65,62 ; eb
+ 025E 75 67                                 db 75,67 ; ug
+ 0260 20 61                                 db 20,61 ; .a
+ 0262 63 74                                 db 63,74 ; ct
+ 0264 69 76                                 db 69,76 ; iv
+ 0266 61 74                                 db 61,74 ; at
+ 0268 69 6F                                 db 69,6F ; io
+ 026A 6E 20                                 db 6E,20 ; n.
+ 026C 28 65                                 db 28,65 ; (e
+ 026E 76 65                                 db 76,65 ; ve
+ 0270 6E 20                                 db 6E,20 ; n.
+ 0272 69 66                                 db 69,66 ; if
+ 0274 20 74                                 db 20,74 ; .t
+ 0276 68 65                                 db 68,65 ; he
+ 0278 72 65                                 db 72,65 ; re
+ 027A 20 61                                 db 20,61 ; .a
+ 027C 72 65                                 db 72,65 ; re
+ 027E 20 6E                                 db 20,6E ; .n
+ 0280 6F 20                                 db 6F,20 ; o.
+ 0282 49 2F                                 db 49,2F ; I/
+ 0284 4F 20                                 db 4F,20 ; O.
+ 0286 66 69                                 db 66,69 ; fi
+ 0288 6C 65                                 db 6C,65 ; le
+ 028A 73 20                                 db 73,20 ; s.
+ 028C 72 65                                 db 72,65 ; re
+ 028E 71 75                                 db 71,75 ; qu
+ 0290 65 73                                 db 65,73 ; es
+ 0292 74 65                                 db 74,65 ; te
+ 0294 64 29                                 db 64,29 ; d)
+ 0296 20 74                                 db 20,74 ; .t
+ 0298 68 65                                 db 68,65 ; he
+ 029A 20 27                                 db 20,27 ; .'
+ 029C 01 3D                                 db 01,3D ; .=
+ 029E 0E 27                                 db 0E,27 ; .'
+ 02A0 20 69                                 db 20,69 ; .i
+ 02A2 73 20                                 db 73,20 ; s.
+ 02A4 6D 61                                 db 6D,61 ; ma
+ 02A6 6E 64                                 db 6E,64 ; nd
+ 02A8 61 74                                 db 61,74 ; at
+ 02AA 6F 72                                 db 6F,72 ; or
+ 02AC 79 01                                 db 79,01 ; y.
+ 02AE 3D 28                                 db 3D,28 ; =(
+ 02B0 49 4D                                 db 49,4D ; IM
+ 02B2 50 4D                                 db 50,4D ; PM
+ 02B4 41 49                                 db 41,49 ; AI
+ 02B6 4E 58                                 db 4E,58 ; NX
+ 02B8 3A 20                                 db 3A,20 ; :.
+ 02BA 41 62                                 db 41,62 ; Ab
+ 02BC 6F 75                                 db 6F,75 ; ou
+ 02BE 74 20                                 db 74,20 ; t.
+ 02C0 74 6F                                 db 74,6F ; to
+ 02C2 20 65                                 db 20,65 ; .e
+ 02C4 6E 74                                 db 6E,74 ; nt
+ 02C6 65 72                                 db 65,72 ; er
+ 02C8 20 74                                 db 20,74 ; .t
+ 02CA 68 65                                 db 68,65 ; he
+ 02CC 20 49                                 db 20,49 ; .I
+ 02CE 4D 50                                 db 4D,50 ; MP
+ 02D0 20 70                                 db 20,70 ; .p
+ 02D2 72 6F                                 db 72,6F ; ro
+ 02D4 67 72                                 db 67,72 ; gr
+ 02D6 61 6D                                 db 61,6D ; am
+ 02D8 23 49                                 db 23,49 ; #I
+ 02DA 4D 50                                 db 4D,50 ; MP
+ 02DC 4D 41                                 db 4D,41 ; MA
+ 02DE 49 4E                                 db 49,4E ; IN
+ 02E0 58 3A                                 db 58,3A ; X:
+ 02E2 20 43                                 db 20,43 ; .C
+ 02E4 6F 6D                                 db 6F,6D ; om
+ 02E6 70 6C                                 db 70,6C ; pl
+ 02E8 65 74                                 db 65,74 ; et
+ 02EA 65 64                                 db 65,64 ; ed
+ 02EC 20 74                                 db 20,74 ; .t
+ 02EE 68 65                                 db 68,65 ; he
+ 02F0 20 49                                 db 20,49 ; .I
+ 02F2 4D 50                                 db 4D,50 ; MP
+ 02F4 20 70                                 db 20,70 ; .p
+ 02F6 72 6F                                 db 72,6F ; ro
+ 02F8 67 72                                 db 67,72 ; gr
+ 02FA 61 6D                                 db 61,6D ; am
+ 02FC 27 49                                 db 27,49 ; 'I
+ 02FE 4D 50                                 db 4D,50 ; MP
+ 0300 4D 41                                 db 4D,41 ; MA
+ 0302 49 4E                                 db 49,4E ; IN
+ 0304 3A 20                                 db 3A,20 ; :.
+ 0306 41 62                                 db 41,62 ; Ab
+ 0308 6F 75                                 db 6F,75 ; ou
+ 030A 74 20                                 db 74,20 ; t.
+ 030C 74 6F                                 db 74,6F ; to
+ 030E 20 65                                 db 20,65 ; .e
+ 0310 6E 74                                 db 6E,74 ; nt
+ 0312 65 72                                 db 65,72 ; er
+ 0314 20 74                                 db 20,74 ; .t
+ 0316 68 65                                 db 68,65 ; he
+ 0318 20 49                                 db 20,49 ; .I
+ 031A 4D 50                                 db 4D,50 ; MP
+ 031C 20 70                                 db 20,70 ; .p
+ 031E 72 6F                                 db 72,6F ; ro
+ 0320 67 72                                 db 67,72 ; gr
+ 0322 61 6D                                 db 61,6D ; am
+ 0324 22 49                                 db 22,49 ; "I
+ 0326 4D 50                                 db 4D,50 ; MP
+ 0328 4D 41                                 db 4D,41 ; MA
+ 032A 49 4E                                 db 49,4E ; IN
+ 032C 3A 20                                 db 3A,20 ; :.
+ 032E 43 6F                                 db 43,6F ; Co
+ 0330 6D 70                                 db 6D,70 ; mp
+ 0332 6C 65                                 db 6C,65 ; le
+ 0334 74 65                                 db 74,65 ; te
+ 0336 64 20                                 db 64,20 ; d.
+ 0338 74 68                                 db 74,68 ; th
+ 033A 65 20                                 db 65,20 ; e.
+ 033C 49 4D                                 db 49,4D ; IM
+ 033E 50 20                                 db 50,20 ; P.
+ 0340 70 72                                 db 70,72 ; pr
+ 0342 6F 67                                 db 6F,67 ; og
+ 0344 72 61                                 db 72,61 ; ra
+ 0346 6D 00                                 db 6D,00 ; m.
       CONST  ENDS
       _TEXT  SEGMENT WORD PUBLIC 'CODE'
             ENDS
       DATA  SEGMENT WORD PUBLIC 'DATA'
- 0000 00 00                           db 00,00 ; ..
- 0002 00 00                           db 00,00 ; ..
- 0004 00 00                           db 00,00 ; ..
- 0006 00 00                           db 00,00 ; ..
+ 0000 00 00                                 db 00,00 ; ..
+ 0002 00 00                                 db 00,00 ; ..
+ 0004 00 00                                 db 00,00 ; ..
+ 0006 00 00                                 db 00,00 ; ..
       DATA    ENDS
               ENDS
       _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'

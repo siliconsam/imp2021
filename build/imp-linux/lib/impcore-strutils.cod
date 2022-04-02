@@ -1,0 +1,927 @@
+{------------------------------------------------------------------------------}
+    %external %routine impstrcat ( %byte %name dst, src, %integer len)
+ 0000                      L1000  EQU $
+ 0000 C8 00 00 01                           ENTER 0000,1
+        %integer i
+        %integer count
+        %byte dlen,slen
+        %byte %name srcx,dstx
+
+        %if (len = 0) %then len = MAXLENIMPSTRING; ! string(*)name - comes from general %name's etc
+ 0004 8B 45 08                              MOV EAX,[EBP+8]
+ 0007 3D 00 00 00 00                        CMP EAX,0
+ 000C 75 00                                 JNE L1001
+ 000E C7 45 08 FF 00 00 00                  MOV LONG [EBP+8],255
+ 0015                      L1001  EQU $
+
+        dlen = dst;   ! pick up existing destination length
+ 0015 8B 75 10                              MOV ESI,[EBP+16]
+ 0018 8A 06                                 MOV AL,[ESI]
+ 001A 88 45 F3                              MOV [EBP-13],AL
+        slen = src;   ! fetch the source length
+ 001D 8B 7D 0C                              MOV EDI,[EBP+12]
+ 0020 8A 07                                 MOV AL,[EDI]
+ 0022 88 45 F2                              MOV [EBP-14],AL
+
+        %signal 6,1,1 %if (slen + dlen > len)
+ 0025 31 C0                                 XOR EAX,EAX
+ 0027 8A 45 F2                              MOV AL,[EBP-14]
+ 002A 31 C9                                 XOR ECX,ECX
+ 002C 8A 4D F3                              MOV CL,[EBP-13]
+ 002F 01 C8                                 ADD EAX,ECX
+ 0031 3B 45 08                              CMP EAX,[EBP+8]
+ 0034 7E 00                                 JLE L1002
+ 0036 B8 0D 00 00 00                        MOV EAX,13
+ 003B 50                                    PUSH EAX
+ 003C B8 06 00 00 00                        MOV EAX,6
+ 0041 50                                    PUSH EAX
+ 0042 B8 01 00 00 00                        MOV EAX,1
+ 0047 50                                    PUSH EAX
+ 0048 B8 01 00 00 00                        MOV EAX,1
+ 004D 50                                    PUSH EAX
+ 004E E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 0051 83 C4 10                              ADD ESP,16
+ 0054                      L1002  EQU $
+
+        count = slen
+ 0054 31 C0                                 XOR EAX,EAX
+ 0056 8A 45 F2                              MOV AL,[EBP-14]
+ 0059 89 45 F4                              MOV [EBP-12],EAX
+        dlen = dlen + count
+ 005C 8B 45 F4                              MOV EAX,[EBP-12]
+ 005F 00 45 F3                              ADD [EBP-13],AL
+
+        ! update the destination count
+        dstx == byteinteger( addr( dst) ); ! get the address
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 0062 8B 45 10                              MOV EAX,[EBP+16]
+ 0065 89 45 E8                              MOV [EBP-24],EAX
+        dstx = dlen;                       ! set the new length
+ 0068 8B 5D E8                              MOV EBX,[EBP-24]
+ 006B 8A 45 F3                              MOV AL,[EBP-13]
+ 006E 88 03                                 MOV [EBX],AL
+
+        ! copy across the source chars
+        %for i = 1,1,count %cycle
+ 0070 8B 45 F4                              MOV EAX,[EBP-12]
+ 0073 89 45 E4                              MOV [EBP-28],EAX
+ 0076 C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
+ 007D                      L1003  EQU $
+ 007D 8B 45 F8                              MOV EAX,[EBP-8]
+ 0080 3B 45 E4                              CMP EAX,[EBP-28]
+ 0083 74 00                                 JE L1004
+ 0085 40                                    INC EAX
+ 0086 89 45 F8                              MOV [EBP-8],EAX
+            srcx == byteinteger( addr(src) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0089 8B 45 0C                              MOV EAX,[EBP+12]
+ 008C 03 45 F8                              ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 008F 89 45 EC                              MOV [EBP-20],EAX
+            dstx == byteinteger( addr(dst) + (dlen - count) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0092 31 C0                                 XOR EAX,EAX
+ 0094 8A 45 F3                              MOV AL,[EBP-13]
+ 0097 2B 45 F4                              SUB EAX,[EBP-12]
+ 009A 03 45 10                              ADD EAX,[EBP+16]
+ 009D 03 45 F8                              ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 00A0 89 45 E8                              MOV [EBP-24],EAX
+            dstx = srcx
+ 00A3 8B 75 E8                              MOV ESI,[EBP-24]
+ 00A6 8B 7D EC                              MOV EDI,[EBP-20]
+ 00A9 8A 07                                 MOV AL,[EDI]
+ 00AB 88 06                                 MOV [ESI],AL
+        %repeat
+ 00AD EB 00                                 JMP L1003
+ 00AF                      L1004  EQU $
+    %end
+ 00AF C9                                    LEAVE
+ 00B0 C3                                    RET
+{------------------------------------------------------------------------------}
+{------------------------------------------------------------------------------}
+    ! strcmp returns a number comparable to the state of the
+    ! strings (-1 = less than, 0 = equal, 1 = more than)
+    %external %integer %function impstrcmp ( %byte %name l,r )
+ 00B1                      L1005  EQU $
+ 00B1 C8 00 00 01                           ENTER 0000,1
+        %integer lcount, rcount, index
+        %byte lx,rx
+
+        lcount = l; ! pick up the counts
+ 00B5 8B 5D 0C                              MOV EBX,[EBP+12]
+ 00B8 31 C0                                 XOR EAX,EAX
+ 00BA 8A 03                                 MOV AL,[EBX]
+ 00BC 89 45 F8                              MOV [EBP-8],EAX
+        rcount = r;
+ 00BF 8B 75 08                              MOV ESI,[EBP+8]
+ 00C2 31 C0                                 XOR EAX,EAX
+ 00C4 8A 06                                 MOV AL,[ESI]
+ 00C6 89 45 F4                              MOV [EBP-12],EAX
+
+        index = 1
+ 00C9 C7 45 F0 01 00 00 00                  MOV LONG [EBP-16],1
+        %while (lcount > 0) %and (rcount > 0) %cycle
+ 00D0                      L1006  EQU $
+ 00D0 8B 45 F8                              MOV EAX,[EBP-8]
+ 00D3 3D 00 00 00 00                        CMP EAX,0
+ 00D8 7E 00                                 JLE L1007
+ 00DA 8B 45 F4                              MOV EAX,[EBP-12]
+ 00DD 3D 00 00 00 00                        CMP EAX,0
+ 00E2 7E 00                                 JLE L1007
+            lx = byteinteger( addr( l ) + index ); ! get the address
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 00E4 8B 45 0C                              MOV EAX,[EBP+12]
+ 00E7 03 45 F0                              ADD EAX,[EBP-16]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 00EA 8A 08                                 MOV CL,[EAX]
+ 00EC 88 4D EF                              MOV [EBP-17],CL
+            rx = byteinteger( addr( r ) + index ); ! get the address
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 00EF 8B 45 08                              MOV EAX,[EBP+8]
+ 00F2 03 45 F0                              ADD EAX,[EBP-16]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 00F5 8A 08                                 MOV CL,[EAX]
+ 00F7 88 4D EE                              MOV [EBP-18],CL
+
+            %result =  1 %if (lx > rx)
+ 00FA 31 C0                                 XOR EAX,EAX
+ 00FC 8A 45 EF                              MOV AL,[EBP-17]
+ 00FF 31 C9                                 XOR ECX,ECX
+ 0101 8A 4D EE                              MOV CL,[EBP-18]
+ 0104 39 C8                                 CMP EAX,ECX
+ 0106 7E 00                                 JLE L1008
+ 0108 B8 01 00 00 00                        MOV EAX,1
+ 010D C9                                    LEAVE
+ 010E C3                                    RET
+ 010F                      L1008  EQU $
+            %result = -1 %if (rx > lx)
+ 010F 31 C0                                 XOR EAX,EAX
+ 0111 8A 45 EE                              MOV AL,[EBP-18]
+ 0114 31 C9                                 XOR ECX,ECX
+ 0116 8A 4D EF                              MOV CL,[EBP-17]
+ 0119 39 C8                                 CMP EAX,ECX
+ 011B 7E 00                                 JLE L1009
+ 011D B8 FF FF FF FF                        MOV EAX,-1
+ 0122 C9                                    LEAVE
+ 0123 C3                                    RET
+ 0124                      L1009  EQU $
+
+            index = index + 1
+ 0124 FF 45 F0                              INC WORD [EBP-16]
+            lcount = lcount - 1
+ 0127 FF 4D F8                              DEC WORD [EBP-8]
+            rcount = rcount - 1
+ 012A FF 4D F4                              DEC WORD [EBP-12]
+        %repeat
+ 012D EB 00                                 JMP L1006
+ 012F                      L1007  EQU $
+
+        ! here we ran out of characters on one or both sides
+        %result =  1 %if (lcount > 0)
+ 012F 8B 45 F8                              MOV EAX,[EBP-8]
+ 0132 3D 00 00 00 00                        CMP EAX,0
+ 0137 7E 00                                 JLE L1010
+ 0139 B8 01 00 00 00                        MOV EAX,1
+ 013E C9                                    LEAVE
+ 013F C3                                    RET
+ 0140                      L1010  EQU $
+        %result = -1 %if (rcount > 0)
+ 0140 8B 45 F4                              MOV EAX,[EBP-12]
+ 0143 3D 00 00 00 00                        CMP EAX,0
+ 0148 7E 00                                 JLE L1011
+ 014A B8 FF FF FF FF                        MOV EAX,-1
+ 014F C9                                    LEAVE
+ 0150 C3                                    RET
+ 0151                      L1011  EQU $
+
+        ! if here, the strings are identical
+        %result = 0
+ 0151 31 C0                                 XOR EAX,EAX
+ 0153 C9                                    LEAVE
+ 0154 C3                                    RET
+    %end
+{------------------------------------------------------------------------------}
+{------------------------------------------------------------------------------}
+    %external %routine impstrcpy ( %byte %name dst, src, %integer len)
+ 0155                      L1012  EQU $
+ 0155 C8 00 00 01                           ENTER 0000,1
+        %integer i
+        %integer count
+        %byte dlen,slen
+        %byte %name srcx,dstx
+
+        %if (len = 0) %then len = MAXLENIMPSTRING; ! string(*)name - comes from general %name's etc
+ 0159 8B 45 08                              MOV EAX,[EBP+8]
+ 015C 3D 00 00 00 00                        CMP EAX,0
+ 0161 75 00                                 JNE L1013
+ 0163 C7 45 08 FF 00 00 00                  MOV LONG [EBP+8],255
+ 016A                      L1013  EQU $
+
+        dlen = 0;      ! destination length = 0
+ 016A C6 45 F3 00                           MOV BYTE [EBP-13],0
+        slen = src;    ! fetch the source length
+ 016E 8B 7D 0C                              MOV EDI,[EBP+12]
+ 0171 8A 07                                 MOV AL,[EDI]
+ 0173 88 45 F2                              MOV [EBP-14],AL
+
+        %signal 6,1,2 %if (slen > len)
+ 0176 31 C0                                 XOR EAX,EAX
+ 0178 8A 45 F2                              MOV AL,[EBP-14]
+ 017B 3B 45 08                              CMP EAX,[EBP+8]
+ 017E 7E 00                                 JLE L1014
+ 0180 B8 49 00 00 00                        MOV EAX,73
+ 0185 50                                    PUSH EAX
+ 0186 B8 06 00 00 00                        MOV EAX,6
+ 018B 50                                    PUSH EAX
+ 018C B8 01 00 00 00                        MOV EAX,1
+ 0191 50                                    PUSH EAX
+ 0192 B8 02 00 00 00                        MOV EAX,2
+ 0197 50                                    PUSH EAX
+ 0198 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 019B 83 C4 10                              ADD ESP,16
+ 019E                      L1014  EQU $
+
+        count = slen
+ 019E 31 C0                                 XOR EAX,EAX
+ 01A0 8A 45 F2                              MOV AL,[EBP-14]
+ 01A3 89 45 F4                              MOV [EBP-12],EAX
+        dlen = dlen + count;
+ 01A6 8B 45 F4                              MOV EAX,[EBP-12]
+ 01A9 00 45 F3                              ADD [EBP-13],AL
+
+        ! update the destination count
+        dstx == byteinteger( addr( dst) ); ! get the address
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 01AC 8B 45 10                              MOV EAX,[EBP+16]
+ 01AF 89 45 E8                              MOV [EBP-24],EAX
+        dstx = dlen;                       ! set the new length
+ 01B2 8B 5D E8                              MOV EBX,[EBP-24]
+ 01B5 8A 45 F3                              MOV AL,[EBP-13]
+ 01B8 88 03                                 MOV [EBX],AL
+
+        ! copy across the source chars (and the lengths)
+        %for i = 1,1,count %cycle
+ 01BA 8B 45 F4                              MOV EAX,[EBP-12]
+ 01BD 89 45 E4                              MOV [EBP-28],EAX
+ 01C0 C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
+ 01C7                      L1015  EQU $
+ 01C7 8B 45 F8                              MOV EAX,[EBP-8]
+ 01CA 3B 45 E4                              CMP EAX,[EBP-28]
+ 01CD 74 00                                 JE L1016
+ 01CF 40                                    INC EAX
+ 01D0 89 45 F8                              MOV [EBP-8],EAX
+            srcx == byteinteger( addr(src) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 01D3 8B 45 0C                              MOV EAX,[EBP+12]
+ 01D6 03 45 F8                              ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 01D9 89 45 EC                              MOV [EBP-20],EAX
+            dstx == byteinteger( addr(dst) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 01DC 8B 45 10                              MOV EAX,[EBP+16]
+ 01DF 03 45 F8                              ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 01E2 89 45 E8                              MOV [EBP-24],EAX
+            dstx = srcx
+ 01E5 8B 75 E8                              MOV ESI,[EBP-24]
+ 01E8 8B 7D EC                              MOV EDI,[EBP-20]
+ 01EB 8A 07                                 MOV AL,[EDI]
+ 01ED 88 06                                 MOV [ESI],AL
+        %repeat
+ 01EF EB 00                                 JMP L1015
+ 01F1                      L1016  EQU $
+    %end
+ 01F1 C9                                    LEAVE
+ 01F2 C3                                    RET
+{------------------------------------------------------------------------------}
+{------------------------------------------------------------------------------}
+    %external %routine impstrjam ( %byte %name dst,src, %integer len)
+ 01F3                      L1017  EQU $
+ 01F3 C8 00 00 01                           ENTER 0000,1
+        %integer i
+        %integer count
+        %byte slen,dlen
+        %byte %name srcx,dstx
+
+        %if (len = 0) %then len = MAXLENIMPSTRING; ! string(*)name - comes from general %name's etc
+ 01F7 8B 45 08                              MOV EAX,[EBP+8]
+ 01FA 3D 00 00 00 00                        CMP EAX,0
+ 01FF 75 00                                 JNE L1018
+ 0201 C7 45 08 FF 00 00 00                  MOV LONG [EBP+8],255
+ 0208                      L1018  EQU $
+
+        dlen = dst;   ! pick up existing destination length
+ 0208 8B 5D 10                              MOV EBX,[EBP+16]
+ 020B 8A 03                                 MOV AL,[EBX]
+ 020D 88 45 F2                              MOV [EBP-14],AL
+        slen = src;   ! fetch the source length
+ 0210 8B 75 0C                              MOV ESI,[EBP+12]
+ 0213 8A 06                                 MOV AL,[ESI]
+ 0215 88 45 F3                              MOV [EBP-13],AL
+
+        %if (slen > len) %start { force the length to fit }
+ 0218 31 C0                                 XOR EAX,EAX
+ 021A 8A 45 F3                              MOV AL,[EBP-13]
+ 021D 3B 45 08                              CMP EAX,[EBP+8]
+ 0220 7E 00                                 JLE L1019
+            count = len
+ 0222 8B 45 08                              MOV EAX,[EBP+8]
+ 0225 89 45 F4                              MOV [EBP-12],EAX
+        %else
+ 0228 EB 00                                 JMP L1020
+ 022A                      L1019  EQU $
+            count = slen
+ 022A 31 C0                                 XOR EAX,EAX
+ 022C 8A 45 F3                              MOV AL,[EBP-13]
+ 022F 89 45 F4                              MOV [EBP-12],EAX
+        %finish
+ 0232                      L1020  EQU $
+        dlen = count
+ 0232 8B 45 F4                              MOV EAX,[EBP-12]
+ 0235 88 45 F2                              MOV [EBP-14],AL
+
+        ! update the destination count
+        dstx == byteinteger( addr( dst) ); ! get the address
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 0238 8B 45 10                              MOV EAX,[EBP+16]
+ 023B 89 45 E8                              MOV [EBP-24],EAX
+        dstx = dlen;                       ! set the new length
+ 023E 8B 7D E8                              MOV EDI,[EBP-24]
+ 0241 8A 45 F2                              MOV AL,[EBP-14]
+ 0244 88 07                                 MOV [EDI],AL
+
+        ! copy across the source chars (and length) 
+        %for i = 1,1,count %cycle
+ 0246 8B 45 F4                              MOV EAX,[EBP-12]
+ 0249 89 45 E4                              MOV [EBP-28],EAX
+ 024C C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
+ 0253                      L1021  EQU $
+ 0253 8B 45 F8                              MOV EAX,[EBP-8]
+ 0256 3B 45 E4                              CMP EAX,[EBP-28]
+ 0259 74 00                                 JE L1022
+ 025B 40                                    INC EAX
+ 025C 89 45 F8                              MOV [EBP-8],EAX
+            srcx == byteinteger( addr(src) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 025F 8B 45 0C                              MOV EAX,[EBP+12]
+ 0262 03 45 F8                              ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 0265 89 45 EC                              MOV [EBP-20],EAX
+            dstx == byteinteger( addr(dst) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0268 8B 45 10                              MOV EAX,[EBP+16]
+ 026B 03 45 F8                              ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 026E 89 45 E8                              MOV [EBP-24],EAX
+            dstx = srcx
+ 0271 8B 5D E8                              MOV EBX,[EBP-24]
+ 0274 8B 75 EC                              MOV ESI,[EBP-20]
+ 0277 8A 06                                 MOV AL,[ESI]
+ 0279 88 03                                 MOV [EBX],AL
+        %repeat
+ 027B EB 00                                 JMP L1021
+ 027D                      L1022  EQU $
+    %end
+ 027D C9                                    LEAVE
+ 027E C3                                    RET
+{------------------------------------------------------------------------------}
+{------------------------------------------------------------------------------}
+    %external %routine impstrjcat ( %byte %name dst,src, %integer len )
+ 027F                      L1023  EQU $
+ 027F C8 00 00 01                           ENTER 0000,1
+        %integer i
+        %integer count
+        %byte dlen,slen
+        %byte %name srcx,dstx
+
+        %if (len = 0) %then len = MAXLENIMPSTRING; ! string(*)name - comes from general %name's etc
+ 0283 8B 45 08                              MOV EAX,[EBP+8]
+ 0286 3D 00 00 00 00                        CMP EAX,0
+ 028B 75 00                                 JNE L1024
+ 028D C7 45 08 FF 00 00 00                  MOV LONG [EBP+8],255
+ 0294                      L1024  EQU $
+
+        dlen = dst;   ! pick up existing destination length
+ 0294 8B 7D 10                              MOV EDI,[EBP+16]
+ 0297 8A 07                                 MOV AL,[EDI]
+ 0299 88 45 F3                              MOV [EBP-13],AL
+        slen = src;   ! fetch the source length
+ 029C 8B 5D 0C                              MOV EBX,[EBP+12]
+ 029F 8A 03                                 MOV AL,[EBX]
+ 02A1 88 45 F2                              MOV [EBP-14],AL
+
+        %if ((dlen + slen) > len) %start { force the length to fit }
+ 02A4 31 C0                                 XOR EAX,EAX
+ 02A6 8A 45 F3                              MOV AL,[EBP-13]
+ 02A9 31 C9                                 XOR ECX,ECX
+ 02AB 8A 4D F2                              MOV CL,[EBP-14]
+ 02AE 01 C8                                 ADD EAX,ECX
+ 02B0 3B 45 08                              CMP EAX,[EBP+8]
+ 02B3 7E 00                                 JLE L1025
+            count = len - dlen
+ 02B5 8B 45 08                              MOV EAX,[EBP+8]
+ 02B8 31 C9                                 XOR ECX,ECX
+ 02BA 8A 4D F3                              MOV CL,[EBP-13]
+ 02BD 29 C8                                 SUB EAX,ECX
+ 02BF 89 45 F4                              MOV [EBP-12],EAX
+        %else
+ 02C2 EB 00                                 JMP L1026
+ 02C4                      L1025  EQU $
+            count = slen
+ 02C4 31 C0                                 XOR EAX,EAX
+ 02C6 8A 45 F2                              MOV AL,[EBP-14]
+ 02C9 89 45 F4                              MOV [EBP-12],EAX
+        %finish
+ 02CC                      L1026  EQU $
+        dlen = dlen + count
+ 02CC 8B 45 F4                              MOV EAX,[EBP-12]
+ 02CF 00 45 F3                              ADD [EBP-13],AL
+
+        ! update the destination count
+        dstx == byteinteger( addr( dst) ); ! get the address
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 02D2 8B 45 10                              MOV EAX,[EBP+16]
+ 02D5 89 45 E8                              MOV [EBP-24],EAX
+        dstx = dlen;                       ! set the new length
+ 02D8 8B 75 E8                              MOV ESI,[EBP-24]
+ 02DB 8A 45 F3                              MOV AL,[EBP-13]
+ 02DE 88 06                                 MOV [ESI],AL
+
+        ! copy across the source chars
+        %for i = 1,1,count %cycle
+ 02E0 8B 45 F4                              MOV EAX,[EBP-12]
+ 02E3 89 45 E4                              MOV [EBP-28],EAX
+ 02E6 C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
+ 02ED                      L1027  EQU $
+ 02ED 8B 45 F8                              MOV EAX,[EBP-8]
+ 02F0 3B 45 E4                              CMP EAX,[EBP-28]
+ 02F3 74 00                                 JE L1028
+ 02F5 40                                    INC EAX
+ 02F6 89 45 F8                              MOV [EBP-8],EAX
+            srcx == byteinteger( addr(src) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 02F9 8B 45 0C                              MOV EAX,[EBP+12]
+ 02FC 03 45 F8                              ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 02FF 89 45 EC                              MOV [EBP-20],EAX
+            dstx == byteinteger( addr(dst) + (dlen - count) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0302 31 C0                                 XOR EAX,EAX
+ 0304 8A 45 F3                              MOV AL,[EBP-13]
+ 0307 2B 45 F4                              SUB EAX,[EBP-12]
+ 030A 03 45 10                              ADD EAX,[EBP+16]
+ 030D 03 45 F8                              ADD EAX,[EBP-8]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 0310 89 45 E8                              MOV [EBP-24],EAX
+            dstx = srcx
+ 0313 8B 7D E8                              MOV EDI,[EBP-24]
+ 0316 8B 5D EC                              MOV EBX,[EBP-20]
+ 0319 8A 03                                 MOV AL,[EBX]
+ 031B 88 07                                 MOV [EDI],AL
+        %repeat
+ 031D EB 00                                 JMP L1027
+ 031F                      L1028  EQU $
+    %end
+ 031F C9                                    LEAVE
+ 0320 C3                                    RET
+{------------------------------------------------------------------------------}
+{------------------------------------------------------------------------------}
+    ! IMP resolution - S->A.(B).C; returns 1 for success, 0 for failure
+    %external %integer %function impstrres ( %byte %name c,b,a,s )
+ 0321                      L1029  EQU $
+ 0321 C8 00 00 01                           ENTER 0000,1
+        %integer index, count, i
+        %byte slen, alen, blen, clen
+        %byte %name sx,ax,bx,cx
+
+        ! Although s,a,b,c are declared equivalent to C format string arrays
+        ! we can access a char at index i by x[i]
+        ! However the string arrays are formatted as IMP strings
+        ! Hence, x[0] contains the length of the string.
+        ! And x[x[0] is therefore the last char in the IMP string.
+        ! DANGER, IMP format string arrays are at most 256 chars (1 for length, 255 for actual string text)
+        ! DANGER, DANGER. The compiler/programmer may have assigned a lesser size so beware overflow
+
+        ! case 1:   S -> A.(B).C
+        !  sub-case 1A: length(B) > length(S) => result = 0, A := S,       C := ""
+        !  sub-case 1B: B not in S            => result = 0, A := S,       C := ""
+        !  sub-case 1C: B in S                => result = 1, A := S\(B.C), C := S\(A.B)
+    
+        ! case 2:   S -> A.(B)
+        !  sub-case 2A: length(B) > length(S) => result = 0, A := S
+        !  sub-case 2B: B not in S            => result = 0, A := S
+        !  sub-case 2C: B in S                => result = 1, A := S\B
+
+        ! case 3:   S ->   (B).C
+        !  sub-case 3A: length(B) > length(S) => result = 0,         C := ""
+        !  sub-case 3B: B not in S            => result = 0,         C := ""
+        !  sub-case 3C: B in S                => result = 1,         C := S\B
+
+        ! General case S -> A.(B).C    (S,B inputs, A,C outputs)
+        ! initialise:
+        ! if addr(A) # 0 then A := S
+        ! if addr(C) # 0 then C := ""
+        ! case A: length(B) > length(S) => result = 0, if addr(A) # 0 then length(A) := length(S)
+        ! case B: B not in S            => result = 0, if addr(A) # 0 then length(A) := length(S)
+        ! case C: B in S                => result = 1, if addr(A) # 0 then length(A) := length(S) - length(B.C), if addr(C) # 0 then C := S\(A.B)
+
+        ! Assume a == %string(255), c == %string(255)
+        ! We don't care about the size of s,b since we use length(s), length(b)
+        ! Algorithm regards each s,a,b,c as an array of char in memory
+        ! where x[MAXLENIMPSTRING+1] == x[0..MAXLENIMPSTRING] and x[0] == length(x)
+
+        ! successively try to fit B into S
+        ! initialise A = "" (if addr(A) # 0)
+
+        ! successively try to fit B into S
+        sx == byteinteger( addr( s ) )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 0325 8B 45 08                              MOV EAX,[EBP+8]
+ 0328 89 45 E8                              MOV [EBP-24],EAX
+        bx == byteinteger( addr( b ) )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 032B 8B 45 10                              MOV EAX,[EBP+16]
+ 032E 89 45 E0                              MOV [EBP-32],EAX
+        slen = s                     ;! pick up respective lengths
+ 0331 8B 75 08                              MOV ESI,[EBP+8]
+ 0334 8A 06                                 MOV AL,[ESI]
+ 0336 88 45 EF                              MOV [EBP-17],AL
+        blen = b
+ 0339 8B 7D 10                              MOV EDI,[EBP+16]
+ 033C 8A 07                                 MOV AL,[EDI]
+ 033E 88 45 ED                              MOV [EBP-19],AL
+
+        alen = 0
+ 0341 C6 45 EE 00                           MOV BYTE [EBP-18],0
+        %if (addr(a) # 0) %start
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0345 8B 45 0C                              MOV EAX,[EBP+12]
+ 0348 3D 00 00 00 00                        CMP EAX,0
+ 034D 74 00                                 JE L1030
+            ax == byteinteger( addr( a ) )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 034F 8B 45 0C                              MOV EAX,[EBP+12]
+ 0352 89 45 E4                              MOV [EBP-28],EAX
+            ax = alen
+ 0355 8B 5D E4                              MOV EBX,[EBP-28]
+ 0358 8A 45 EE                              MOV AL,[EBP-18]
+ 035B 88 03                                 MOV [EBX],AL
+        %finish
+ 035D                      L1030  EQU $
+
+        clen = 0
+ 035D C6 45 EC 00                           MOV BYTE [EBP-20],0
+        %if (addr(c) # 0) %start
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0361 8B 45 14                              MOV EAX,[EBP+20]
+ 0364 3D 00 00 00 00                        CMP EAX,0
+ 0369 74 00                                 JE L1031
+            cx == byteinteger( addr(c) )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 036B 8B 45 14                              MOV EAX,[EBP+20]
+ 036E 89 45 DC                              MOV [EBP-36],EAX
+            cx = clen
+ 0371 8B 75 DC                              MOV ESI,[EBP-36]
+ 0374 8A 45 EC                              MOV AL,[EBP-20]
+ 0377 88 06                                 MOV [ESI],AL
+        %finish
+ 0379                      L1031  EQU $
+
+        %if (blen > slen) %start ;! can't possibly work
+ 0379 31 C0                                 XOR EAX,EAX
+ 037B 8A 45 ED                              MOV AL,[EBP-19]
+ 037E 31 C9                                 XOR ECX,ECX
+ 0380 8A 4D EF                              MOV CL,[EBP-17]
+ 0383 39 C8                                 CMP EAX,ECX
+ 0385 7E 00                                 JLE L1032
+            %result = 0
+ 0387 31 C0                                 XOR EAX,EAX
+ 0389 C9                                    LEAVE
+ 038A C3                                    RET
+        %finish
+ 038B                      L1032  EQU $
+
+        index = 1
+ 038B C7 45 F8 01 00 00 00                  MOV LONG [EBP-8],1
+        %while ( (index + blen) <= slen + 1) %cycle
+ 0392                      L1033  EQU $
+ 0392 8B 45 F8                              MOV EAX,[EBP-8]
+ 0395 31 C9                                 XOR ECX,ECX
+ 0397 8A 4D ED                              MOV CL,[EBP-19]
+ 039A 01 C8                                 ADD EAX,ECX
+ 039C 31 C9                                 XOR ECX,ECX
+ 039E 8A 4D EF                              MOV CL,[EBP-17]
+ 03A1 41                                    INC ECX
+ 03A2 39 C8                                 CMP EAX,ECX
+ 03A4 7F 00                                 JG L1034
+            ! see if there is a match starting from index
+            count = 0
+ 03A6 C7 45 F4 00 00 00 00                  MOV LONG [EBP-12],0
+            %while (count <= blen) %cycle
+ 03AD                      L1035  EQU $
+ 03AD 8B 45 F4                              MOV EAX,[EBP-12]
+ 03B0 31 C9                                 XOR ECX,ECX
+ 03B2 8A 4D ED                              MOV CL,[EBP-19]
+ 03B5 39 C8                                 CMP EAX,ECX
+ 03B7 7F 00                                 JG L1036
+                sx == byteinteger( addr(s) + index + count )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 03B9 8B 45 08                              MOV EAX,[EBP+8]
+ 03BC 03 45 F8                              ADD EAX,[EBP-8]
+ 03BF 03 45 F4                              ADD EAX,[EBP-12]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 03C2 89 45 E8                              MOV [EBP-24],EAX
+                bx == byteinteger( addr(b) + 1 + count )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 03C5 8B 45 10                              MOV EAX,[EBP+16]
+ 03C8 40                                    INC EAX
+ 03C9 03 45 F4                              ADD EAX,[EBP-12]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 03CC 89 45 E0                              MOV [EBP-32],EAX
+
+                %exit %if (sx # bx)
+ 03CF 8B 7D E8                              MOV EDI,[EBP-24]
+ 03D2 31 C0                                 XOR EAX,EAX
+ 03D4 8A 07                                 MOV AL,[EDI]
+ 03D6 8B 5D E0                              MOV EBX,[EBP-32]
+ 03D9 31 C9                                 XOR ECX,ECX
+ 03DB 8A 0B                                 MOV CL,[EBX]
+ 03DD 39 C8                                 CMP EAX,ECX
+ 03DF 74 00                                 JE L1037
+ 03E1 EB 00                                 JMP L1036
+ 03E3                      L1037  EQU $
+
+                count = count + 1;
+ 03E3 FF 45 F4                              INC WORD [EBP-12]
+            %repeat
+ 03E6 EB 00                                 JMP L1035
+ 03E8                      L1036  EQU $
+
+            ! check if a match was found, at offset INDEX
+            %if (count = blen) %start
+ 03E8 8B 45 F4                              MOV EAX,[EBP-12]
+ 03EB 31 C9                                 XOR ECX,ECX
+ 03ED 8A 4D ED                              MOV CL,[EBP-19]
+ 03F0 39 C8                                 CMP EAX,ECX
+ 03F2 75 00                                 JNE L1038
+                %if (addr(a) # 0) %start
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 03F4 8B 45 0C                              MOV EAX,[EBP+12]
+ 03F7 3D 00 00 00 00                        CMP EAX,0
+ 03FC 74 00                                 JE L1039
+                    alen = index - 1
+ 03FE 8B 45 F8                              MOV EAX,[EBP-8]
+ 0401 48                                    DEC EAX
+ 0402 88 45 EE                              MOV [EBP-18],AL
+
+                    ! copy the results
+                    ! Now to remember the prefix string A in S-> A.(B).C
+                    ax == byteinteger( addr(a) )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 0405 8B 45 0C                              MOV EAX,[EBP+12]
+ 0408 89 45 E4                              MOV [EBP-28],EAX
+                    ax = alen
+ 040B 8B 75 E4                              MOV ESI,[EBP-28]
+ 040E 8A 45 EE                              MOV AL,[EBP-18]
+ 0411 88 06                                 MOV [ESI],AL
+                    %for i = 1,1,alen %cycle
+ 0413 31 C0                                 XOR EAX,EAX
+ 0415 8A 45 EE                              MOV AL,[EBP-18]
+ 0418 89 45 D8                              MOV [EBP-40],EAX
+ 041B C7 45 F0 00 00 00 00                  MOV LONG [EBP-16],0
+ 0422                      L1040  EQU $
+ 0422 8B 45 F0                              MOV EAX,[EBP-16]
+ 0425 3B 45 D8                              CMP EAX,[EBP-40]
+ 0428 74 00                                 JE L1041
+ 042A 40                                    INC EAX
+ 042B 89 45 F0                              MOV [EBP-16],EAX
+                        sx == byteinteger( addr(s) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 042E 8B 45 08                              MOV EAX,[EBP+8]
+ 0431 03 45 F0                              ADD EAX,[EBP-16]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 0434 89 45 E8                              MOV [EBP-24],EAX
+                        ax == byteinteger( addr(a) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0437 8B 45 0C                              MOV EAX,[EBP+12]
+ 043A 03 45 F0                              ADD EAX,[EBP-16]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 043D 89 45 E4                              MOV [EBP-28],EAX
+                        ax = sx;
+ 0440 8B 7D E4                              MOV EDI,[EBP-28]
+ 0443 8B 5D E8                              MOV EBX,[EBP-24]
+ 0446 8A 03                                 MOV AL,[EBX]
+ 0448 88 07                                 MOV [EDI],AL
+                    %repeat
+ 044A EB 00                                 JMP L1040
+ 044C                      L1041  EQU $
+                %finish
+ 044C                      L1039  EQU $
+
+                ! Now to remember the postfix string C in S-> A.(B).C
+                %if (addr(c) # 0) %start
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 044C 8B 45 14                              MOV EAX,[EBP+20]
+ 044F 3D 00 00 00 00                        CMP EAX,0
+ 0454 74 00                                 JE L1042
+                    clen = (slen - (alen + blen))
+ 0456 31 C0                                 XOR EAX,EAX
+ 0458 8A 45 EE                              MOV AL,[EBP-18]
+ 045B 31 C9                                 XOR ECX,ECX
+ 045D 8A 4D ED                              MOV CL,[EBP-19]
+ 0460 01 C8                                 ADD EAX,ECX
+ 0462 31 C9                                 XOR ECX,ECX
+ 0464 8A 4D EF                              MOV CL,[EBP-17]
+ 0467 29 C1                                 SUB ECX,EAX
+ 0469 88 4D EC                              MOV [EBP-20],CL
+                    ! Ok, we have somewhere to store C
+                    cx == byteinteger( addr(c) )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 046C 8B 45 14                              MOV EAX,[EBP+20]
+ 046F 89 45 DC                              MOV [EBP-36],EAX
+                    cx = clen
+ 0472 8B 75 DC                              MOV ESI,[EBP-36]
+ 0475 8A 45 EC                              MOV AL,[EBP-20]
+ 0478 88 06                                 MOV [ESI],AL
+                    %for i = 1,1,clen %cycle
+ 047A 31 C0                                 XOR EAX,EAX
+ 047C 8A 45 EC                              MOV AL,[EBP-20]
+ 047F 89 45 D4                              MOV [EBP-44],EAX
+ 0482 C7 45 F0 00 00 00 00                  MOV LONG [EBP-16],0
+ 0489                      L1043  EQU $
+ 0489 8B 45 F0                              MOV EAX,[EBP-16]
+ 048C 3B 45 D4                              CMP EAX,[EBP-44]
+ 048F 74 00                                 JE L1044
+ 0491 40                                    INC EAX
+ 0492 89 45 F0                              MOV [EBP-16],EAX
+                        sx == byteinteger( addr(s) + i + alen + blen )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 0495 8B 45 08                              MOV EAX,[EBP+8]
+ 0498 03 45 F0                              ADD EAX,[EBP-16]
+ 049B 31 C9                                 XOR ECX,ECX
+ 049D 8A 4D EE                              MOV CL,[EBP-18]
+ 04A0 01 C8                                 ADD EAX,ECX
+ 04A2 31 C9                                 XOR ECX,ECX
+ 04A4 8A 4D ED                              MOV CL,[EBP-19]
+ 04A7 01 C8                                 ADD EAX,ECX
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 04A9 89 45 E8                              MOV [EBP-24],EAX
+                        cx == byteinteger( addr(c) + i )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 04AC 8B 45 14                              MOV EAX,[EBP+20]
+ 04AF 03 45 F0                              ADD EAX,[EBP-16]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 04B2 89 45 DC                              MOV [EBP-36],EAX
+                        cx = sx
+ 04B5 8B 7D DC                              MOV EDI,[EBP-36]
+ 04B8 8B 5D E8                              MOV EBX,[EBP-24]
+ 04BB 8A 03                                 MOV AL,[EBX]
+ 04BD 88 07                                 MOV [EDI],AL
+                    %repeat
+ 04BF EB 00                                 JMP L1043
+ 04C1                      L1044  EQU $
+                %finish
+ 04C1                      L1042  EQU $
+
+                %result = 1
+ 04C1 B8 01 00 00 00                        MOV EAX,1
+ 04C6 C9                                    LEAVE
+ 04C7 C3                                    RET
+            %finish
+ 04C8                      L1038  EQU $
+
+            ! here = no match
+            index = index + 1
+ 04C8 FF 45 F8                              INC WORD [EBP-8]
+        %repeat
+ 04CB EB 00                                 JMP L1033
+ 04CD                      L1034  EQU $
+
+        %if (addr(a) # 0) %start
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 04CD 8B 45 0C                              MOV EAX,[EBP+12]
+ 04D0 3D 00 00 00 00                        CMP EAX,0
+ 04D5 74 00                                 JE L1045
+            %for count = 0,1,slen %cycle
+ 04D7 31 C0                                 XOR EAX,EAX
+ 04D9 8A 45 EF                              MOV AL,[EBP-17]
+ 04DC 89 45 D0                              MOV [EBP-48],EAX
+ 04DF C7 45 F4 FF FF FF FF                  MOV LONG [EBP-12],-1
+ 04E6                      L1046  EQU $
+ 04E6 8B 45 F4                              MOV EAX,[EBP-12]
+ 04E9 3B 45 D0                              CMP EAX,[EBP-48]
+ 04EC 74 00                                 JE L1047
+ 04EE 40                                    INC EAX
+ 04EF 89 45 F4                              MOV [EBP-12],EAX
+                sx == byteinteger( addr(s) + count )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 04F2 8B 45 08                              MOV EAX,[EBP+8]
+ 04F5 03 45 F4                              ADD EAX,[EBP-12]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 04F8 89 45 E8                              MOV [EBP-24],EAX
+                ax == byteinteger( addr(a) + count )
+                                      Generating CODE for 'ADDR' (MACRO 4)
+                                      CALL 'ADDR' (MACRO 4)
+ 04FB 8B 45 0C                              MOV EAX,[EBP+12]
+ 04FE 03 45 F4                              ADD EAX,[EBP-12]
+                                      Generating CODE for 'BYTE INTEGER' (MACRO 6)
+                                      CALL 'BYTE INTEGER' (MACRO 6)
+ 0501 89 45 E4                              MOV [EBP-28],EAX
+                ax = sx
+ 0504 8B 75 E4                              MOV ESI,[EBP-28]
+ 0507 8B 7D E8                              MOV EDI,[EBP-24]
+ 050A 8A 07                                 MOV AL,[EDI]
+ 050C 88 06                                 MOV [ESI],AL
+            %repeat
+ 050E EB 00                                 JMP L1046
+ 0510                      L1047  EQU $
+        %finish
+ 0510                      L1045  EQU $
+
+        %result = 0
+ 0510 31 C0                                 XOR EAX,EAX
+ 0512 C9                                    LEAVE
+ 0513 C3                                    RET
+    %end
+{------------------------------------------------------------------------------}
+%endoffile
+      _TEXT  ENDS
+      CONST  SEGMENT WORD PUBLIC 'CONST'
+      CONST  ENDS
+      _TEXT  SEGMENT WORD PUBLIC 'CODE'
+            ENDS
+      DATA  SEGMENT WORD PUBLIC 'DATA'
+      DATA    ENDS
+              ENDS
+      _SWTAB  SEGMENT WORD PUBLIC '_SWTAB'
+      _SWTAB   ENDS

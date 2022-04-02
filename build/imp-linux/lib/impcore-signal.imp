@@ -3,30 +3,29 @@
 
     %constant %integer max panic = 20
 
-    %recordformat impframe( (%record(impframe) %name xebp %or %integer ximp), %integer xret )
+    %recordformat impframe( (%record(impframe) %name xebp %or %integer ximp),
+                            %integer xret )
 
-    %external %routine %spec terminate io 
-    %external %routine %spec save event( %integer event, sub, extra )
+    %external %routine %spec terminate io system
+
+    %external %routine %spec save event( %integer line, event, sub, extra )
     %external %routine %spec messageFormatA( %integer message id )
     %external %routine %spec messageFormatB( %integer address )
     %external %routine %spec dumpalltrapinfo
     %external %predicate %spec handler found ( %integer event, address )
     %external %predicate %spec initial entry found ( %integer address )
     %external %integer %function %spec handler entry address( %integer address )
-
-{------------------------------------------------------------------------------}
+{-----------------------------------------------------------------------------}
     %routine impexit( %integer status )
-        terminateio
+        terminate io system
         exit( status )
     %end
-
-{------------------------------------------------------------------------------}
+{-----------------------------------------------------------------------------}
     %external %routine impstop
         impexit(1)
     %end
-
-{------------------------------------------------------------------------------}
-    %external %routine impsignal ( %integer event,extra,sub )
+{-----------------------------------------------------------------------------}
+    %external %routine impsignal ( %integer line,event,sub,info )
         %integer status
         %record(impframe) %name mybp,chainbp
         %integer panic
@@ -37,10 +36,11 @@
         %if (debugmode = dbgtrap) %then dumpalltrapinfo
 
         ! Remember the event data and form the event message
-        save event( event, sub, extra )
+        save event( line, event, sub, info )
 
         ! try to find our own base pointer...
-        ! We have to use embedded machine code to read the Frame Pointer/Base Pointer
+        ! We have to use embedded machine code
+        ! to read the Frame Pointer/Base Pointer
         *mov_ mybp,ebp
 
         ! make a copy of the current frame
@@ -58,8 +58,10 @@
             %if handler found ( event, chainbp_xret ) %start
 
                 ! Yes, so overwrite the Frame Pointer and return address
-                mybp_xebp == chainbp_xebp                         { set my return BP to the trappers BP }
-                mybp_xret = handler entry address( chainbp_xret ) { and my return location is the trap }
+                { set my return BP to the trappers BP }
+                mybp_xebp == chainbp_xebp
+                { and my return location is the trap }
+                mybp_xret = handler entry address( chainbp_xret )
 
                 %return                    { kazzam! }
             %finish
@@ -90,7 +92,8 @@
             %cycle
                 messageFormatB( mybp_xret )
 
-                ! have we gone too far, and found the entry point's trap handler?
+                ! have we gone too far,
+                !   and found the entry point's trap handler?
                 %exit %if initial entry found ( mybp_xret )
 
                 mybp == mybp_xebp  { previous stack frame }
@@ -109,9 +112,9 @@
 
             status = 1
         %finish %else %start
-            status = sub
+            status = info
 
-            %if (extra = 0) %start
+            %if (info = 0) %start
                 ! %signal 0,0,n  == %stop with exit status == n
                 %if ((DEBUGMODE & dbgcore) # 0) %then messageFormatA( 6 )
             %finish %else %start
@@ -121,6 +124,5 @@
 
         impexit( status )
     %end
-
-{------------------------------------------------------------------------------}
+{-----------------------------------------------------------------------------}
 %endoffile

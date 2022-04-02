@@ -1,0 +1,38 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1      %external %long %real %fn %spec C Lib Cos %alias "cos" ( %longreal r)
+   2      %external %long %real %fn %spec C Lib Sine %alias "sin" ( %longreal r)
+   3  
+   4  {----------------------------------------------------------------------------}
+   5      ! Simple trig library functions to demonstrate
+   6      ! how to cross-link with the C library functions
+   7      ! Copyright 2002 NB Information Limited
+   8      !
+   9      ! Declare useful trignometry functions
+   10      !
+   11      %external %long %real %function cosine(%longreal r)
+   12  
+   13          %if |r| > 30000 %then %signal 10,1,5
+   14  
+   15          %result = C Lib Cos(r)
+   16      %end
+   17  {----------------------------------------------------------------------------}
+   18  {----------------------------------------------------------------------------}
+   19      ! Simple trig library functions to demonstrate
+   20      ! how to cross-link with the C library functions
+   21      ! Copyright 2002 NB Information Limited
+   22      !
+   23      ! Declare useful trignometry functions
+   24      !
+   25      %external %long %real %function sine(%longreal r)
+   26  
+   27          ! Slightly arbitrary - the C library tries to work with larger values,
+   28          ! but this demonstrates keeping the error case in the IMP world
+   29          %if |r| > 30000 %then %signal 10,1,5
+   30  
+   31          %result = C Lib Sine(r)
+   32      %end
+   33  {----------------------------------------------------------------------------}
+   34  %endoffile
+
+   11 Statements compiled

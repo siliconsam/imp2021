@@ -1,0 +1,41 @@
+         Edinburgh IMP77 Compiler - Version 8.4
+
+   1  
+   2      %external            %routine %spec impfree %c
+   3+                                  %alias "free" ( %integer templateaddr )
+   4      %external %record(*) %map     %spec impmalloc %c
+   5+                                  %alias "malloc" ( %integer s )
+   6  
+   7  {----------------------------------------------------------------------------}
+   8      !
+   9      ! NEW/DISPOSE routines used to acquire/free heap variables
+   10      ! NEW/DISPOSE routines based on C library malloc/free routines
+   11      !
+   12      ! declare heap access routines
+   13      !
+   14      %external %routine Dispose ( %name Template )
+   15  
+   16          %integer Where = Addr( Template )
+   17  
+   18          impfree( Where )
+   19      %end
+   20  {----------------------------------------------------------------------------}
+   21  {----------------------------------------------------------------------------}
+   22      !
+   23      ! NEW/DISPOSE routines used to acquire/free heap variables
+   24      ! NEW/DISPOSE routines based on C library malloc/free routines
+   25      !
+   26      ! declare heap access routines
+   27      !
+   28      %external %record(*) %map New ( %name Template )
+   29          %record(*) %name Res
+   30          %integer Bytes = (Size Of(Template)+3) & (\3) {round to longword}
+   31  
+   32          Res == impmalloc(Bytes)
+   33  
+   34          %result == Res
+   35      %end
+   36  {----------------------------------------------------------------------------}
+   37  %endoffile
+
+   13 Statements compiled

@@ -1,0 +1,44 @@
+
+    !--------------------------------------------------------------------------
+    ! Returns floating point x ^ p
+    !--------------------------------------------------------------------------
+    %external %long %real %function impfexp ( %integer p, %long %real x)
+        %long %real r;
+
+        %if (p = 0) %then %result = 1.0
+        %if (x = 0.0) %then %result = 0.0
+
+        ! deal with negative exponents
+        %if (p < 0) %start
+            x = 1.0/x
+            p = -p
+        %finish
+
+        r = 1.0
+        %cycle
+            %if ((p & 1) # 0) %then r = r * x;
+            p = p >> 1;
+            %if (p = 0) %then %result = r;
+            x = x * x;
+        %repeat
+    %end
+    !--------------------------------------------------------------------------
+    !--------------------------------------------------------------------------
+    ! returns x ^ y
+    !--------------------------------------------------------------------------
+    %external %integer %function impiexp ( %integer y, x)
+        %integer value;
+
+        %signal 5, 2, y %unless (y >=0);
+
+        value = 1;
+
+        %while (y > 0) %cycle
+            value = value * x
+            y = y - 1
+        %repeat
+
+        %result = value
+    %end
+    !--------------------------------------------------------------------------
+%endoffile
