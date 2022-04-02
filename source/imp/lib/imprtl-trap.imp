@@ -1,5 +1,15 @@
 
-    %recordformat imptrap( %integer start,end,trapep,from, %byte %array data(0:15) )
+    %constinteger integersize   = 4
+    %constinteger bytesize      = 1
+
+{------------------------------------------------------------------------------}
+    %recordformat imptrap( %integer start,end,trapep,from, %c
+                           %byte %array data(0:15) )
+
+    ! If the imptrap record format is altered then amend trapsize accordingly
+    ! Noting the record format for imptrap (4@integer + 16@byte
+    ! So, trapsize equals 4*size of(integer) + 16*size of(byte)
+    %constinteger trapsize = 4*integersize + 16*bytesize
 
     %own %record(imptrap) noinfo
 
@@ -61,7 +71,8 @@
     %external %routine dumpalltrapinfo
         %record(imptrap)%name tp
 
-        ! We iterate over the table of trap blocks from __imptrapbase to __imptrapend.
+        ! We iterate over the table of trap blocks
+        !    from __imptrapbase to __imptrapend.
         tp == trapbase
 
         %while (addr(tp) < addr(trapend)) %cycle
@@ -70,19 +81,19 @@
             ! We would like to just say "tp++" here, BUT for reasons I can't
             ! fathom, the linker puts one or more 16 byte blocks of zeroes
             ! between the trap entries for different objects.
-            tp == record( addr(tp) + sizeof(tp) )
+            tp == record( addr(tp) + trapsize )
         %repeat
     %end
-
 {------------------------------------------------------------------------------}
     %record(imptrap) %map blockinfo( %integer address)
         %record(imptrap)%name tp,found
 
-        ! We search the table of trap blocks.  The compiler does NOT exbed routines,
-        ! so for a nested routine it will match the block parameters of all the
-        ! surrounding blocks too.  However, since the blocks are planted in the
-        ! order the code actually appears, the correct block to match is therefore
-        ! the LAST one we can match.
+        ! We search the table of trap blocks.
+        ! The compiler does NOT exbed routines, so for a nested routine it will
+        ! match the block parameters of all the surrounding blocks too.
+        ! However, since the blocks are planted in the order the code actually
+        ! appears.
+        ! The correct block to match is therefore the LAST one we can match.
         ! When we get to the end of the table, or we find an entry which starts
         ! AFTER our address, we know we must have found the right one.
         tp == trapend
@@ -94,13 +105,9 @@
                 %exit
             %finish
 
-            ! JDM: Traversing the trap table in deccreasing order
+            ! JDM: Traversing the trap table in decreasing order
             ! So, technically we do a tp--
-            tp == record( addr(tp) - sizeof(tp) )
-
-!            %while ( (addr(tp) < addr(trapend) ) %and ( tp_start = 0) %and (tp_end = 0)) %cycle
-!                tp == record( addr(tp) + 16 )
-!            %repeat
+            tp == record( addr(tp) - trapsize )
 
             ! Defend against reaching beyond the start of the trap table
             %exit %if (addr(tp) < addr(trapbase))
@@ -109,7 +116,6 @@
 
         %result == found
     %end
-
 {------------------------------------------------------------------------------}
     %external %predicate handler found ( %integer event, address )
         %record(imptrap)%name tp
@@ -132,7 +138,6 @@
 
         %false
     %end
-
 {------------------------------------------------------------------------------}
     %external %predicate initial entry found ( %integer address )
         %record(imptrap)%name tp
@@ -150,14 +155,25 @@
         ! get the routine name containing the event handler
         procname = getprocname( tp )
 
-!        ! Exit loop if we've reached the %begin..%end program entry point
-!        %true %if (procname = "Main Program")
+        ! We have two choices of when to exit the "loop"
+        ! (1) if we've reached the %begin..%end program entry point
+        !     => a "last-ditch" handler must be in the program
+        !     %true %if (procname = "Main Program")
+        !
+        ! (2) if we've reached the IMP entry point
+        !     => a default "last-ditch" handler can be in the runtime system
+        !     %true %if (procname = "STARTIMP")
+        !
+        ! Case (2) is the current choice and an appropriate "last-ditch" event
+        ! handler is provided inside the top-level RTL routine "StartImp"
+        ! inside the rtl library code file imprtl-main.imp
+        !
+
         ! Exit loop if we've reached the IMP entry point
         %true %if (procname = "STARTIMP")
 
         %false
     %end
-
 {------------------------------------------------------------------------------}
     %external %string(14) %function handler name( %integer address )
         %record(imptrap)%name tp
@@ -169,7 +185,6 @@
         ! get the routine name containing the event handler
         %result = getprocname( tp )
     %end
-
 {------------------------------------------------------------------------------}
     %external %integer %function handler entry address( %integer address )
         %record(imptrap)%name tp
@@ -180,6 +195,5 @@
         ! get the routine name containing the event handler
         %result = tp_trapep
     %end
-
 {------------------------------------------------------------------------------}
 %endoffile

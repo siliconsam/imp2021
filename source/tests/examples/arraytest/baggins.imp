@@ -1,0 +1,101 @@
+
+    %external %routine baggins ( %name n, %string(*)%name var, %integer p,q )
+        %integer s,t,ac,as,at,ad,alb,aub,index
+
+        s = sizeof(n)
+        t = typeof(n)
+
+        printstring("================================");newline
+
+        ! depending on the "global" type decode the "name"
+        spaces(4)
+        printstring( var )
+        printstring( ":")
+        newline
+
+        spaces(4)
+        printstring( "global (typename,typeof)=(")
+        printstring( typename(p))
+        printsymbol( ',' )
+        printstring( itos(p,0))
+        printsymbol( ')' )
+        newline
+
+        spaces(4)
+        printstring( " local (typename,typeof)=(")
+        printstring( typename(t))
+        printsymbol( ',' )
+        printstring( itos(t,0))
+        printsymbol( ')' )
+        newline
+
+        spaces(4)
+        printstring( "global (sizeof)=(")
+        printstring( itos(q,0))
+        printsymbol( ')' )
+        newline
+
+        spaces(4)
+        printstring( " local (sizeof)=(")
+        printstring( itos(s,0))
+        printsymbol( ')' )
+        newline
+
+        %if (t = 9) %start
+            spaces(8)
+            printstring( " Array name detected")
+            newline
+        %finish %else %start
+            spaces(8)
+            printstring( " Simple name detected")
+            newline
+        %finish
+
+        as = array entry size(n)
+        spaces(12)
+        printstring( " array entry size=")
+        printstring( itos(as,0))
+        newline
+
+        at = array entry type(n)
+        spaces(12)
+        printstring( " array entry (typename,typeof)=(")
+        printstring( typename(at))
+        printsymbol( ',' )
+        printstring( itos(at,0))
+        printsymbol( ')' )
+        newline
+
+        ac = sizeof(n) // as
+        spaces(12)
+        printstring( " array entry count=")
+        printstring( itos(ac,0))
+        newline
+
+        ad = array dimensions(n)
+        spaces(12)
+        printstring( " array dimensions=")
+        printstring( itos(ad,0))
+        newline
+
+        %if (ad # 0) %and (p = 9) %start
+            %for index = 1,1,ad %cycle
+                alb = array lower bound(n,index)
+                aub = array upper bound(n,index)
+                spaces(16)
+                printstring( "index(".itos(index,0).") range=(".itos(alb,0).":".itos(aub,0).")" )
+                newline
+            %repeat
+        %finish %else %start
+            alb = array lower bound(n,ad)
+            aub = array upper bound(n,ad)
+            spaces(16)
+            printstring( "index(".itos(ad,0).") range=(".itos(alb,0).":".itos(aub,0).")" )
+        newline
+
+        %finish
+
+        newline
+    %end
+
+%endoffile

@@ -31,7 +31,7 @@
 :runit
 @rem default to current parameter
 @if "%target%"=="" @set target=%1
-@rem do we realy have a target?
+@rem do we really have a target?
 @if "%target%"=="" @goto nofolder
 @rem ok, we should specified have a target directory
 @rem the target should be a directory name, but let the script find out!
@@ -58,47 +58,55 @@
 @if not  exist %TARGET_HOME%                    @mkdir %TARGET_HOME%
 
 @rem Now, copy the source files into a build area
-copy    %LINUX_SOURCE_HOME%\README              %TARGET_HOME%\*                     > nul
+@copy    %LINUX_SOURCE_HOME%\README             %TARGET_HOME%\*
 @rem copy the source files for the compiler
 @if not  exist %TARGET_HOME%\compiler           @mkdir %TARGET_HOME%\compiler
-xcopy   %IMP_SOURCE_HOME%\compiler\i77.grammar  %TARGET_HOME%\compiler\*            > nul
-xcopy   %IMP_SOURCE_HOME%\compiler\*.imp        %TARGET_HOME%\compiler\*            > nul
-xcopy   %IMP_SOURCE_HOME%\pass3\*.c             %TARGET_HOME%\compiler\*            > nul
-xcopy   %IMP_SOURCE_HOME%\pass3\*.h             %TARGET_HOME%\compiler\*            > nul
+@xcopy   %IMP_SOURCE_HOME%\compiler\i77.grammar %TARGET_HOME%\compiler\*
+@xcopy   %IMP_SOURCE_HOME%\compiler\*.imp       %TARGET_HOME%\compiler\*
+@xcopy   %IMP_SOURCE_HOME%\pass3\*.c            %TARGET_HOME%\compiler\*
+@xcopy   %IMP_SOURCE_HOME%\pass3\*.h            %TARGET_HOME%\compiler\*
 @rem overwrite the target with the linux specific versions for the compiler
-xcopy/y %LINUX_SOURCE_HOME%\linux\compiler\*    %TARGET_HOME%\compiler\*            > nul
+@xcopy/y %LINUX_SOURCE_HOME%\linux\compiler\*   %TARGET_HOME%\compiler\*
 
 @rem copy the source files for the lib
 @if not  exist %TARGET_HOME%\lib                @mkdir %TARGET_HOME%\lib
-xcopy   %IMP_SOURCE_HOME%\lib\*.imp             %TARGET_HOME%\lib\*                 > nul
-xcopy   %IMP_SOURCE_HOME%\lib\inc.386.registers %TARGET_HOME%\lib\*                 > nul
-xcopy   %IMP_SOURCE_HOME%\lib\*.c               %TARGET_HOME%\lib\*                 > nul
+@xcopy   %IMP_SOURCE_HOME%\lib\*.imp            %TARGET_HOME%\lib\*
+@xcopy/Y %IMP_SOURCE_HOME%\lib\inc.*            %TARGET_HOME%\lib\*
+@xcopy   %IMP_SOURCE_HOME%\lib\*.c              %TARGET_HOME%\lib\*
 @rem overwrite with the linux specific versions for the library
-xcopy/y %LINUX_SOURCE_HOME%\linux\lib\*         %TARGET_HOME%\lib\*                 > nul
+@xcopy/y %LINUX_SOURCE_HOME%\linux\lib\*        %TARGET_HOME%\lib\*
 
 @rem don't forget some of the documwentation
 @if not  exist %TARGET_HOME%\docs               @mkdir %TARGET_HOME%\docs
-copy %SOURCE_HOME%\docs\imp77.pdf               %TARGET_HOME%\docs\imp77.pdf        > nul
-copy %SOURCE_HOME%\docs\ascii.txt               %TARGET_HOME%\docs\ascii.txt        > nul
-copy %SOURCE_HOME%\docs\icode1v3.txt            %TARGET_HOME%\docs\icode1v3.txt     > nul
-copy %SOURCE_HOME%\docs\psr_thesis.txt          %TARGET_HOME%\docs\psr_thesis.txt   > nul
+@copy %SOURCE_HOME%\docs\imp77.pdf              %TARGET_HOME%\docs\imp77.pdf
+@copy %SOURCE_HOME%\docs\ascii.txt              %TARGET_HOME%\docs\ascii.txt
+@copy %SOURCE_HOME%\docs\icode1v3.txt           %TARGET_HOME%\docs\icode1v3.txt
+@copy %SOURCE_HOME%\docs\psr_thesis.txt         %TARGET_HOME%\docs\psr_thesis.txt
 
 @rem prepare the tools environment
 @if not  exist %TARGET_HOME%\tools              @mkdir %TARGET_HOME%\tools
 @rem copy the tools folder tree
-xcopy/se %TOOLS_SOURCE_HOME%\*                  %TARGET_HOME%\tools\*               > nul
+@xcopy/SE %TOOLS_SOURCE_HOME%\*                 %TARGET_HOME%\tools\*
 
 @rem prepare the tests environment
 @if not  exist %TARGET_HOME%\tests              @mkdir %TARGET_HOME%\tests
 @rem prepare the base set of tests
-xcopy   %TESTS_SOURCE_HOME%\*                   %TARGET_HOME%\tests\*               > nul
-xcopy   %IMP_SOURCE_HOME%\lib\inc.386.registers %TARGET_HOME%\tests\*               > nul
+@xcopy/E   %TESTS_SOURCE_HOME%\*                %TARGET_HOME%\tests\*
+@xcopy/Y   %IMP_SOURCE_HOME%\lib\inc.*          %TARGET_HOME%\tests\*
 
 @rem Now start the process of building the cross compiler environment
 @cd %TARGET_HOME%\compiler
 
 @rem use the Windows version of the takeon parse/lex table compiler
-@%TAKEON_HOME%\takeon i77.grammar=i77.tables.imp,i77.par.debug,i77.lex.debug
+@call :build_tables
+
+@echo.
+@echo *************************************************************************
+@echo *                                                                       *
+@echo *                        I77 Parse tables created                       *
+@echo *                                                                       *
+@echo *************************************************************************
+@echo.
 
 @rem Now build the Elf object files for the compiler passes 
 @call :i77 pass1
@@ -106,47 +114,41 @@ xcopy   %IMP_SOURCE_HOME%\lib\inc.386.registers %TARGET_HOME%\tests\*           
 @rem Also build the Elf object files for the grammar generator 
 @call :i77 takeon
 
+@echo.
+@echo *************************************************************************
+@echo *                                                                       *
+@echo *   Imp compiler pass1,pass2 and takeon Elf object files created        *
+@echo *                                                                       *
+@echo *************************************************************************
+@echo.
+
 @cd %TARGET_HOME%\lib
 @rem Now build the Elf object files for the run-time modules (IMP implementation)
-@call :i77 impcore-adef
-@call :i77 impcore-aref
-@call :i77 impcore-fexp
-@call :i77 impcore-iexp
+@call :i77 impcore-arrayutils
+@call :i77 impcore-mathutils
 @call :i77 impcore-signal
-@call :i77 impcore-strcat
-@call :i77 impcore-strcmp
-@call :i77 impcore-strcpy
-@call :i77 impcore-strjam
-@call :i77 impcore-strjcat
-@call :i77 impcore-strres
+@call :i77 impcore-strutils
+
 @call :i77 implib-arg
-@call :i77 implib-cosine
 @call :i77 implib-debug
-@call :i77 implib-dispose
 @call :i77 implib-env
-@call :i77 implib-formatnumber
-@call :i77 implib-int2ascii
-@call :i77 implib-intpt
-@call :i77 implib-itos
-@call :i77 implib-new
-@call :i77 implib-newline
-@call :i77 implib-newlines
-@call :i77 implib-print
-@call :i77 implib-printstring
+@call :i77 implib-heap
 @call :i77 implib-read
-@call :i77 implib-sine
-@call :i77 implib-skipsymbol
-@call :i77 implib-space
-@call :i77 implib-spaces
-@call :i77 implib-substring
-@call :i77 implib-tolower
-@call :i77 implib-toupper
-@call :i77 implib-trim
-@call :i77 implib-write
+@call :i77 implib-strings
+@call :i77 implib-trig
+
+@call :i77 imprtl-main
 @call :i77 imprtl-event
 @call :i77 imprtl-io
-@call :i77 imprtl-main
 @call :i77 imprtl-trap
+
+@echo.
+@echo *************************************************************************
+@echo *                                                                       *
+@echo *   Imp77 run-time library Elf object files created                     *
+@echo *                                                                       *
+@echo *************************************************************************
+@echo.
 
 @rem In the %TARGET_HOME% folder tree
 @rem We keep the .o files and i77.tables.imp file needed by the Linux bootstrap step
@@ -169,6 +171,10 @@ xcopy   %IMP_SOURCE_HOME%\lib\inc.386.registers %TARGET_HOME%\tests\*           
 @%P2_HOME%\pass2 %icdfile%,%source%=%1.ibj,%codefile%
 @rem Use the Windows executable ELF version of pass3.c to create the .o files
 @%P3_HOME%\pass3elf %1.ibj %1.o
+@exit/b
+
+:build_tables
+@takeon i77.grammar,i77.grammar=i77.tables.imp,i77.par.debug,i77.lex.debug
 @exit/b
 
 :nofolder

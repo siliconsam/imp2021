@@ -1,0 +1,68 @@
+{----------------------------------------------------------------------------}
+    !
+    ! NEW/DISPOSE routines used to acquire/free heap variables
+    ! NEW/DISPOSE routines based on C library malloc/free routines
+    !
+    ! declare heap access routines
+    !
+{----------------------------------------------------------------------------}
+    %external %routine        %spec impfree %c
+                             %alias "_free" ( %integer templateaddr )
+    %external %record(*) %map %spec impmalloc %c
+                             %alias "_malloc" ( %integer s )
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %constinteger integersize   = 4
+    %constinteger realsize      = 4
+    ! we don't define stringsize as it could be in range 1..255
+    ! we don't define recordsize as it depends on the record format
+    %constinteger bytesize      = 1
+    %constinteger longrealsize  = 8
+
+    ! Curious naming strategy because we don't want to clobber
+    ! the built-in functions and maps like "integer" or "int"
+    ! Types extracted from general names
+    %constinteger      integertype = 1
+    %constinteger         realtype = 2
+    %constinteger       stringtype = 3
+    %constinteger       recordtype = 4
+!    %constinteger         bytetype = 6
+    %constinteger         bytetype = 5
+    %constinteger shortintegertype = 6
+    %constinteger     longrealtype = 8
+
+    ! Check that the types match
+    %predicate acceptabletype( %integer type )
+        %true %if (type = integertype)
+        %true %if (type = realtype)
+        %true %if (type = stringtype)
+        %true %if (type = recordtype)
+        %true %if (type = bytetype)
+        %true %if (type = longrealtype)
+        %false
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %routine Dispose ( %name Template )
+
+        %integer Where = Addr( Template )
+
+        impfree( Where )
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %record(*) %map New ( %name Template )
+        %record(*) %name Res
+        %integer type
+
+        type = typeof( Template )
+        %signal 5,5,type %unless acceptabletype( type )
+
+        %integer Bytes = (sizeof( template )+3) & (\3) {round to longword}
+
+        Res == impmalloc(Bytes)
+
+        %result == Res
+    %end
+{----------------------------------------------------------------------------}
+%endoffile

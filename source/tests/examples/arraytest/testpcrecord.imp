@@ -1,0 +1,31 @@
+%begin
+    %external %routine %spec baggins ( %name n, %string(*)%name var, %integer p,q )
+
+    %integer to,so
+    %string(31) vname
+    %recordformat         fm0 (%integer f1,%longreal %array f2(1:5), %byte %array f3(1:4) )
+
+    %record(fm0)          v1
+    %record(fm0)  %array  v2(3:4)
+    %record(fm0)  %array  v3(4:5,3:6)
+
+    newline
+    printstring( "    Running TestPCRecord" ); newline
+    newline
+
+    vname = "v1-record"
+    to = typeof(v1)
+    so = sizeof(v1)
+    baggins ( v1,vname,to,so )
+
+    vname = "v2-recordarray(1D)"
+    to = typeof(v2)
+    so = sizeof(v2)
+    baggins ( v2,vname,to,so )
+
+    vname = "v3-recordarray(2D)"
+    to = typeof(v3)
+    so = sizeof(v3)
+    baggins ( v3,vname,to,so )
+
+%endofprogram

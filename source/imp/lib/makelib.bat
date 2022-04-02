@@ -9,9 +9,9 @@
 
 :parseargs
 @if "%1"=="gcc" @goto clearoption
-@if "%1"=="" @goto setoption
+@rem if "%1"=="" @goto setoption
 @rem if here parameter assumed to be the build folder
-@goto runit
+@goto clearit
 
 :clearoption
 @rem Use this parameter to indicate we are using the Microsoft C compiler, linker and libraries
@@ -25,53 +25,40 @@
 @shift
 @goto parseargs
 
+:clearit
+@if exist *.assemble del *.assemble
+@if exist *.cod      del *.cod
+@if exist *.dump     del *.dump
+@if exist *.ibj      del *.ibj
+@if exist *.icd      del *.icd
+@if exist *.lst      del *.lst
+@if exist *.obj      del *.obj
+
+@goto runit
+
 :runit
 @rem Compile the C implemented primitives code
 @rem The possible parameter 
 @cl /nologo /Gd /c /Gs /W3 /Od /arch:IA32 -D_CRT_SECURE_NO_WARNINGS %option% /FAscu /Foprim-rtl-file.obj /Faprim-rtl-file.lst prim-rtl-file.c
 
 @rem Compile the IMP77 implemented library code
+@call :%driver% impcore-arrayutils
+@call :%driver% impcore-mathutils
+@call :%driver% impcore-signal
+@call :%driver% impcore-strutils
+
+@call :%driver% implib-arg
+@call :%driver% implib-debug
+@call :%driver% implib-env
+@call :%driver% implib-heap
+@call :%driver% implib-read
+@call :%driver% implib-strings
+@call :%driver% implib-trig
+
 @call :%driver% imprtl-main
 @call :%driver% imprtl-event
 @call :%driver% imprtl-io
 @call :%driver% imprtl-trap
-@call :%driver% impcore-adef
-@call :%driver% impcore-aref
-@call :%driver% impcore-asiz
-@call :%driver% impcore-fexp
-@call :%driver% impcore-iexp
-@call :%driver% impcore-signal
-@call :%driver% impcore-strcat
-@call :%driver% impcore-strcmp
-@call :%driver% impcore-strcpy
-@call :%driver% impcore-strjam
-@call :%driver% impcore-strjcat
-@call :%driver% impcore-strres
-@call :%driver% implib-arg
-@call :%driver% implib-cosine
-@call :%driver% implib-debug
-@call :%driver% implib-dispose
-@call :%driver% implib-env
-@call :%driver% implib-formatnumber
-@call :%driver% implib-int2ascii
-@call :%driver% implib-intpt
-@call :%driver% implib-itos
-@call :%driver% implib-new
-@call :%driver% implib-newline
-@call :%driver% implib-newlines
-@call :%driver% implib-read
-@call :%driver% implib-write
-@call :%driver% implib-print
-@call :%driver% implib-printstring
-@call :%driver% implib-sine
-@call :%driver% implib-skipsymbol
-@call :%driver% implib-space
-@call :%driver% implib-spaces
-@call :%driver% implib-substring
-@call :%driver% implib-tolower
-@call :%driver% implib-toupper
-@call :%driver% implib-trim
-@call :%driver% implib-typename
 
 @rem Ensure we have a clean library
 @if exist libimp.lib del libimp.lib
@@ -86,43 +73,19 @@
 @lib /nologo /out:libimp.lib libimp.lib imprtl-event.obj
 @lib /nologo /out:libimp.lib libimp.lib imprtl-io.obj
 @lib /nologo /out:libimp.lib libimp.lib imprtl-trap.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-adef.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-aref.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-asiz.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-fexp.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-iexp.obj
+
+@lib /nologo /out:libimp.lib libimp.lib impcore-arrayutils.obj
+@lib /nologo /out:libimp.lib libimp.lib impcore-mathutils.obj
 @lib /nologo /out:libimp.lib libimp.lib impcore-signal.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-strcat.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-strcmp.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-strcpy.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-strjam.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-strjcat.obj
-@lib /nologo /out:libimp.lib libimp.lib impcore-strres.obj
+@lib /nologo /out:libimp.lib libimp.lib impcore-strutils.obj
+
 @lib /nologo /out:libimp.lib libimp.lib implib-arg.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-cosine.obj
 @lib /nologo /out:libimp.lib libimp.lib implib-debug.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-dispose.obj
 @lib /nologo /out:libimp.lib libimp.lib implib-env.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-formatnumber.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-int2ascii.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-intpt.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-itos.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-new.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-newline.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-newlines.obj
+@lib /nologo /out:libimp.lib libimp.lib implib-heap.obj
 @lib /nologo /out:libimp.lib libimp.lib implib-read.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-write.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-print.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-printstring.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-sine.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-skipsymbol.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-space.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-spaces.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-substring.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-tolower.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-toupper.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-trim.obj
-@lib /nologo /out:libimp.lib libimp.lib implib-typename.obj
+@lib /nologo /out:libimp.lib libimp.lib implib-strings.obj
+@lib /nologo /out:libimp.lib libimp.lib implib-trig.obj
 
 @rem Create the library which allows command line to specify the file I/O
 @if exist libi77.lib del libi77.lib
@@ -135,10 +98,17 @@
 :i32
 @setlocal
 @set source=%1
-@%IMP_INSTALL_HOME%\bin\pass1     %source%.imp,..\lib\stdperm.imp=%source%.icd:b,%source%.lst
-@%IMP_INSTALL_HOME%\bin\pass2     %source%.icd:b,%source%.imp=%source%.ibj,%source%.cod
+@%IMP_INSTALL_HOME%/bin/pass1        %source%.imp,stdperm.imp=%source%.icd:b,%source%.lst
+@%IMP_INSTALL_HOME%/bin/pass2        %source%.icd:b,%source%.imp=%source%.ibj,%source%.cod
+
 @%DEV_HOME%\pass3\pass3coff       %source%.ibj                %source%.obj
 @%IMP_INSTALL_HOME%\bin\coff2dump %source%.obj                %source%.dump
+
+@rem %DEV_HOME%\pass3\pass3elf        %source%.ibj                %source%.o
+
+@%IMP_INSTALL_HOME%\bin\icd2assemble %source%.icd                %source%.icd.assemble
+@%IMP_INSTALL_HOME%\bin\ibj2assemble %source%.ibj                %source%.ibj.assemble
+
 @endlocal
 @exit/b
 

@@ -1,7 +1,6 @@
 ! PRIMS must NOT be changed in order...
-! These are internal MACRO's within the pass2 phase of the compiler
-! NB %prim 0 is regarded as the unknown/illegal macro
-! NB Warning! only 15 %prim functions/routines are allowed at present!
+! PRIMS are internal MACRO's within the pass2 phase of the compiler
+! NB Warning! only 13 %prim functions/routines are allowed at present!
 %prim     %integer       %fn  %spec		rem( %integer p,q )
 %prim     %real          %fn  %spec		float( %integer n )
 %prim     %string(1)     %fn  %spec		tostring( %integer c )
@@ -14,24 +13,28 @@
 %prim     %long %real    %map %spec		longreal( %integer n )
 %prim     %byte %integer %map %spec		length( %string(255) s )
 %prim     %byte %integer %map %spec		charno( %string(255) s,%integer n )
-! Danger Will Robinson!!
-! For an array, typeof only works in the same scope as the array's declaration
-! Simple types give the correct typeof value
-%prim     %integer       %fn  %spec		typeof( %name n )
-%prim     %integer       %fn  %spec		sizeof( %name n )
 %prim     %integer       %fn  %spec		int( %longreal r )
 
 ! Remaining routines are included within the IMP RTL
-
-! Event handler routines
-%const    %integer                      max event = 16
-%recordformat event fm(%integer event,sub,info, %string(255) message)
-%external %record(event fm) %map %spec event
-
+%external %integer       %fn  %spec     type of( %name n )
+%external %integer       %fn  %spec     size of( %name n )
 ! Routine to map result of "typeof" function to a string
 %external %string(255)   %fn  %spec     typeName( %integer t )
 
-! Starting point for Seek Input, Seek Output random access routines
+! These next 5 functions only work on those %name parameters which reference
+! an array's (Dope Vector Pointer,Array Data Address)
+%external %integer       %fn  %spec     array entry size( %name n )
+%external %integer       %fn  %spec     array entry type( %name n )
+%external %integer       %fn  %spec     array dimensions( %name n )
+%external %integer       %fn  %spec     array lower bound( %name n, %integer index )
+%external %integer       %fn  %spec     array upper bound( %name n, %integer index )
+
+! Event handler routines
+%const    %integer                      max event = 16
+%recordformat event fm(%integer event,sub,info, line, %string(255) message)
+%external %record(event fm) %map %spec event
+
+! Starting point for Seek Input, Seek Output random access routines  
 %const    %integer from start   = 0
 %const    %integer from current = 1
 %const    %integer from end     = 2
@@ -95,24 +98,15 @@
 %constant %integer                      File Sep = '='
 
 ! Debug definitions
-%constant %integer                      lvlprog = 0
-%constant %integer                      lvlmain = 1
-%constant %integer                      lvllib  = 2
-%constant %integer                      lvlio   = 3
-%constant %integer                      lvlevnt = 4
-%constant %integer                      lvlcore = 5
-%constant %integer                      lvlprim = 6
-%constant %integer                      lvltrap = 7
-
 %constant %integer                      dbgoff  = 0
-%constant %integer                      dbgprog = 1 << lvlprog  ;! dbgprog =  1
-%constant %integer                      dbgmain = 1 << lvlmain  ;! dbgmain =  2
-%constant %integer                      dbglib  = 1 << lvllib   ;! dbglib  =  4
-%constant %integer                      dbgio   = 1 << lvlio    ;! dbgio   =  8
-%constant %integer                      dbgevnt = 1 << lvlevnt  ;! dbgevnt = 16
-%constant %integer                      dbgcore = 1 << lvlcore  ;! dbgcore = 32
-%constant %integer                      dbgprim = 1 << lvlprim  ;! dbgprim = 64
-%constant %integer                      dbgtrap = 1 << lvltrap  ;! dbgprim =128
+%constant %integer                      dbgprog = 1 << 0 ;! dbgprog =  1
+%constant %integer                      dbgmain = 1 << 1 ;! dbgmain =  2
+%constant %integer                      dbglib  = 1 << 2 ;! dbglib  =  4
+%constant %integer                      dbgio   = 1 << 3 ;! dbgio   =  8
+%constant %integer                      dbgevnt = 1 << 4 ;! dbgevnt = 16
+%constant %integer                      dbgcore = 1 << 5 ;! dbgcore = 32
+%constant %integer                      dbgprim = 1 << 6 ;! dbgprim = 64
+%constant %integer                      dbgtrap = 1 << 7 ;! dbgtrap =128
 
 %external %routine            %spec     Set Debug
 %external %routine            %spec     Clear Debug

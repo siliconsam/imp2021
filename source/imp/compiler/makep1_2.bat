@@ -5,13 +5,15 @@
 @set DEV_HOME=%COM_HOME:~0,-10%
 
 @rem First tidy up
-@if exist *.lst del *.lst
-@if exist *.exe del *.exe
-@if exist *.obj del *.obj
-@if exist *.cod del *.cod
-@if exist *.ibj del *.ibj
-@if exist *.icd del *.icd
-@if exist i77.*_debug del i77.*_debug
+@if exist *.assemble del *.assemble
+@if exist *.cod      del *.cod
+@if exist *.debug    del *.debug
+@if exist *.dump     del *.dump
+@if exist *.exe      del *.exe
+@if exist *.ibj      del *.ibj
+@if exist *.icd      del *.icd
+@if exist *.lst      del *.lst
+@if exist *.obj      del *.obj
 
 @rem compile the takeon lexer/parser table generator using new development library
 @call :i32 takeon
@@ -20,7 +22,7 @@
 @echo     *******************************************************************************
 @echo     *    Form the "development" parse/lex tables from the grammar using takeon    *
 @echo     *******************************************************************************
-@%DEV_HOME%\compiler\takeon i77.grammar=i77.tables.imp,i77.par_debug,i77.lex_debug
+@%DEV_HOME%\compiler\takeon i77.grammar=i77.tables.imp,i77.par.debug,i77.lex.debug
 @echo.
 @echo     *******************************************************************************
 @echo     *    Compile pass1 with the "released" versions of pass1,pass2                *
@@ -67,21 +69,28 @@
 
 :i32
 @set source=%1
-@%IMP_INSTALL_HOME%\bin\pass1 %source%.imp,..\lib\stdperm.imp=%source%.icd:b,%source%.lst
-@%IMP_INSTALL_HOME%\bin\pass2 %source%.icd:b,%source%.imp=%source%.ibj,%source%.cod
-exit/b
+@%IMP_INSTALL_HOME%\bin\pass1        %source%.imp,..\lib\stdperm.imp=%source%.icd:b,%source%.lst
+@%IMP_INSTALL_HOME%\bin\pass2        %source%.icd:b,%source%.imp=%source%.ibj,%source%.cod
+
+@%IMP_INSTALL_HOME%\bin\icd2assemble %source%.icd                    %source%.icd.assemble
+@%IMP_INSTALL_HOME%\bin\ibj2assemble %source%.ibj                    %source%.ibj.assemble
+@exit/b
 
 :i32x
 @set source=%1
-@%DEV_HOME%\compiler\pass1 %source%.imp,..\lib\stdperm.imp=%source%.icd:b,%source%.lst
-@%DEV_HOME%\compiler\pass2 %source%.icd:b,%source%.imp=%source%.ibj,%source%.cod
-exit/b
+@%DEV_HOME%\compiler\pass1           %source%.imp,..\lib\stdperm.imp=%source%.icd:b,%source%.lst
+@%DEV_HOME%\compiler\pass2           %source%.icd:b,%source%.imp=%source%.ibj,%source%.cod
+
+@%IMP_INSTALL_HOME%\bin\icd2assemble %source%.icd                    %source%.icd.assemble
+@%IMP_INSTALL_HOME%\bin\ibj2assemble %source%.ibj                    %source%.ibj.assemble
+@exit/b
 
 :dolink
 @%DEV_HOME%\pass3\pass3coff %1.ibj %1.obj
+@rem %DEV_HOME%\pass3\pass3elf %1.ibj %1.o
 @%IMP_INSTALL_HOME%\bin\coff2dump %1.obj %1.dump
 @link /nologo /stack:0x800000,0x800000 /SUBSYSTEM:CONSOLE /DEFAULTLIB:%DEV_HOME%\lib\libi77.lib /OUT:%1.exe %1.obj %DEV_HOME%\lib\libi77.lib
-exit/b
+@exit/b
 
 :the_end
 @endlocal

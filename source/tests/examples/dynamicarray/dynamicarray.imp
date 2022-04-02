@@ -1,0 +1,64 @@
+%begin
+    ! JDM JDM temporary debug
+    %external %integer %fn %spec arraysize %alias "_IMPASIZ" ( %name dvp )
+
+    %integer top
+    read(top); ! grab a value from the input data
+    %if (top < 1) %then top = 5;
+    newline
+
+    %routine baggins ( %string(7) var, %name n, %integer t,so )
+        %switch tt(0:31)
+
+!        printstring( int2ascii(addr(n),16,8) ); spaces(4)
+!        printstring( itos(integer(addr(n)),0) ); spaces(4)
+!        printstring( int2ascii(integer(addr(n)+1),16,8)); newline
+
+        ! depending on the "global" type decode the "name"
+        spaces(4)
+        printstring( var )
+        printstring( ":")
+        newline
+        spaces(4)
+        printstring( "global typename=")
+        printstring( typename(t))
+        newline
+
+        spaces(4)
+        printstring( "local typename=")
+        printstring( typename(typeof(n)))
+        newline
+
+        spaces(4)
+        printstring( "global size=")
+        printstring( itos(so,0) )
+        newline
+
+        spaces(4)
+        printstring( "arraysize=")
+        printstring( itos(arraysize(n),0) )
+        newline
+
+        newline
+    %end
+
+    %begin
+        %integer i,j
+        %short %integer %array table(1:top,1:top)
+
+        %for i=1,1,top %cycle
+            %for j=1,1,top %cycle
+                table(i,j) = 2*i +j
+            %repeat        
+        %repeat        
+
+        %for i=1,1,top %cycle
+            %for j=1,1,top %cycle
+                printstring("TOP(".itos(i,0).",".itos(j,0).")=".itos(table(i,j),0));newline
+            %repeat        
+        %repeat        
+
+        baggins("table",table,typeof(table),sizeof(table))       
+    %end
+
+%endofprogram

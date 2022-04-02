@@ -13,19 +13,15 @@
 @rem *                                                                                   *
 @rem *************************************************************************************
 
-@if exist pass3coff.exe @del pass3coff.exe
-@if exist pass3coff.obj @del pass3coff.obj
-@if exist pass3elf.exe @del pass3elf.exe
-@if exist pass3elf.obj @del pass3elf.obj
-@if exist ifreader.obj @del ifreader.obj
-@if exist writebig.obj @del writebig.obj
+@if exist *.exe @del *.exe
+@if exist *.obj @del *.obj
 
-@rem we ass-u-me that a Microsoft C compiler is bneing used
+@rem we ass-u-me that a Microsoft C compiler is being used
 @set option=-DMSVC
 
 :parseargs
 @if "%1"=="gcc" @goto clearoption
-@if "%1"=="" @goto setoption
+@rem if "%1"=="" @goto setoption
 @rem if here parameter assumed to be the build folder
 @goto runit
 

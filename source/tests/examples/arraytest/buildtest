@@ -1,0 +1,9 @@
+#! /bin/bash
+
+imp77link testpcsimple baggins
+
+imp77link testpcrecord baggins
+
+imp77link testpcstring baggins
+
+imp77link testpcdynamicarray

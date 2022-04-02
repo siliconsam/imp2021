@@ -93,9 +93,19 @@
 @set IMP_DEV_TEMP=%IMP_TARGET%\source
 @if not exist %IMP_DEV_TEMP%                    @mkdir %IMP_DEV_TEMP%
 @if not exist %IMP_DEV_TEMP%\imp                @mkdir %IMP_DEV_TEMP%\imp
+@if not exist %IMP_DEV_TEMP%\imp\compiler       @mkdir %IMP_DEV_TEMP%\imp\compiler
+@if not exist %IMP_DEV_TEMP%\imp\lib            @mkdir %IMP_DEV_TEMP%\imp\lib
+@if not exist %IMP_DEV_TEMP%\imp\pass3          @mkdir %IMP_DEV_TEMP%\imp\pass3
+@if not exist %IMP_DEV_TEMP%\imp\scripts        @mkdir %IMP_DEV_TEMP%\imp\scripts
 
 @rem Now build the compiler etc in a temporary location
-xcopy/S/E %IMP_DEV_SOURCE%\imp                 %IMP_DEV_TEMP%\imp                       > nul
+@copy %IMP_DEV_SOURCE%\imp\*.bat                %IMP_DEV_TEMP%\imp\*                     > nul
+@copy %IMP_DEV_SOURCE%\imp\compiler\*.grammar   %IMP_DEV_TEMP%\imp\compiler\*.grammar    > nul
+@copy %IMP_DEV_SOURCE%\imp\compiler\*.bat       %IMP_DEV_TEMP%\imp\compiler\*.bat        > nul
+@copy %IMP_DEV_SOURCE%\imp\compiler\*.imp       %IMP_DEV_TEMP%\imp\compiler\*.imp        > nul
+xcopy/S/E %IMP_DEV_SOURCE%\imp\lib              %IMP_DEV_TEMP%\imp\lib                   > nul
+xcopy/S/E %IMP_DEV_SOURCE%\imp\pass3            %IMP_DEV_TEMP%\imp\pass3                 > nul
+xcopy/S/E %IMP_DEV_SOURCE%\imp\scripts          %IMP_DEV_TEMP%\imp\scripts               > nul
 
 echo.
 echo                    ***********************************
@@ -144,7 +154,9 @@ echo.
 
 @rem Now set up the compiler/utility test files
 if not exist %IMP_DEV_TEMP%\tests              @mkdir %IMP_DEV_TEMP%\tests              > nul
-xcopy/S/E %IMP_DEV_SOURCE%\tests               %IMP_DEV_TEMP%\tests                     > nul
+if not exist %IMP_DEV_TEMP%\tests\examples     @mkdir %IMP_DEV_TEMP%\tests\examples     > nul
+xcopy/S/E %IMP_DEV_SOURCE%\tests\examples      %IMP_DEV_TEMP%\tests\examples            > nul
+copy %IMP_DEV_SOURCE%\tests\*                  %IMP_DEV_TEMP%\tests\*                   > nul
 
 echo.
 echo                    *********************************

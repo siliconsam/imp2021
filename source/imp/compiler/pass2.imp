@@ -1,5 +1,5 @@
 !   Intel 80386 IMP77 compiler second pass
-
+!
 ! Copyright 2021 JD McMullin for various enhancements
 ! Copyright 2002 NB Information Limited.
 !        from an original version probably -
@@ -14,7 +14,8 @@
 !
 ! Version 1.03 - October 2003
 !	* Properly cleaned up GP TAG list at end of a block
-!	* Tidied up some constant tables with names (a hangover from the SKIMP version)
+!	* Tidied up some constant tables with names
+!     (a hangover from the SKIMP version)
 !	* Corrected ISWORK to only be true for full-size string work blocks
 
 %begin
@@ -157,23 +158,7 @@
     !    8 = "longreal"
     !    9 = "array"
     !   10 = "label"
-    !
-    ! JDM JDM extended list of returned values for typeof
-    ! N.B. The value 9 ("array") has been split into 17..26
-    ! This depend on the underlying simple type of the array
-    ! code = name (returned by typeName library function)
-    !   16 = "name"
-    !   17 = "integer array"
-    !   18 = "real array"
-    !   19 = "string array"
-    !   20 = "record array"
-    !   21 = "byte array"
-    !   22 = "shortinteger array"
-    !   23 = "longinteger array"
-    !   24 = "longreal array"
-    !   25 = "array array"
-    !   26 = "label array"
-    !   *  = "unknown"
+    !    * = "unknown"
 
     ! size of each of those internal types in bytes
     %constbyteintegerarray  vsize(general:xnamearrayname) =
@@ -443,7 +428,8 @@
     ! Variables are declared here
     ! JDM JDM added idname to remember the IMP variable names
     %recordformat  varfm( %string(255) idname,
-                          %byteinteger type, form, level, scope, dim,
+                          %byteinteger level,
+                          %byteinteger type, form, scope, dim,
                           %integer disp, extdisp, 
                                    format, size, pbase, extra )
     %record(varfm)%array  var(0:max vars)
@@ -454,8 +440,9 @@
     ! JDM JDM changed record format to reference the IMP variable name
     ! via var(var no)_idname
     ! This saves some memory by not adding 256 bytes per stack entry
-    %recordformat  stackfm( %byteinteger type, form, aform, base, scope, dim,
-                            %integer var no,
+    %recordformat  stackfm( %integer var no,
+                            %byteinteger aform, base,
+                            %byteinteger type, form, scope, dim,
                             %integer disp, extdisp,
                                      format, size, pbase, extra )
     %record(stackfm)%array  stack(1:max stack)
@@ -519,6 +506,9 @@
     ! current data item size
     %integer    data size
 
+    ! current array entry type
+    %integer    array entry type
+
     ! local stack frame extent
     %owninteger frame = 0
 
@@ -548,9 +538,6 @@
     ! More about current declaration
     %integer    spec,
                 potype
-
-    ! used in the initialisation loops only
-    %integer    i, j
 
     ! Place to store Real and LReal function results
     %owninteger Fp Result Loc = -1
@@ -660,7 +647,7 @@
             %finish %else %if (size = 5) %start
                 s = "quad"
             %finish %else %start
-                s = "unknown size for type 1=" . so
+                s = "type=1 (integer) has an unknown size=" . so
             %finish
             -> esac
         sw(2):
@@ -669,7 +656,7 @@
             %finish %else %if (size = 4) %start
                 s = "longreal"
             %finish %else %start
-                s = "unknown size for type 2=" . so
+                s = "type=2 (float) has an unknown size=" . so
             %finish
             -> esac
         sw(3):
@@ -725,6 +712,72 @@
         esac:
 
         %result = s
+    %end
+
+    ! Determine an array entry type
+    ! type, size are values from the "Define Var" iCode parameters
+    ! type represent the type of each array entry
+    ! size represents the size of the simple var (not the array size)
+    %integer %fn get entry type( %integer type, size )
+        %label esac
+        %switch sw(0:15)
+        %integer t
+
+        ! Assuming this is referring to an array
+        ! We can then decode the array entry type
+
+        ! set default type as "unknown"
+        t = 0
+
+        ! decode the active entry type
+        ! As more data-types are added (ie %longlonginteger, %char)
+        ! provide more "type" values and decode appropriately
+        -> sw(type&15)
+        sw(1):
+            %if (size = 1) %start
+                ! "integer"
+                t = 1
+            %finish %else %if (size = 2) %start
+                ! "byte"
+                t = 5
+            %finish %else %if (size = 3) %start
+!               ! "short"
+!               t = 6
+                ! "short" are regarded as "integer"
+                ! "integer"
+                t = 1
+            %finish %else %if (size = 4) %start
+!                ! "long"
+!                t = 7
+                ! "long" are regarded as "integer"
+                ! "integer"
+                t = 1
+            %finish
+            -> esac
+        sw(2):
+            %if (size = 1) %start
+                ! "real"
+                t = 2
+            %finish %else %if (size = 4) %start
+                ! "longreal"
+                t = 8
+            %finish
+            -> esac
+        sw(3):
+            ! "string"
+            t = 3
+            -> esac
+        sw(4):
+            ! "record"
+            t = 4
+            -> esac
+        sw(*):
+            ! "unknown"
+            t = 0
+            -> esac
+        esac:
+
+        %result = t
     %end
 
     %string(255) %fn get typeof String( %integer type )
@@ -963,6 +1016,62 @@
     ! manipulation and debug
     !-----------------------------------------------------------
 
+    %string(255) %function hexint( %integer nn, places )
+        %constinteger base = 16
+
+        %own %string(16) basechar = "0123456789ABCDEF"
+        %string(31) reversed,human
+        %integer n,i
+
+        length(reversed) = 0
+
+        n = nn
+        %while (n # 0) %cycle
+            length(reversed) = length(reversed) + 1
+            charno(reversed,length(reversed)) = charno(basechar,1+(n&15))
+            n = n >> 4
+        %repeat
+
+        ! Pad out the digits with zero's if places more than actual number of 'digits'
+        %if (places > length(reversed)) %start
+            %while length(reversed) < places %cycle
+                length(reversed) = length(reversed) + 1
+                charno(reversed,length(reversed)) = '0'
+            %repeat
+        %finish
+
+        ! Now reverse the digits for human readability.
+        length(human) = 0
+        %for i = length(reversed), -1, 1 %cycle
+            length(human) = length(human) + 1
+            charno(human,length(human)) = charno( reversed, i )
+        %repeat
+
+        %result = human
+    %end
+
+    %routine  writenibble(%integer n)
+        n = n&16_f
+        %if (0 <= n %and n <= 9) %start
+            printsymbol(n + '0')
+        %else
+            printsymbol(n + ('A' - 10))
+        %finish
+    %end
+
+    ! print a number in hexadecimal, to "places" size
+    %routine writehex(%integer n, places)
+        %integer p, shift
+
+        shift = (places - 1) * 4
+        %while (shift > 0) %cycle
+            p = n >> shift
+            writenibble(p)
+            shift = shift - 4
+        %repeat
+        writenibble(n)
+    %end
+
     !                                                  >> SHOW <<
     %routine  show(%record(stackfm)%name  v)
         ! JDM The field widths have been tweaked to align columns
@@ -985,34 +1094,35 @@
         newline
     %end
 
-    %routine dump stack entry( %record(stackfm)%name  v, %string(7) prefix )
+    %routine dump tag var( %integer tag, %string(7) prefix )
+        %record(varfm)%name v
 
-        ! JDM JDM retrieve the variable name
-        print string(" STACK entry")
+        v == var(tag)
+
+        print string(" VAR entry")
         newline
-        print string(" ".prefix."    name=".var(v_var no)_idname)
+        print string(" ".prefix."     tag=".itos(tag,0))
+        newline
+        print string(" ".prefix."    name=".v_idname)
         newline
 
         print string(" ".prefix."    type=".itos(v_type,0))
         printstring(" ".get type name(v_type))
         newline
-
         print string(" ".prefix."    form=".itos(v_form,0))
-        printstring(" ".get internal form name(v_form))
+        printstring(" ".get external form name(v_form))
         newline
-
-        print string(" ".prefix."   aform=".itos(v_aform,0))
-        printstring(" ".get external form name(v_aform))
-        newline
-
-        print string(" ".prefix."    base=".itos(v_base,0))
+        print string(" ".prefix."   level=".itos(v_level,0))
         newline
         print string(" ".prefix."   scope=".itos(v_scope,0))
+        printstring(" ".relocname(v_scope>>4) )
         newline
         print string(" ".prefix."     dim=".itos(v_dim,0))
         newline
 
         print string(" ".prefix."    disp=".itos(v_disp,0))
+        spaces(4)
+        printstring( hexint(v_disp,8) )
         newline
         print string(" ".prefix." extdisp=".itos(v_extdisp,0))
         newline
@@ -1023,46 +1133,6 @@
         print string(" ".prefix."   pbase=".itos(v_pbase,0))
         newline
         print string(" ".prefix."   extra=".itos(v_extra,0))
-        newline
-        print string(" ".prefix."   varno=".itos(v_varno,0))
-        newline
-        newline
-    %end
-
-    %routine dump tag var( %integer tag, %string(7) prefix )
-
-        print string(" VAR entry")
-        newline
-        print string(" ".prefix."     tag=".itos(tag,0))
-        newline
-        print string(" ".prefix."    name=".var(tag)_idname)
-        newline
-
-        print string(" ".prefix."    type=".itos(var(tag)_type,0))
-        printstring(" ".get type name(var(tag)_type))
-        newline
-        print string(" ".prefix."    form=".itos(var(tag)_form,0))
-        printstring(" ".get external form name(var(tag)_form))
-        newline
-        print string(" ".prefix."   level=".itos(var(tag)_level,0))
-        newline
-        print string(" ".prefix."   scope=".itos(var(tag)_scope,0))
-        printstring(" ".relocname(var(tag)_scope>>4) )
-        newline
-        print string(" ".prefix."     dim=".itos(var(tag)_dim,0))
-        newline
-
-        print string(" ".prefix."    disp=".itos(var(tag)_disp,0))
-        newline
-        print string(" ".prefix." extdisp=".itos(var(tag)_extdisp,0))
-        newline
-        print string(" ".prefix."  format=".itos(var(tag)_format,0))
-        newline
-        print string(" ".prefix."    size=".itos(var(tag)_size,0))
-        newline
-        print string(" ".prefix."   pbase=".itos(var(tag)_pbase,0))
-        newline
-        print string(" ".prefix."   extra=".itos(var(tag)_extra,0))
         newline
         newline
     %end
@@ -1081,7 +1151,7 @@
             print string("STACK:");  newline
             spaces(11) %and show(stack(j)) %for j = 1,1,stp
         %finish
-        %stop
+        %signal 0,-1
     %end
 
     !                                                  >> WARN <<
@@ -1110,7 +1180,8 @@ at:
     !                                                  >> MONITOR <<
     %routine  monitor(%record(stackfm)%name  v, %string(15) text)
         select output(report)
-        print string(text);  print symbol(':')
+        print string(text)
+        print symbol(':')
         spaces(10-length(text))
         show(v)
         select output(objout)
@@ -1195,28 +1266,6 @@ at:
     %constinteger IF ABSEXT     = 22
           { W - external name absolute offset code word (data external) }
 
-    %routine  writenibble(%integer n)
-        n = n&16_f
-        %if (0 <= n %and n <= 9) %start
-            printsymbol(n + '0')
-        %else
-            printsymbol(n + ('A' - 10))
-        %finish
-    %end
-
-    ! print a number in hexadecimal, to "places" size
-    %routine write hex(%integer n, places)
-        %integer p, shift
-
-        shift = (places - 1) * 4
-        %while (shift > 0) %cycle
-            p = n >> shift
-            writenibble(p)
-            shift = shift - 4
-        %repeat
-        writenibble(n)
-    %end
-
     %routine  writeifrecord( %integer type, length, 
                              %byteintegerarrayname buffer )
         %integer c1, c2, i
@@ -1264,8 +1313,10 @@ at:
         %integer i;
 
         select output(listout)
-        space; writehex(nextcad, 4); space;
-        %for i = 0, 1, 7 %cycle
+        space
+        writehex(nextcad, 4)
+        space
+        %for i = 0, 1, 9 %cycle
             %if (i < listptr) %start
                 writehex(listbytes(i), 2)
                 space
@@ -1364,7 +1415,7 @@ at:
 
     ! plant code for a relocated (DATA/BSS/DISPLAY/EXTERNAL) code word
     %routine norelocateoffset( %integer offset )
-        %integer i;
+        %integer i
 
 		%for i=1,1,word size %cycle
 			putbyte(offset&255)
@@ -2030,7 +2081,7 @@ break:
         flushcode
     %end
 
-    ! Memory (word) immediate operations - can be MOV, Math, or Shift
+    ! Memory (long) immediate operations - can be MOV, Math, or Shift
     %routine dumpmi( %integer opn, base, disp, extdisp, immed )
         %integer subop
         %switch ops(MOV:SHR)
@@ -2136,7 +2187,7 @@ break:
         listpreamble
         printstring(opname(opn))
         ! otherwise it's ambiguous for the reader
-        printstring(" WORD ")
+        printstring(" LONG ")
         printmemref(base, disp)
         printsymbol(',')
         write(immed, 0)
@@ -2414,7 +2465,14 @@ break:
         { JDM JDM start new code }
         %if (opn = CALL) %start
             ! JDM JDM See if we can show the routine name
-            printstring("'".var(top_var no)_idname."' (INTERNAL ")
+            printstring( "'" )
+            %if (top_var no = 0) %start
+                printstring( "$L" )
+                write(labelid,0)
+            %finish %else %start
+                printstring( var(top_var no)_idname )
+            %finish
+            printstring( "' (INTERNAL ")
             printsymbol('L')
             write(labelid,0)
             printstring(" )")
@@ -2712,15 +2770,16 @@ break:
     !------------------------------------------------------
     ! Constant table utility routines
     !
-    ! Rather than dump literal constants as they occur, we
-    ! collect them in a table.  Whenever the compiler wants
-    ! any kind of literal, we look to see if we already
-    ! have it.  Note this automatically solves re-use of
-    ! things like floating point constants, string newline,
-    ! and fixed array dope vectors.  When the table starts
-    ! to get fairly full, we flush it.  Obviously that means
-    ! in a large program we might not actually get full re-use
-    ! of constants after we've flushed, but the idea is sound.
+    ! Rather than dump literal constants as they occur,
+    ! we collect them in a table.
+    ! Whenever the compiler wants any kind of literal,
+    ! we look to see if we already have it.
+    ! Note this automatically solves re-use of things like
+    ! floating point constants, string newline, and fixed array dope vectors.
+    ! When the table starts to get fairly full, we flush it.
+    ! Obviously that means in a large program we might not
+    ! actually get full re-use of constants after we've flushed,
+    ! but the idea is sound.
     !
     ! For the convenience of the caller, several versions of
     ! pretty much the same thing are provided.
@@ -3460,13 +3519,16 @@ out1:
     ! Note that it also modifies the vlb and vub variables - after
     ! the call, VLB contains the byte offset for the first member
     ! and VUB contains the size to allocate for the array in bytes.
-    %integerfn  set dope vector
-        %integer  t, dv
+    %integerfn  set dope vector( %integer size, type )
+        %integer  entries, dv, descriptor
 
-        t = vub-vlb+1
-        dv = getcot4(1, vlb, vub, data size)
-        vub = t*data size
-        vlb = vlb*data size
+        ! Make DV _size field to be a size/type/flag format descriptor
+        descriptor = (size<<5) ! (type<<1) ! 1
+
+        entries = vub-vlb+1
+        dv = getcot4(1, vlb, vub, descriptor)
+        vub = entries*size
+        vlb = vlb*size
         %result = dv
     %end
 
@@ -3636,10 +3698,11 @@ out1:
 
 POWER:
 			n = ReadTag
-            ! Tag is unsigned 16-bit integer (0..65535)
+            ! Pass1 writes a Tag as an unsigned 16-bit integer (0..65535)
             ! but is read into a 32-bit signed integer
             ! and so 0 < n < 65535
-            ! BUT - tag is to be regarded as a 16-bit signed integer
+            ! BUT:
+            ! in this case a tag is to be regarded as a 16-bit signed integer
             ! So 0 < n < 32768 is to be regarded as a positive integer
             ! and 32767 < n < 65536 is a negative integer
             ! n     => correct n
@@ -3754,6 +3817,13 @@ SIGN:
             type = (tf>>4)
             form = tf&15
 
+            ! If this var is really an array,
+            !     then remember the array entry type
+            ! simple arrays have their bounds defined AFTER the "Define Var"
+            ! %switch arrays have their bounds defined BEFORE the "Define Var"
+            !     and we would "tag" them as "label" array entry type
+            array entry type = get entry type( type, size )
+
             ! Now analyse the Scope word
             dimension = (scope>>8)&255
             ! JDM JDM debug
@@ -3845,6 +3915,7 @@ SIGN:
             %else
                 size = vsize(type)
             %finish
+            
 
             ! JDM JDM remember the variable name
             ! Needed should an embedded code fragment refer to an IMP variable
@@ -3964,7 +4035,7 @@ SIGN:
                     %if (form = array) %or (form = name array) %start
                         gfix(align)
                         ! N.B.  changes vlb, vub
-                        dv = set dope vector
+                        dv = set dope vector( data size, array entry type )
                         ! We treat OWN and CONST arrays identically - both are in data segment
                         gfix(align)
                         decvar_disp = datatp - vlb;
@@ -3998,7 +4069,7 @@ SIGN:
                 %if (swtp + size > Max Switch) %then abort("Switch Table Full")
                 decvar_scope = SWT
                 decvar_disp = swtp - vlb
-                decvar_extra = set dope vector
+                decvar_extra = set dope vector( data size, switch )
                 %for s = swtp, 1, swtp + size %cycle
                     ! should really deal with undefined switch entries
                     swtab(s) = 0
@@ -5546,7 +5617,7 @@ roper(EXPx):
             %finish
         %end
 
-        !                                                           >> ASSIGN <<
+        !                                                          >> ASSIGN <<
         ! ASSOP =   -1:  parameter assignment
         !            0:  == assignment
         !            1:  =  assignment
@@ -5704,7 +5775,18 @@ roper(EXPx):
                     ! so, rustle up the second word
                     temp = 0
                     temp_type = integer
-                    temp_disp = (rh_size << 4) + gen map(rh_type)
+                    ! load the values for sizeof, typeof
+                    %if (rh_type = string) %start
+                        temp_disp = (rh_size + 1)<<4
+                    %finish %else %start
+                        temp_disp = (rh_size<<4)
+                    %finish
+                    temp_disp = temp_disp + gen map(rh_type)
+
+                    ! DANGER! this second word needs to be differentiated
+                    ! from a DVP pointer
+                    ! JDM JDM make temp_disp an odd number
+                    temp_disp = (temp_disp<<1) + 1
                 %finish
 
                 ! We do the words backwards, so that parameter push works
@@ -5873,7 +5955,8 @@ roper(EXPx):
 
             %if (form = arrayname) %or (form = namearrayname) %start
                 ! array is a "name"
-                ! We will AMAP the name, so we remember the info and then put it all back later
+                ! We will AMAP the name,
+                ! so we remember the info and then put it all back later
                 type = av_type
                 format = av_format
                 size = av_size
@@ -6156,11 +6239,10 @@ roper(EXPx):
         %routine  Compile Call(%record(stackfm)%name  v)
             %label form new type
             ! switch b used for prim macro functions
-            %switch  b(0:15)
+            %switch  b(1:13)
             %string(255) tname
             %integer     i
 
-            !  0 = unknown/illegal macro call
             !  1 = rem
             !  2 = float
             !  3 = to string
@@ -6173,12 +6255,9 @@ roper(EXPx):
             ! 10 = long real
             ! 11 = length
             ! 12 = charno
-            ! 13 = type of ( type of general name parameter )
-            ! 14 = size of ( physical length in bytes )
-            ! 15 = int (from real)
+            ! 13 = int (from real)
 
-            %conststring(15) %array macroname(0:15) =
-            {  0 } "UNKNOWN",
+            %conststring(15) %array macroname(1:13) =
             {  1 } "REM",
             {  2 } "FLOAT",
             {  3 } "TO STRING",
@@ -6191,9 +6270,7 @@ roper(EXPx):
             { 10 } "LONG REAL",
             { 11 } "LENGTH",
             { 12 } "CHARNO",
-            { 13 } "TYPEOF",
-            { 14 } "SIZEOF",
-            { 15 } "INT"
+            { 13 } "INT"
 
             %constbyteintegerarray  new type(5:12) =
                       integer, byte, string, record, real, lreal, byte, byte
@@ -6210,6 +6287,7 @@ roper(EXPx):
 
                 ! JDM JDM defend against out-of-range value for t
                 t = 0 %unless (0 < t < 16)
+                abort("Illegal %prim macro") %unless (0 < t < 15)
 
                 ! JDM JDM show start of macro "call" in listing
                 ! Now to say which macro was requested
@@ -6221,9 +6299,6 @@ roper(EXPx):
                 newline
 
                 -> b(t)
-b(0):
-                ! UNKNOWN/ILLEGAL macro
-                                                       -> esac
 b(1):
                 ! REM
                 Operation(REMx)
@@ -6274,132 +6349,7 @@ b(12):
 
                 ! JDM JDM avoid code duplication
                 -> form new type
-
 b(13):
-                ! TYPE OF(..)
-                %if (top_type = general) %start
-                    ! general type explicitly specified
-
-                    ! reference property-word
-                    top_disp = top_disp + word size
-                    top_form = V in S
-                    top_type = integer
-                    push const(15)
-                    Operation(ANDx)
-
-                %finish %else %if (top_aform = simple) %start
-                    ! not a name or a bare array so get the core "typeof" value
-
-                    ! convert top to be a constant
-                    release(top_base)
-                    top_type = integer
-                    top_form = constant
-                    top_aform = 0 {void}
-                    top_base = 0
-
-                    ! store the expected datatype value as the constant value
-                    top_disp = gen map(top_type)
-
-                %finish %else %start
-                    ! unknown type explicitly specified
-
-                    ! Now, to convert the top var into a constant
-                    ! Value to be loaded into top_disp
-                    ! The value stored should match the expected value of the
-                    ! datatype held in top
-                    ! The "typeof" extended value is a function of the top_type and top_aform
-                    
-                    ! Map the top var to the corresponding datatype value
-                    %if (top_aform = name) %start
-                        ! Ah, original var was a name
-                        ! give the extended "typeof" value for name
-                        ! should really define a constant for "typeof"=name
-                        p = 0
-                    %finish %else %if (array <= top_aform <= namearrayname) %start
-                        ! check if original var was an array (and no index values supplied)
-                        ! give the extended "typeof" value of array for the underlying type
-                        p = gen map(top_aform)
-                    %finish %else %start
-                        ! not a name or a bare array so get the core "typeof" value
-                        p = gen map(top_type)
-                    %finish
-
-                    ! convert top to be a constant
-                    release(top_base)
-                    top_type = integer
-                    top_form = constant
-                    top_aform = 0 {void}
-                    top_base = 0
-                    ! store the expected data-type value as the constant value
-                    top_disp = p
-
-!                    ! JDM JDM new code to return extended "typeof" value
-!                    ! release the top
-!                    pop rel
-!                    ! push a constant with the expected datatype value for "typeof" as the constant value
-!                    push const(p)
-                %finish
-				                                       -> esac
-b(14):
-                ! SIZE OF(..)
-
-                %if (top_type = general) %start
-                    ! general type explicitly specified
-
-                    ! reference property-word
-                    top_disp = top_disp + word size
-                    top_form = V in S
-                    top_type = integer
-                    push const(4)
-                    Operation(RSHx)
-
-                %finish %else %if (top_aform = simple) %start
-                    %if (top_type = string) %start
-                        ! string type explicitly specified
- 
-                        p = top_size + 1
-
-                        release(top_base)
-                        top_type = integer
-                        top_form = constant
-                        top_base = 0
-                        top_disp = p
-                    %finish %else %start
-
-                        p = top_size
-
-                        release(top_base)
-                        top_type = integer
-                        top_form = constant
-                        top_base = 0
-                        top_disp = p
-                    %finish
-
-                %finish %else %if (array <= top_type <= namearrayname) %start
-                    ! array type explicitly specified
-
-!                    p = arraysize( top_pbase )
-
-                    top_disp = top_disp + word size
-                    top_form = V in S
-                    top_type = integer
-                    push const(4)
-                    Operation(RSHx)
-
-                %finish %else %start
-                    ! other/unknown type explicitly specified
-
-                    p = top_size
-
-                    release(top_base)
-                    top_type = integer
-                    top_form = constant
-                    top_base = 0
-                    top_disp = p
-
-                %finish
-                                                       -> esac
-b(15):
                 ! INT(real)
                 loadreg(top, anyf)
                 release(top_base)
@@ -6642,10 +6592,11 @@ ot(string):
             %if (current string(0)+1 > data size) %start
                 ! check for overflow
 				! String constant too long - warn and truncate
-				warn(5);  current string(0) = data size-1
+				warn(5)
+                current string(0) = data size - 1
 			%finish
 
-			%for i = 0,1,data size-1 %cycle
+			%for i = 0,1,data size - 1 %cycle
 				gbyte(current string(i))
 			%repeat
 			-> done
@@ -6934,7 +6885,7 @@ done:
         %end
 
 		%routine Dimension( %integer dim, n )
-			%integer i,j
+			%integer i,j, useCOT, descriptor
 
             ! JDM JDM debug show the iCode instruction
             %if (ShowIcode=1) %start
@@ -6950,25 +6901,53 @@ done:
 			! Validate the ICODE Parameters
 			abort("Array Dim") %unless (0 < dim < 6)
 
-			%if (in params # 0) %start;         ! Array in record
+			%if (in params # 0) %start
+                ! This is an Array inside a Record
+                ! NB. Only 1D arrays are allowed in a record!
+                ! Defended against by the IMP grammar
+                ! Hence the simplified code for a Dope Vector creation
 				parms = parms + n
 				vub = top_disp
                 pop stack
 				vlb = top_disp
                 pop stack
 				abort("Array Bounds") %if (vlb > vub)
-				dv = set dope vector
-			%else
+				dv = set dope vector( data size, array entry type )
+            %else
 				names = names - n
-				! Now we need to plant code to manufacture a dope vector
-				frame = (frame - ((dim * (2 * word size))+(2 * word size)))&(\align);  ! space for :Dim:<bound pairs>:DataSize:
+
+                ! We should check to see if we can store the DopeVector in
+                ! the COT table or on the machine stack
+                ! Assume we have constant array bounds
+                useCOT = 1
+				! Now iterate over the bounds
+				j = 0
+                ! points to before the first stack value
+				%for i=1,1,dim*2 %cycle
+					j = j + 1
+                    lhs == stack(j)
+                    ! Determine if any bound is defined by a variable
+					%if (lhs_form # constant) %start
+                        ! Drat! One of the bounds is NOT constant
+                        ! So, we'll have to store the DV on the stack
+                        useCOT = 0
+					%finish
+				%repeat
+
+				! Now to plant code to manufacture space for a Dope Vector
+                ! original DV definition
+                !   :Dim:<bound pairs>:DataSize:
+                ! new DV definition
+                !   :Dim:<bound pairs>:DataSize<<5!DataType<<1!1:
+				frame = (frame - 2*word size*(dim + 1) )&(\align)
 				dv = frame
-				! First store the dimension
+
+				! First store the dimension (constant value)
 				dumpmi(MOV, BP, dv, 0, dim)
-				! And the data size is also constant
-				dumpmi(MOV, BP, dv + (dim * (2 * word size)) + word size, 0, data size)
-				! Now the bounds
-				j = 0;                    ! points to before the first stack value
+
+				! Now the bounds (which may not be constant)
+				j = 0
+                ! points to before the first stack value
 				%for i=1,1,dim*2 %cycle
 					j = j + 1
                     lhs == stack(j)
@@ -6979,24 +6958,35 @@ done:
 						dumpmr(MOV, BP, dv + (i*word size), 0, lhs_base)
 					%finish
 				%repeat
+
+				! And the data size is also constant
+                ! JDM JDM enhancement
+                ! Make DV _size field to be a size/type/flag format descriptor
+                descriptor = (data size<<5) ! ((array entry type&15)<<1) ! 1
+				dumpmi(MOV, BP, dv + (2*dim + 1) * word size, 0, descriptor )
+
 				! Now we need to allocate the space for the array
+                ! Depending on the number of array dimensions
 				%if (dim > 1) %or (control&check array # 0) %start
 					! Do it with the PERM
 					%while (stp # 0) %cycle
-                        ! get rid of all the bounds - they are in the DV already
+                        ! get rid of all the bounds
+                        !     they are in the DV already
 						pop rel
 					%repeat
+
 					dumprm(LEA, AX, BP, dv, 0)
 					dumpur(PUSH, AX)
 					perm(adef, 1)
-					! We now need to make our result match the inline version
-					! by putting AX and DX into stacklike variables
+
+					! We now need to make our result match the in-line version
+					! by putting AX and DX into stack-like variables
 					push const(0)
                     lhs == top
-					
+
                     push const(0)
                     rhs == top
-					
+	
                     lhs_base = AX
                     lhs_form = V in R
                     claim(AX)
@@ -7005,17 +6995,21 @@ done:
                     rhs_form = V in R
                     claim(DX)
 
-					pop stack
-					pop stack
-				%else
-					push const(1)
-					Operation(ADDx)
+                    pop stack
+                    pop stack
+                %else
+                    push const(1)
+                    Operation(ADDx)
+                    push const(data size)
+                    Operation(MULx)
+                    
+                    ! suck up the lower bound
+                    push copy(stack(stp-1))
 					push const(data size)
 					Operation(MULx)
-					push copy(stack(stp-1));   ! suck up the lower bound
-					push const(data size)
-					Operation(MULx)
-					! top is now the lower bound, next is the upper, and a bogus copy of lb is next
+					! top is now the lower bound,
+                    ! next is the upper,
+                    ! and a bogus copy of lb is next
 					loadreg(top, any);   ! Make sure this is in a register
 					lhs == top;          ! Point to it
 					pop stack;           ! and drop (without release) this copy
@@ -7024,13 +7018,14 @@ done:
 					pop stack;           ! and keep RHS (Upper)
 					pop stack;           ! dump the bogus lb
 				%finish
+
 				! Note - there are 4 GP registers, and we're going to need them ALL here
 				t = gp reg;             ! get a working register for the dope vector address
 				dumprm(LEA, t, BP, dv, 0); ! load it
 				dv = t
                 claim(dv);              ! use this to hold the register number
 				t = gp reg;             ! the last one! (which we don't claim, 'cos we can't lose it)
-				dumprr(MOV, t, SP);	   ! working copy of SP so that real SP is always "OK"
+				dumprr(MOV, t, SP);     ! working copy of SP so that real SP is always "OK"
 			%finish
 
 			%for i = 1,1,n %cycle
@@ -7042,23 +7037,31 @@ done:
 					decvar_level = level
 					frame = frame - (word size * 2);  ! 2-word header
 					decvar_disp = frame
-					%if (decvar_form = array) %or (decvar_form = namearray) %then decvar_form = decvar_form + 1;         ! force arrayname
-					dumprr(SUB, t, rhs_base);
+
+                    ! force arrayname?
+					%if (decvar_form = array) %or (decvar_form = namearray) %then decvar_form = decvar_form + 1
+
+					dumprr(SUB, t, rhs_base)
 					dumpmr(MOV, BP, frame, 0, t);             ! store a(0) address
 					dumpmr(MOV, BP, frame + word size, 0, dv);! store dope vector pointer
-					dumprr(ADD, t, lhs_base);
-				%else;          ! array-in-record
+					dumprr(ADD, t, lhs_base)
+				%else
+                    ! array-in-record
 					parms = parms-1
                     decvar == var(parms)
 					decvar_disp = frame - vlb
-					frame = frame + vub; ! noting that Set Dope Vector has changed VUB to the array size
+
+                    ! noting that Set Dope Vector has changed VUB to the array size
+					frame = frame + vub
 					decvar_pbase = dv
 				%finish
 			%repeat
 
 			%if (in params = 0) %start
-				! We need to keep the stack pointer word aligned - 8086's run faster that way,
-				! and more importantly, Pentiums throw an exception if you don't!
+				! We need to keep the stack pointer word aligned 
+                ! - 8086's run faster that way,
+				! and more importantly,
+                !     Pentiums throw an exception if you don't!
 				%if (data size&align # 0) %then dumpri(AND, t, \align)
 				dumprr(MOV,SP,t)
 				release(lhs_base)
@@ -7182,21 +7185,35 @@ done:
         %end
 
 		%routine Internal Handler ( %integer id )
-			push const(0) %while (stp < 2)
-			push const( id )
-			loadreg(top, any)
-            dumpur(PUSH, top_base)
-            pop rel
-			
-            loadreg(top, any)
-            dumpur(PUSH, top_base)
-            pop rel
-			
-            loadreg(top, any)
-            dumpur(PUSH, top_base)
-            pop rel
+            %record(stackfm)%name  lh,rh
+            %record(stackfm)  temp
 
-			perm(signal, 3)
+            ! Check if event_sub, event_info values are present
+            ! if not then load a default value=0
+            push const(0) %while (stp < 2)
+
+
+            ! So swop the stack entries ensuring the internal macro has valid parameters
+            rh == top
+            lh == stack(stp-1)
+            temp = lh
+            lh = rh
+            rh = temp
+
+            ! Now, stack the event_event value
+			push const( id )
+            ! JDM JDM extra feature - report the line invoking the %signal
+            ! (extra parameter added to impsignal)
+            push const( current line )
+
+            ! load the parameters for impsignal( line, event, extra, sub )
+            loadreg(top, any); dumpur(PUSH, top_base); pop rel; ! line
+            loadreg(top, any); dumpur(PUSH, top_base); pop rel; ! event
+            loadreg(top, any); dumpur(PUSH, top_base); pop rel; ! sub
+            loadreg(top, any); dumpur(PUSH, top_base); pop rel; ! extra
+
+            ! call imp signal, then pop the 4 parameters from the stack
+			perm(signal, 4)
 			uncond jump = next cad %if (id # -1);     ! %monitor will return
 		%end
 
@@ -8004,7 +8021,7 @@ done:
                     %finish
                 %repeat
 
-                ! We are NOT allowing any floating point instructions
+                ! Currently, we are NOT allowing any floating point instructions
 !                %for i = FILD,1,FLDPI %cycle
 !                   %if instruction = flopname(i) %then opId = i
 !                %repeat
@@ -8177,30 +8194,39 @@ done:
         evep = 0
         evfrom = 0
 
-        %if (amode >= 0) %start;                         ! NOT A RECORDFORMAT
+        %if (amode >= 0) %start
+            ! Not a RecordFormat
             level = level+1
             abort("Level") %if (level > max level) %and (spec = 0)
             worklist(level) = 0
 
-            %if (amode = 0) %start;            ! %begin block
-                %if (level = 1) %start;        ! Initial %begin ?
-                    block name = program ip;   ! For stack traceback readability
-                    external id = program ep;  ! linkage to program entry
+            %if (amode = 0) %start;
+                ! %begin block
+                %if (level = 1) %start
+                    ! Initial %begin ?
+                    ! Name the block for stack traceback readability
+                    block name = program ip
+
+                    ! remember the program entry name for the linker
+                    external id = program ep
                     otype = external
                     potype = otype
                 %else
                     block name = "%begin block"
                 %finish
                 static alloc = enter
-                frame = -(level * word size);          ! 1 word for every display entry
+                frame = -(level * word size);  ! 1 word for each display entry
             %finish
         %else
-            %if (amode = -1) %start;                   ! normal record format
-                ProcVar_pbase = parms;                 ! where our members start
+            %if (amode = -1) %start
+                ! normal record format
+                ProcVar_pbase = parms;        ! where our members start
             %else
-                %if (amode = -2) %then frame = oldframe; ! alternates start at the current offset
+                ! alternates start at the current offset
+                %if (amode = -2) %then frame = oldframe
             %finish
-            max frame = frame;                         ! start counting space here
+            ! start counting space here
+            max frame = frame
         %finish
 
 		!  --- main compilation loop ---
@@ -8228,147 +8254,161 @@ done:
 
 			-> c(iCodeInst)
 
-c('!'):     Load Operation( ORx ); 				%continue
-c('"'):	    Load Compare Double;				%continue
-c('#'):		Jump Forward( ReadTag, NE );		%continue
-c('$'):		Define Var( ReadTag, Get Ascii( ',' ), ReadTagComma, ReadTagComma, ReadTag );	%continue
-c('%'):		Load Operation( XORx );				%continue
-c('&'):		Load Operation( ANDx );				%continue
-c(''''):	Input String Value( ReadString );	%continue;	! Stack string constant
-c('('):		Jump Forward( ReadTag, LE );		%continue
-c(')'):		Jump Forward( ReadTag, GE );		%continue
-c('*'):		Load Operation( MULx );				%continue
-c('+'):		Load Operation( ADDx );				%continue
-c('-'):		Load Operation( SUBx );				%continue
-c('.'):		Load Operation( CONCx );			%continue
-c('/'):		Load Operation( DIVx );				%continue
-c(':'):		Define Compiler Label( ReadTag );	%continue;	! Define compiler label
-c(';'):		Load End of Block;					%exit
-c('<'):		Jump Forward( ReadTag, LT );		%continue
-c('='):		Jump Forward( ReadTag, EQ );		%continue
-c('>'):		Jump Forward( ReadTag, GT );		%continue
-c('?'):		Load Compare Values;				%continue;	! Compare values
-c('@'):		Load Var( ReadTag );				%continue;	! Load variable descriptor (calls Stack Var)
-c('A'):     Init( ReadTag );					%continue;	! Initialise OWN variable
-c('B'):     Jump Backward( ReadTag );			%continue;	! Backward Jump
-c('C'):     Load Compare Addresses;				%continue;	! Compare addresses
-c('D'):		Input Real Value( ReadReal );		%continue;	! Stack real constant
-c('E'):		Load Compile Call( top );			%continue
-c('F'):     Jump Forward( ReadTag, Always );	%continue;	! Forward Jump
-c('G'):		Get Alias Value( ReadString );		%continue;	! Alias for item about to be declared
-c('H'):		Load Compile Begin;					%continue;	! Start of BEGIN block
-c('I'):		Abort("Pascal?");					!%continue;	! {ESCAPE for Pascal etc.}
-c('J'):		User Jump( ReadTag );				%continue;	! Jump to user label
-c('K'):		Load Return( False );				%continue;	! %false
-c('L'):		Define User Label( ReadTag );		%continue;	! Define user label
-c('M'):		Load Return( Map );					%continue;	! MAP result
-c('N'):		Load Const( ReadInteger );			%continue;	! Load integer constant (calls Push Const)
-c('O'):		Update Line( ReadTag );				%continue;	! Set line number
-c('P'):		Load Plant;			                %continue;	! Machine code literal
-c('Q'):		Load Operation( RDIVx );			%continue
-c('R'):		Load Return( Routine );				%continue;	! RETURN
-c('S'):		Load Assign( 1 );					%continue;	! Normal value assignment
-c('T'):		Load Return( True );				%continue;	! %true
-c('U'):		Load Operation(NEGx);				%continue
-c('V'):		Load Return ( Fn );					%continue;	! FN result
-c('W'):		Switch Jump( ReadTag );				%continue;	! Jump to switch
-c('X'):		Load Operation( EXPx );				%continue
+c('!'):     Load Operation( ORx );              %continue
+c('"'):	    Load Compare Double;                %continue
+c('#'):     Jump Forward( ReadTag, NE );        %continue
+c('$'):     Define Var( ReadTag, Get Ascii( ',' ), ReadTagComma, ReadTagComma, ReadTag );  %continue
+c('%'):     Load Operation( XORx );             %continue
+c('&'):     Load Operation( ANDx );             %continue
+c(''''):    Input String Value( ReadString );   %continue; ! Stack string constant
+c('('):     Jump Forward( ReadTag, LE );        %continue
+c(')'):     Jump Forward( ReadTag, GE );        %continue
+c('*'):     Load Operation( MULx );             %continue
+c('+'):     Load Operation( ADDx );             %continue
+c('-'):     Load Operation( SUBx );             %continue
+c('.'):     Load Operation( CONCx );            %continue
+c('/'):     Load Operation( DIVx );             %continue
+c(':'):     Define Compiler Label( ReadTag );   %continue; ! Define compiler label
+c(';'):     Load End of Block;                  %exit
+c('<'):     Jump Forward( ReadTag, LT );        %continue
+c('='):     Jump Forward( ReadTag, EQ );        %continue
+c('>'):     Jump Forward( ReadTag, GT );        %continue
+c('?'):     Load Compare Values;                %continue; ! Compare values
+c('@'):     Load Var( ReadTag );                %continue; ! Load variable descriptor (calls Stack Var)
+c('A'):     Init( ReadTag );                    %continue; ! Initialise OWN variable
+c('B'):     Jump Backward( ReadTag );           %continue; ! Backward Jump
+c('C'):     Load Compare Addresses;             %continue; ! Compare addresses
+c('D'):     Input Real Value( ReadReal );       %continue; ! Stack real constant
+c('E'):     Load Compile Call( top );           %continue
+c('F'):     Jump Forward( ReadTag, Always );    %continue; ! Forward Jump
+c('G'):     Get Alias Value( ReadString );      %continue; ! Alias for item about to be declared
+c('H'):     Load Compile Begin;                 %continue; ! Start of BEGIN block
+c('I'):     Abort("Pascal?");                              ! {ESCAPE for Pascal etc.}
+c('J'):     User Jump( ReadTag );               %continue; ! Jump to user label
+c('K'):     Load Return( False );               %continue; ! %false
+c('L'):     Define User Label( ReadTag );       %continue; ! Define user label
+c('M'):     Load Return( Map );                 %continue; ! MAP result
+c('N'):     Load Const( ReadInteger );          %continue; ! Load integer constant (calls Push Const)
+c('O'):     Update Line( ReadTag );             %continue; ! Set line number
+c('P'):     Load Plant;                         %continue; ! Machine code literal
+c('Q'):     Load Operation( RDIVx );            %continue
+c('R'):     Load Return( Routine );             %continue; ! RETURN
+c('S'):     Load Assign( 1 );                   %continue; ! Normal value assignment
+c('T'):     Load Return( True );                %continue; ! %true
+c('U'):     Load Operation(NEGx);               %continue
+c('V'):     Load Return ( Fn );                 %continue; ! FN result
+c('W'):     Switch Jump( ReadTag );             %continue; ! Jump to switch
+c('X'):     Load Operation( EXPx );             %continue
 !'Y' - UNUSED
-c('Z'):		Load Assign( 0 );					%continue;	! Assign address '=='
-c('['):		Load Operation( LSHx );				%continue
-c('\'):		Load Operation( NOTx );				%continue
-c(']'):		Load Operation( RSHx );				%continue
-c('^'):		Set Record Format( ReadTag );		%continue;	!   {Set Format}
-c('_'):		Switch Label( ReadTag );			%continue;	! Define switch label
-c('a'):		Load Array Ref( 0 );				%continue
-c('b'):		Load Constant Bounds;				%continue;	! Define constant bounded Dope Vector
+c('Z'):     Load Assign( 0 );                   %continue; ! Assign address '=='
+c('['):     Load Operation( LSHx );             %continue
+c('\'):     Load Operation( NOTx );             %continue
+c(']'):     Load Operation( RSHx );             %continue
+c('^'):     Set Record Format( ReadTag );       %continue; ! {Set Format}
+c('_'):     Switch Label( ReadTag );            %continue; ! Define switch label
+c('a'):     Load Array Ref( 0 );                %continue
+c('b'):     Load Constant Bounds;               %continue; ! Define constant bounded Dope Vector
 !'c' NOT IMPLEMENTED
-c('d'):		Dimension( ReadTagComma, ReadTag );	%continue;	! dimensions, count of variables - NB in params:  =0 -> simple array,  # 0 -> array-in-record
-c('e'):		Signal Event( ReadTag);				%continue;	! %signal event
-c('f'):     Compile For( ReadTag );				%continue
-c('g'):		Dimension( ReadTagComma, ReadTag );	%continue;	! (different to PSR) dimensions, count of variables - NB in params:  =0 -> simple array,  # 0 -> array-in-record
+c('d'):     Dimension( ReadTagComma, ReadTag ); %continue; ! dimensions, count of variables - NB in params:  =0 -> simple array,  # 0 -> array-in-record
+c('e'):     Signal Event( ReadTag );            %continue; ! %signal event
+c('f'):     Compile For( ReadTag );             %continue
+c('g'):     Dimension( ReadTagComma, ReadTag ); %continue; ! (different to PSR) dimensions, count of variables - NB in params:  =0 -> simple array,  # 0 -> array-in-record
 c('h'):
 			! compiler op(n)
 !			compiler op(ReadTag)
-			                                    %continue
-c('i'):		Load Array Ref( 1 );				%continue
-c('j'):		Load Assign( 2 );					%continue;	! JAM transfer
-c('k'):		Jump Forward( ReadTag, FF );		%continue;	! Branch on FALSE (= 0)
-c('l'):		Load Language Flags( ReadTag );		%continue;	! We currently only support standard IMP - who knows the future
-c('m'):		Load Monitor;						%continue;	! %monitor
-c('n'):		SelectField( ReadTag );				%continue;	! Select member from record format
-c('o'):		EventTrap( ReadTagComma, ReadTag );	%continue;	! %on %event block
-c('p'):		Load Assign( -1 );					%continue;	! Pass a parameter
-c('q'):		DoubleOp( SUBx);					%continue;	!--
-c('r'):		Resolve( ReadTag );					%continue
-c('s'):		Load Perm(stop, 0);					%continue;	! %stop
-c('t'):		Jump Forward( ReadTag, TT );		%continue;	! Branch on TRUE (# 0)
-c('u'):		DoubleOp( ADDx );					%continue;	!++
-c('v'):		Load Operation( ABSx );				%continue
-c('w'):		Machine Code( Get Ascii( ';' ) );   %continue;	! JDM: allowed call to Machine code
-c('x'):		Load Operation(REXPx);				%continue
-c('y'):		Set CD( ReadTag, diagnose);			%continue;	! %diagnose n (what about pass3? how do we send to pass3)
-c('z'):		Set CD( ReadTag, control );			%continue;	! %control n
-c('{'):     StartParams;                        %continue;! Start of formal parameters
-c('}'):     %exit %if Finish Params;            %continue;	! End of formal parameters
-c('~'):		%exit %if AlternateFormat( ReadByte )
-                                                %continue;	! alternate record format
-c(*):		abort("Bad I Code");				!%continue;	! To catch the sinners!! (that is - an unimplemented iCode)
-		%repeat
+                                                %continue
+c('i'):     Load Array Ref( 1 );                %continue
+c('j'):     Load Assign( 2 );                   %continue; ! JAM transfer
+c('k'):     Jump Forward( ReadTag, FF );        %continue; ! Branch on FALSE (= 0)
+c('l'):     Load Language Flags( ReadTag );     %continue; ! We currently only support standard IMP - who knows the future
+c('m'):     Load Monitor;                       %continue; ! %monitor
+c('n'):     SelectField( ReadTag );             %continue; ! Select member from record format
+c('o'):     EventTrap( ReadTagComma, ReadTag ); %continue; ! %on %event block
+c('p'):     Load Assign( -1 );                  %continue; ! Pass a parameter
+c('q'):     DoubleOp( SUBx);                    %continue; !--
+c('r'):     Resolve( ReadTag );                 %continue
+c('s'):     Load Perm(stop, 0);                 %continue; ! %stop
+c('t'):     Jump Forward( ReadTag, TT );        %continue; ! Branch on TRUE (# 0)
+c('u'):     DoubleOp( ADDx );                   %continue; !++
+c('v'):     Load Operation( ABSx );             %continue
+c('w'):     Machine Code( Get Ascii( ';' ) );   %continue; ! JDM: allowed call to Machine code
+c('x'):     Load Operation(REXPx);              %continue
+c('y'):     Set CD( ReadTag, diagnose);         %continue; ! %diagnose n (what about pass3? how do we send to pass3)
+c('z'):     Set CD( ReadTag, control );         %continue; ! %control n
+c('{'):     StartParams;                        %continue; ! Start of formal parameters
+c('}'):     %exit %if Finish Params;            %continue; ! End of formal parameters
+c('~'):     %exit %if AlternateFormat( ReadByte )
+                                                %continue; ! alternate record format
+c(*):       abort("Bad I Code");				           ! To catch the sinners!! (that is - an unimplemented iCode)
+        %repeat
  
-        %if (amode >= 0) %start;         ! end of declarative block
+        %if (amode >= 0) %start
+            ! end of declarative block
             %while (worklist(level) # 0) %cycle
                 worklist(level) = ret gp tag(worklist(level))
             %repeat
             level = level-1
-        %else;                        ! end of record format defn
-            %if (amode = -2) %start;    ! end of alternative only
-                frame = max frame %if (max frame > frame);  ! use the longest alternative
+        %else
+            ! end of record format defn
+            %if (amode = -2) %start
+                ! end of alternative only
+                ! use the longest alternative
+                frame = max frame %if (max frame > frame)
                 old frame = frame
             %else
-                frame = (frame+align)&(\align);  ! **** temporary ****
+                ! **** temporary ****
+                frame = (frame+align)&(\align)
                 procvar_size = frame
             %finish
         %finish
         frame = old frame
 
-    %end;  !  assemble
+    %end;  ! assemble
+
+    %routine initialise pass2
+        %string(255) the source file name
+        %integer i,j
+
+        %if (length( getenv( getenvindex( "IMP_ICODE" ) ) ) # 0) %start
+            ! ok, we want to show the iCode records
+            ShowICode = 1
+        %finish
+
+        ! JDM - Before we do any file I/O we need to get the source file name
+        ! (as used to feed the 'source' stream)
+
+        select input( source )
+        the source file name = input name
+
+        ! JDM - ok, now we can really start
+        select input( icode )
+        select output( objout )
+
+        var(0) = 0;              !  for %RECORD(*) . . . . .
+        parms = max vars
+
+        ! Initialise the GP Tag ASL
+        %for i=1,1,Max GP %cycle
+            GP Tags(i)_link = i - 1
+        %repeat
+        gp asl = Max GP
+
+        ! Tell the linker our source file name
+        dumpsourcename( the source file name )
+
+        ! predefine the perms for the linker
+        ! We ignore the number (j) because we know they are in sequence
+        %for i=1,1,lastperm %cycle
+            j = externalref(permname(i))
+        %repeat
+
+    %end
 
     !              -------- it all starts here ---------
-    ! JDM - Before we do any file I/O we need to get the source file name
-    ! (as used to feed the 'source' stream)
-    %string(255) the source file name 
-    select input( source )
-    the source file name = input name
+    initialise pass2
 
-    %if (length( getenv( getenvindex( "IMP_ICODE" ) ) ) # 0) %start
-        ! ok, we want to show the iCode records
-        ShowICode = 1
-    %finish
-
-    ! JDM - ok, now we can really start
-    select input( icode )
-    select output( objout ) 
-
-    var(0) = 0;              !  for %RECORD(*) . . . . .
-    parms = max vars
-
-    ! Initialise the GP Tag ASL
-    %for i=1,1,Max GP %cycle
-        GP Tags(i)_link = i - 1
-    %repeat
-    gp asl = Max GP
-
-    ! Tell the linker our source file name
-    dumpsourcename( the source file name );   ! JDM - hopefully not so bogus now!
-
-    ! predefine the perms for the linker.  We ignore
-    ! the number (j) because we know they are in sequence
-    %for i=1,1,lastperm %cycle
-        j = externalref(permname(i))
-    %repeat
-
-    read symbol(Pending);  !  Prime SYM/NEXT pair
+    !  Prime SYM/NEXT pair
+    read symbol(Pending)
     Spec = 0
     decvar == begin
     assemble(-3,0,0)

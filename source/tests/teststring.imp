@@ -95,7 +95,7 @@
 
 !    selectinput(0)
 !    selectoutput(0)
-    set prompt( "jdm >" )
+    prompt( "jdm >" )
     printstring( "TESTSTRING: Current Input stream=".itos(input stream,0) ); newline
     printstring( "TESTSTRING: New Input stream=".itos(input stream,0) ); newline
     printstring( "Load a value for s24");newline

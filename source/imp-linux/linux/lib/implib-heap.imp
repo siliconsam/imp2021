@@ -1,0 +1,37 @@
+
+    %external            %routine %spec impfree %c
+                                 %alias "free" ( %integer templateaddr )
+    %external %record(*) %map     %spec impmalloc %c
+                                 %alias "malloc" ( %integer s )
+
+{----------------------------------------------------------------------------}
+    !
+    ! NEW/DISPOSE routines used to acquire/free heap variables
+    ! NEW/DISPOSE routines based on C library malloc/free routines
+    !
+    ! declare heap access routines
+    !
+    %external %routine Dispose ( %name Template )
+
+        %integer Where = Addr( Template )
+
+        impfree( Where )
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    !
+    ! NEW/DISPOSE routines used to acquire/free heap variables
+    ! NEW/DISPOSE routines based on C library malloc/free routines
+    !
+    ! declare heap access routines
+    !
+    %external %record(*) %map New ( %name Template )
+        %record(*) %name Res
+        %integer Bytes = (Size Of(Template)+3) & (\3) {round to longword}
+
+        Res == impmalloc(Bytes)
+
+        %result == Res
+    %end
+{----------------------------------------------------------------------------}
+%endoffile

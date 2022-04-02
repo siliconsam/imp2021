@@ -1,0 +1,16 @@
+%begin
+    %long %integer i
+
+    newline
+    printstring( "    Running TestStreams" ); newline
+    newline
+
+    %for i = 1,1,1 %cycle
+!        open output( i, itos(i,0).".lis" )
+        select output( i )
+        printstring( itos(i,0).".lis" )
+        newline
+!        close output( i )
+    %repeat
+
+%endofprogram

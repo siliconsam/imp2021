@@ -1,0 +1,376 @@
+{----------------------------------------------------------------------------}
+    %external %routine newline
+        printsymbol(nl)
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %routine space
+        printsymbol(' ')
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %routine newlines( %integer count )
+        %while count > 0 %cycle
+            printsymbol(nl)
+            count = count - 1
+        %repeat
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %routine spaces(%integer count)
+        %while count > 0 %cycle
+            printsymbol(' ')
+            count = count - 1
+        %repeat
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %routine printstring( %string(255) s)
+        %integer l, i
+
+        l = length(s)
+
+        %for i = 1, 1, l %cycle
+            printsymbol(charno(s, i))
+        %repeat
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %routine skipsymbol
+        %integer trash
+
+        readsymbol(trash)
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %string(255) %function sub string(%string(255) s, %integer from, to)
+        %integer get, put
+        %string(255) temp
+
+        ! Do some defensive error checking first
+        %signal 6, 2, from %unless 0 <= from <= length(s)
+        %signal 6, 2, to   %unless 0 <= to   <= length(s)
+        %signal 5, 3       %unless from <= to
+
+        ! We don't use string operations, and instead hand-poke
+        ! the characters, relying on the compiler primitive map
+        ! functions to plant efficient code
+
+        length(temp) = (to - from) + 1
+        put = 1
+        get = from
+        %while get <= to %cycle
+            charno(temp, put) = charno(s, get)
+            put = put + 1
+            get = get + 1
+        %repeat
+
+        %result = temp
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %routine To Lower(%string(*)%name s)
+        %integer i
+        %byte %name p
+
+        %for i=1,1,length(s) %cycle
+            p == charno(s,i)
+            %if 'A' <= p <= 'Z' %then p = p + ('a'-'A')
+        %repeat
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %routine To Upper(%string(*)%name s)
+        %integer i
+        %byte %name p
+
+        %for i=1,1,length(s) %cycle
+            p == charno(s,i)
+            %if 'a' <= p <= 'z' %then p = p - ('a'-'A')
+        %repeat
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %string(255) %function trim(%string(255) s, %integer max)
+
+        ! Do some defensive error checking first
+        %signal 6, 2, max %if max < 0
+
+        ! tweak our parameter and return it
+        %if length(s) > max %then length(s) = max
+
+        %result = s
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %string(255) %function int2ascii( %integer nn, base, places )
+
+        %own %string(36) basechar = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        %string(255) reversed, human
+        %integer n, np, r, i, negative;
+
+        ! Validate the number base
+        ! Since basechar has from 1 to 36 characters,
+        !   we can only output numbers to base 2 thru 36.
+        ! Of course if we add more characters then ...
+        ! NB a number to base 1 cannot sensibly be displayed
+        %if (base < 2) %then base = 10
+        %if (base > 36) %then base = 10
+
+        length(reversed) = 0
+        n = nn
+        %if (n = 0) %start
+            r = 0
+            ! string index starts at 1 - but r starts from 0
+            ! so if r = 0 we want char 1 in the "basechar" string etc...
+            length(reversed) = length(reversed) + 1
+            charno(reversed,length(reversed)) = charno(basechar,r + 1)
+        %else
+            ! Now to avoid problems with -MAXINT
+            %if (n > 0) %start
+                negative = 0
+                n = -n
+            %else
+                negative = 1
+            %finish
+
+            %while (n < 0) %cycle
+                np = n // base
+                r = (np * base) - n
+                ! string index starts at 1 - but r starts from 0
+                ! so if r = 0 we want char 1 in the "basechar" string etc...
+                length(reversed) = length(reversed) + 1
+                charno(reversed,length(reversed)) = charno(basechar,r + 1)
+                n = np
+            %repeat
+
+            %if (negative > 0) %start
+                length(reversed) = length(reversed) + 1
+                charno(reversed,length(reversed)) = '-'
+            %finish
+        %finish
+
+        ! Now we adjust Places, also slightly mysteriously
+        %if places <= 0 %then places = -places %else places = places + 1
+
+        ! Pad out the digits with blank spaces if places more than actual number of 'digits'
+        %if (places > length(reversed)) %start
+            %while length(reversed) < places %cycle
+                length(reversed) = length(reversed) + 1
+                charno(reversed,length(reversed)) = ' '
+            %repeat
+        %finish
+
+        ! Now reverse the digits for human readability.
+        length(human) = 0
+        %for i = length(reversed), -1, 1 %cycle
+            length(human) = length(human) + 1
+            charno(human,length(human)) = charno( reversed, i )
+        %repeat
+
+        %result = human
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    ! format the number to the given number base
+    ! and prefix by the number base expressed in base 10
+    %external %string(255) %function formatNumber( %integer n,base,places)
+        %string(255) s,x
+        %integer i
+
+        %if base = 10 %start
+            x = int2ascii( n, base, places)
+        %else
+            s = int2ascii( n, base, 0)
+            x = int2ascii( base, 10, places - length(s)  - 1 )
+
+            length(x) = length(x) + 1
+            charno(x,length(x)) = '_'
+            %for i = 1,1,length(s) %cycle
+                length(x) = length(x) + 1
+                charno(x,length(x)) = charno(s,i)
+            %repeat
+        %finish
+
+        %result = x
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    %external %string(255) %function I to S(%integer n, places)
+        %string(255) s
+	
+        s = int2ascii( n, 10, places )
+
+        %result = s
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    ! Write an integer on the current output stream, to
+    ! occupy PLACES character spaces on the page.
+    ! Nominally based on PrintString(I to S(n, places))
+    ! This version doesn't use strings though, and is
+    ! therefore smaller and quicker.  It builds the
+    ! characters "backwards" in an array
+    %external %routine Write(%integer n, places)
+        %string(32) ch;      ! Enough room for a 32 bit integer, plus sign
+        %integer new, digit, sign, i
+
+        length(ch) = 0
+        ! First collect the digits
+        %if n = 0 %start
+            length(ch) = length(ch) + 1
+            charno(ch,length(ch)) = '0'
+            sign = 0
+        %else
+            sign = 1
+            ! we make everything negative to avoid the -ve MaxInt wrap problem
+            %if n > 0 %start
+                sign = 0
+                n = -n
+            %finish
+
+            %while n # 0 %cycle
+                new = n // 10
+                digit = (new * 10) - n
+                length(ch) = length(ch) + 1
+                charno(ch,length(ch)) = digit+'0'
+                n = new
+            %repeat
+        %finish
+
+        ! Now deal with the sign, taking into account the slightly
+        ! idiosyncratic behaviour on positive numbers
+        %if sign # 0 %start
+            length(ch) = length(ch) + 1
+            charno(ch,length(ch)) = '-'
+        %else
+            %if places > 0 %start
+                length(ch) = length(ch) + 1
+                charno(ch,length(ch)) = ' '
+            %finish
+        %finish
+
+        ! Now we adjust Places, also slightly mysteriously
+        %if places <= 0 %then places = -places %else places = places + 1
+
+        ! The array at CH now contains the characters (backwards)
+        ! and the character count is in NEXT
+
+        %while places > length(ch) %cycle
+            length(ch) = length(ch) + 1
+            charno(ch,length(ch)) = ' '
+            places = places - 1
+        %repeat
+
+        %for i=length(ch),-1,1 %cycle
+            print symbol( charno(ch,i))
+        %repeat
+
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    ! Print a floating point number out, along the lines of
+    ! +/-nnn.nnn@+/-nn, to occupy Places character spaces.
+    ! Note - there's a bug in this code such that it does not
+    ! round the number properly.  EG 3.999999999 to 4 places
+    ! should be 4.00 but we print 3.99
+
+    %external %routine print(%longreal x, %integer places)
+        %integer exponent, digit, point, printexpo
+
+        %if x = 0 %start
+            printsymbol('0')
+            printsymbol('.')
+            printsymbol('0')
+            %while places > 3 %cycle
+                printsymbol('0')
+                places = places - 1
+            %repeat
+            %return
+        %finish
+
+        %if x < 0 %then printsymbol('-') %and x = -x %and places = places - 1
+
+        %if places < 3 %then places = 3
+   
+        exponent = 0
+        printexpo = 0
+
+        %while x < 1 %cycle
+            x = x * 10
+            exponent = exponent - 1
+        %repeat
+
+        %while x >= 10 %cycle
+            x = x / 10
+            exponent = exponent + 1
+        %repeat
+
+        ! Now X is between 1.0 and 9.99 and exponent is set accordingly
+        ! If the exponent is "large" we will use scientific notation
+        point = places - 2;     ! for useful digits after the "0."
+        %if exponent >= places %or exponent < -point %start
+            printexpo = exponent
+            exponent = 0
+            places = places - 2
+        %finish
+
+        ! Now the exponent is small-ish
+        %if exponent < 0 %start;      ! 0.nnnn
+            printsymbol('0')
+            printsymbol('.')
+            places = places - 2
+
+            %while exponent < -1 %cycle
+                printsymbol('0')
+                exponent = exponent + 1
+                places = places - 1
+            %repeat
+
+            point = -1; ! because we've already passed that
+        %else;          ! nnn.nnn
+            point = exponent
+        %finish
+
+        %while places > 0 %cycle
+            digit = int pt(x)
+            ! Rounding as we go through this loop can "oversize" the digit.  This
+            ! of course tells us that we should have printed (eg) 40000 but we
+            ! are now stuck with printing 39999
+            %if digit > 9 %then digit = 9
+            printsymbol(digit + '0')
+            x = (x - digit)*10
+            %if point = 0 %then printsymbol('.') %and places = places - 1
+            point = point - 1
+            places = places - 1
+        %repeat
+
+        %if printexpo # 0 %start
+            printsymbol('@')
+            write(printexpo, 1)
+        %finish
+    %end
+{----------------------------------------------------------------------------}
+{----------------------------------------------------------------------------}
+    ! INTPT - return the integer part of a real.  Note that this is
+    ! NOT the same as the built-in primitive "INT" which returns the
+    ! nearest integer to the real according to IEEE rounding rules.
+    ! Thus, INTPT(1.9) = 1, whereas INT(1.9) = 2.  INTPT uses INT
+    ! and then adjusts the rounding to truncate.
+    %external %integer %function Int Pt(%longreal x)
+        %integer i
+
+        i = int(x)
+        %if i # 0 %then %start; ! zero is the easy answer
+            x = x - i
+            %if i > 0 %start; ! correct towards zero - depends which way that is :-)
+                %if x < 0 %then i = i - 1
+            %else
+                %if x > 0 %then i = i + 1
+            %finish
+        %finish
+        %result = i
+    %end
+{----------------------------------------------------------------------------}
+
+%endoffile

@@ -1,29 +1,67 @@
 
     %include "inc.386.registers"
 
-    ! Assign the constant values (MUST match values in prim-rtl-file.h)
-    %constant %integer max stream = 8
+    %external %routine %spec initialise io system
+
+    %constinteger integersize   = 4
+    %constinteger realsize      = 4
+    ! we don't define stringsize as it could be in range 1..255
+    ! we don't define recordsize as it depends on the record format
+    %constinteger bytesize      = 1
+    %constinteger longrealsize  = 8
+
+    ! Curious naming strategy because we don't want to clobber
+    ! the built-in functions and maps like "integer" or "int"
+    ! Types extracted from general names
+    %constinteger      integertype = 1
+    %constinteger         realtype = 2
+    %constinteger       stringtype = 3
+    %constinteger       recordtype = 4
+    %constinteger         bytetype = 5
+    %constinteger shortintegertype = 6
+    %constinteger  longintegertype = 7
+    %constinteger     longrealtype = 8
+
+    ! Assign the constant values
     %constant %integer std null handle = 0
     %constant %integer std err handle  = 1
     %constant %integer std in handle   = 2
     %constant %integer std out handle  = 3
+
+    ! To ensure that the compiler can compile itself
+    ! We need a minimum number of INPUT/OUTPUT Streams
+    ! These minimum numbers depend on the depth of %include files
+    ! for MAX INPUT STREAM
+    ! The number of output files used by the takeon, pass1, pass2
+    ! programs will affect the value of MAX OUTPUI STREAM
+    ! Currently, the bare minimum value for MAX INPUT STREAM is 4
+    ! Currently, the bare minimum value for MAX OUTPUT STREAM is 3
+
+    ! It is perfectly legal to increase the values of MAX XXX STREAM
+    ! to be more than the minimum MAX XXX STREAM values given above
+    %constant %integer MAX INPUT STREAM  = 4
+    %constant %integer MAX OUTPUT STREAM = 4
+
     %constant %integer IS INPUT = 0 << 0
     %constant %integer IS OUTPUT = 1 << 0
     %constant %integer IS TEXT = 0 << 1
     %constant %integer IS BINARY = 1 << 1
 
-    %constant %integer FILE IN = 1
-    %constant %integer FILE OUT = 2
-
     %constant %integer uninitialised = 0
     %constant %integer initialised = 1
 
     %record %format impstream ( %integer lookahead, flags, %string(255) file name, %integer handle )
-    %record %format impio ( %integer current stream, 
-                            %record(impstream) %array streams(0:max stream) )
+    %record %format impinput ( %integer current stream, 
+                               %record(impstream) %array streams(0:MAX INPUT STREAM) )
+!    %record %format impinput ( %integer current stream, 
+!                               %record(impstream) stream0,stream1,stream2,stream3,stream4 )
+    %record %format impoutput ( %integer current stream, 
+                                %record(impstream) %array streams(0:MAX OUTPUT STREAM) )
+!    %record %format impoutput ( %integer current stream, 
+!                                %record(impstream) stream0,stream1,stream2,stream3 )
 
-    %own %record (impio) in
-    %own %record (impio) out
+    %own %record (impinput) in
+    %own %record (impoutput) out
     %own %record (impstream) null stream
     %own %record (impstream) error stream
 
@@ -57,10 +95,6 @@
         %false
     %end
 
-    %external %integer %function get max stream
-        %result = MAX STREAM
-    %end
-
     %routine initialise stream( %record(impstream) %name s )
         s_handle = 0
         length(s_file name) = 0
@@ -69,148 +103,129 @@
     %end
 
     %routine finalise stream( %record(impstream) %name s )
-        %if (s_handle # 0) %then close( s_handle)
+        %if (s_handle # 0) %then close( s_handle )
 
         initialise stream( s )
     %end
 
-    %external %routine initialise io
+    %predicate acceptabletype( %integer type )
+        %true %if (type = integertype)
+        %true %if (type = realtype)
+        %true %if (type = stringtype)
+        %true %if (type = recordtype)
+        %true %if (type = bytetype)
+        %true %if (type = longrealtype)
+        %false
+    %end
+
+    %own %string(31) input prompt = "prompt ->"
+    %own %integer tty needs a prompt = 1
+
+    %external %routine prompt( %string(31) s )
+        input prompt = s
+    %end
+!------------------------------------------------------------------------------
+! Input routines
+!------------------------------------------------------------------------------
+    %routine initialise input system
+        %record(impstream)%name streamX
         %integer i
 
         in_current stream = 0
-        out_current stream = 0
 
-        %for i = 0,1,max stream %cycle
-            initialise stream( in_streams(i) )
-            initialise stream( out_streams(i) )
+        %for i = 0,1,MAX INPUT STREAM %cycle
+            streamX == in_streams(i)
+            initialise stream( streamX )
         %repeat
-        initialise stream( error stream )
-
-        null stream_handle = 0
-        null stream_file name = "null"
-        error stream_handle = get std err handle
-        error stream_file name = "stderr"
         in_streams(0)_handle = get std in handle
         in_streams(0)_file name = "stdin" 
-        out_streams(0)_handle = get std out handle
-        out_streams(0)_file name = "stdout"
 
-        initialised state = initialised
+!        streamX == in_stream0
+!        initialise stream( streamX )
+!        streamX == in_stream1
+!        initialise stream( streamX )
+!        streamX == in_stream2
+!        initialise stream( streamX )
+!        streamX == in_stream3
+!        initialise stream( streamX )
+!        streamX == in_stream4
+!        initialise stream( streamX )
+!        in_stream0_handle = get std in handle
+!        in_stream0_file name = "stdin" 
     %end
 
-    %external %routine terminate io
+    %routine terminate input system
+        %record(impstream)%name streamX
         %integer i
 
         in_current stream = -1
-        out_current stream = -1
 
-        %for i = 1,1,max stream %cycle
-            finalise stream( in_streams(i) )
-            finalise stream( out_streams(i) )
+        %for i = 1,1,MAX INPUT STREAM %cycle
+            streamX == in_streams(i)
+            finalise stream( streamX )
         %repeat
+!        streamX == in_stream0
+!        finalise stream( streamX )
+!        streamX == in_stream1
+!        finalise stream( streamX )
+!        streamX == in_stream2
+!        finalise stream( streamX )
+!        streamX == in_stream3
+!        finalise stream( streamX )
+!        streamX == in_stream4
+!        finalise stream( streamX )
 
-        initialised state = uninitialised
     %end
-
-    %external %routine debug symbol( %integer c )
-        %if need to initialise %then initialise io
-
-        %if (error stream_handle # 0) %then put char( error stream_handle, c )
-    %end
-
-    %external %routine debug real( %long %real d )
-        %if need to initialise %then initialise io
-
-        %if (error stream_handle # 0) %then put double( error stream_handle, d )
-    %end
-
-    %constant %integer  intgr  = 1
-    %constant %integer  float  = 2
-    %constant %integer  strng  = 3
-    %constant %integer  byte   = 6
-    %constant %integer  double = 8
 
     %external %integer %function readbuffer( %name ptr, %integer count )
-
+        %record(impstream)%name streamX
         %integer i,actualcount
+        %integer len,adr,type
+        %integer itemsz
 
-        %integer framep
-        %integer %name dvp
-        %integer dim, itemsz, intsz
-        %integer lb, ub
+        len = size of(ptr)
+        adr = addr(ptr)
+        type = type of(ptr)
+
+%if ((DEBUGMODE & dbgio) # 0) %start
+debug string("READBUFFER: address(ptr)=".int2ascii(adr,16,0) );  debug newline
+debug string("READBUFFER: size of(ptr)=".int2ascii(len,16,0) );  debug newline
+debug string("READBUFFER: type of(ptr)=".int2ascii(type,16,0) ); debug newline
+debug string("READBUFFER:        count=".itos(count,0) );        debug newline
+%finish
+
+        %signal 5,5,type %unless acceptabletype(type)
 
         ! assume we are reading data into a byte array (or string)
-        itemsz = 1
+        itemsz = -1
 
-%if ((DEBUGMODE & dbgio) # 0) %start
-debug string("READBUFFER: address(ptr)=".int2ascii(addr(ptr),16,0) ); debug newline
-debug string("READBUFFER:  sizeof(ptr)=".int2ascii(sizeof(ptr),16,0) ); debug newline
-debug string("READBUFFER:  typeof(ptr)=".int2ascii(typeof(ptr),16,0) ); debug newline
-debug string("READBUFFER: count=".itos(count,0) ); debug newline
-%finish
+        %if (type = integertype)  %then itemsz = integersize
+        %if (type = realtype)     %then itemsz = realsize
+        %if (type = stringtype)   %then itemsz = len
+        %if (type = bytetype)     %then itemsz = bytesize
+        %if (type = longrealtype) %then itemsz = longrealsize
+        %if (type = recordtype)   %then itemsz = len
 
-        %if (0 <= sizeof( ptr ) <= 255) %start
-            ! Ok, it should be a primitive type
-            ! We need to adjust itemsz to type size
-            ! NB strings/byte arrays have itemsz = 1
-            ! So only need to adjust for integer,float or double
-            %if (typeof(ptr) = intgr) %then itemsz = 4
-            %if (typeof(ptr) = float) %then itemsz = 4
-            %if (typeof(ptr) = double) %then itemsz = 8
-        %else
-            ! Ok,This seems to be an array/record
-            ! Get the Base/Frame Pointer
-            *mov_ framep,ebp
-
-            ! Now get the expected 3 parameters
-%if ((DEBUGMODE & dbgio) # 0) %start
-debug string("READBUFFER: [framep +  8]=".itos(integer( framep + 8 ),0) ); debug newline
-debug string("READBUFFER: [framep + 12]=".int2ascii(integer( framep + 12 ),16,0) ); debug newline
-debug string("READBUFFER: [framep + 16]=".int2ascii(integer( framep + 16 ),16,0) ); debug newline
-%finish
-
-            dvp == integer( framep + 16 )
-            dim = integer( dvp )
-            intsz = sizeof(dim); ! get the size of a 32-bit integer
-            ! pick up the element size...
-            itemsz = integer( dvp + sizeof(dim)*(2*dim + 1) )
-
-%if ((DEBUGMODE & dbgio) # 0) %start
-debugstring("READBUFFER: IMPADEF:     dim: dvp[0]='".itos(dim,0)."'"); debugnewline
-%finish
-            %for i=1,1,dim %cycle
-                lb = integer( dvp + sizeof(dim)*(2*i - 1) )
-                ub = integer( dvp + sizeof(dim)*(2*i) )
-
-%if ((DEBUGMODE & dbgio) # 0) %start
-debugstring("READBUFFER: IMPADEF: lb['".itos(i,0)."']: dvp[".itos(2*i-1,0)."]='".itos(lb,0)."'"); debug newline
-debugstring("READBUFFER: IMPADEF: ub['".itos(i,0)."']: dvp[".itos(2*i,0)."]='".itos(ub,0)."'");   debug newline
-%finish
-
-            %repeat
-
-%if ((DEBUGMODE & dbgio) # 0) %start
-debugstring("READBUFFER: IMPADEF:      sz: dvp[".itos((2*dim)+ 1,0)."]='".itos(itemsz,0)."'"); debug newline
-debugstring("READBUFFER: IMPADEF:   intsz:   ='".itos(sizeof(dim),0)."'"); debug newline
-%finish
-
-        %finish
-
-        %if need to initialise %then initialise io
+        %if need to initialise %then initialise io system
 
         ! can't select an invalid stream id (not stdin)
-        %signal 9, 9 %unless (0 < in_current stream <= MAXSTREAM)
+        %signal 9, 9 %unless (0 < in_current stream <= MAX INPUT STREAM)
         ! can't select a closed file
-        %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+        streamX == in_streams( in_current stream )
+!        %if (in_current stream = 1) %then streamX == in_stream1
+!        %if (in_current stream = 2) %then streamX == in_stream2
+!        %if (in_current stream = 3) %then streamX == in_stream3
+!        %if (in_current stream = 4) %then streamX == in_stream4
+        %signal 9, 4, in_current stream %unless (streamX_handle # 0)
 
         ! We actually load the buffer as an array of bytes
         ! We need the stream handle, count of items space, item size, buffer address
         ! Where, count * itemsz = size in bytes of buffer storage
-        actualcount = readbytes( in_streams( in_current stream )_handle, count, itemsz, byteinteger( addr(ptr) ) )
+        actualcount = readbytes( streamX_handle, count, itemsz, byteinteger( addr(ptr) ) )
 
         ! If we are storing in an IMP string then we need to convert the stored buffer
         ! from C string format (zero start index)  to IMP string format
-        %if (0 <= sizeof( ptr ) <= 255) %and (typeof(ptr) = strng) %start
+        %if (0 <= len <= 255) %and (type of(ptr) = stringtype) %start
             ! It is a string!!
             ! Therefore we need to move the chars from n to n+1 location
             ! Thus, we can store the IMP string length in location 0 (its expected location)
@@ -225,260 +240,163 @@ debugstring("READBUFFER: IMPADEF:   intsz:   ='".itos(sizeof(dim),0)."'"); debug
         %result = actualcount
     %end
 
-    %external %integer %function writebuffer( %name ptr, %integer count )
-        %integer i
-        %integer framep
-        %integer %name dvp
-        %integer dim, itemsz, intsz
-        %integer lb, ub
-
-        itemsz = 1
-
-%if ((DEBUGMODE & dbgio) # 0) %start
-debug string("WRITEBUFFER: address(ptr)=".int2ascii(addr(ptr),16,0) ); debug newline
-debug string("WRITEBUFFER:  sizeof(ptr)=".int2ascii(sizeof(ptr),16,0) ); debug newline
-debug string("WRITEBUFFER:  typeof(ptr)=".int2ascii(typeof(ptr),16,0) ); debug newline
-debug string("WRITEBUFFER: count=".itos(count,0) ); debug newline
-%finish
-
-        %if (0 <= sizeof( ptr ) <= 255) %start
-            ! Ok, it should be a primitive type
-            ! We need to adjust itemsz to type size
-            ! NB strings/byte arrays have itemsz = 1
-            ! So only need to adjust for integer,float or double
-            %if (typeof(ptr) = intgr) %then itemsz = 4
-            %if (typeof(ptr) = float) %then itemsz = 4
-            %if (typeof(ptr) = double) %then itemsz = 8
-        %else
-            ! Ok,This seems to be an array/record
-            ! Get the Base/Frame Pointer
-            *mov_ framep,ebp
-
-            ! Now show the expected 3 parameters
-%if ((DEBUGMODE & dbgio) # 0) %start
-debug string("WRITEBUFFER: [framep +  8]=".itos(integer( framep + 8 ),0) ); debug newline
-debug string("WRITEBUFFER: [framep + 12]=".int2ascii(integer( framep + 12 ),16,0) ); debug newline
-debug string("WRITEBUFFER: [framep + 16]=".int2ascii(integer( framep + 16 ),16,0) ); debug newline
-%finish
-
-            dvp == integer( framep + 16 )
-            dim = integer( dvp )
-            intsz = sizeof(dim); ! get the size of a 32-bit integer
-            ! pick up the element size...
-            itemsz = integer( dvp + sizeof(dim)*(2*dim + 1) )
-
-%if ((DEBUGMODE & dbgio) # 0) %start
-debugstring("WRITEBUFFER: IMPADEF:     dim: dvp[0]='".itos(dim,0)."'"); debugnewline
-%finish
-
-            %for i=1,1,dim %cycle
-                lb = integer( dvp + sizeof(dim)*(2*i - 1) )
-                ub = integer( dvp + sizeof(dim)*(2*i) )
-
-%if ((DEBUGMODE & dbgio) # 0) %start
-debugstring("WRITEBUFFER: IMPADEF: lb['".itos(i,0)."']: dvp[".itos(2*i-1,0)."]='".itos(lb,0)."'"); debug newline
-debugstring("WRITEBUFFER: IMPADEF: ub['".itos(i,0)."']: dvp[".itos(2*i,0)."]='".itos(ub,0)."'");   debug newline
-%finish
-            %repeat
-%if ((DEBUGMODE & dbgio) # 0) %start
-debugstring("WRITEBUFFER: IMPADEF:      sz: dvp[".itos((2*dim)+ 1,0)."]='".itos(itemsz,0)."'"); debug newline
-debugstring("WRITEBUFFER: IMPADEF:   intsz:   ='".itos(sizeof(dim),0)."'"); debug newline
-%finish
-
-        %finish
-
-        %if need to initialise %then initialise io
-
-        ! can't select an invalid stream id (not stdout)
-        %signal 9, 9 %unless (0 < out_currentstream <= MAXSTREAM)
-        ! can't select a closed file
-        %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
-
-        ! We actually load the buffer as an array of bytes
-        ! We need the stream handle, count of items space, item size, buffer address
-        ! Where, count * itemsz = size in bytes of buffer storage
-        %result = writebytes( out_streams( out_current stream )_handle, count, itemsz, byteinteger( addr(ptr) ) )
-    %end
-
     %external %integer %function input stream
-
-        %if need to initialise %then initialise io
+        %if need to initialise %then initialise io system
 
         %result = in_current stream
     %end
 
-    %external %integer %function output stream
-
-        %if need to initialise %then initialise io
-
-        %result = out_current stream
-    %end
-
     %external %routine reset input
+        %record(impstream)%name streamX
 
-        %if need to initialise %then initialise io
+        %if need to initialise %then initialise io system
 
         ! can't select an invalid stream id (not stdin)
-        %signal 9, 9 %unless (0 < in_current stream <= MAXSTREAM)
+        %signal 9, 9 %unless (0 < in_current stream <= MAX INPUT STREAM)
         ! can't select a closed file
-        %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+        streamX == in_streams( in_current stream )
+!        %if (in_current stream = 1) %then streamX == in_stream1
+!        %if (in_current stream = 2) %then streamX == in_stream2
+!        %if (in_current stream = 3) %then streamX == in_stream3
+!        %if (in_current stream = 4) %then streamX == in_stream4
 
-        file rewind( in_streams(in_currentstream)_handle )
-    %end
+        %signal 9, 4, in_current stream %unless (streamX_handle # 0)
 
-    %external %routine reset output
-
-        %if need to initialise %then initialise io
-
-        ! can't select an invalid stream id (not stdout)
-        %signal 9, 9 %unless (0 < out_currentstream <= MAXSTREAM)
-        ! can't select a closed file
-        %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
-
-        file rewind( out_streams(out_currentstream)_handle )
+        file rewind( streamX_handle )
     %end
 
     %external %routine seek input( %integer displacement, pos )
+        %record(impstream)%name streamX
 
-        %if need to initialise %then initialise io
+        %if need to initialise %then initialise io system
 
         ! can't select an invalid stream id (not stdin)
-        %signal 9, 9 %unless (0 < in_current stream <= MAXSTREAM)
+        %signal 9, 9 %unless (0 < in_current stream <= MAX INPUT STREAM)
         ! can't select a closed file
-        %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+        streamX == in_streams( in_current stream )
+!        %if (in_current stream = 1) %then streamX == in_stream1
+!        %if (in_current stream = 2) %then streamX == in_stream2
+!        %if (in_current stream = 3) %then streamX == in_stream3
+!        %if (in_current stream = 4) %then streamX == in_stream4
 
-        %if (0 <= pos <= 2) %then file seek( in_streams( in_current stream)_handle, displacement, pos )
-    %end
+        %signal 9, 4, in_current stream %unless (streamX_handle # 0)
 
-    %external %routine seek output( %integer displacement, pos )
-
-        %if need to initialise %then initialise io
-
-        ! can't select an invalid stream id (not stdout)
-        %signal 9, 9 %unless (0 < out_currentstream <= MAXSTREAM)
-        ! can't select a closed file
-        %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
-
-        %if (0 <= pos <= 2) %then file seek( out_streams( out_current stream)_handle, displacement, pos )
+        %if (0 <= pos <= 2) %then file seek( streamX_handle, displacement, pos )
     %end
 
     %external %integer %function tell input
+        %record(impstream)%name streamX
 
-        %if need to initialise %then initialise io
+        %if need to initialise %then initialise io system
 
         ! can't select an invalid stream id (not stdin)
-        %signal 9, 9 %unless (0 < in_current stream <= MAXSTREAM)
+        %signal 9, 9 %unless (0 < in_current stream <= MAX INPUT STREAM)
         ! can't select a closed file
-        %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+        streamX == in_streams( in_current stream )
+!        %if (in_current stream = 1) %then streamX == in_stream1
+!        %if (in_current stream = 2) %then streamX == in_stream2
+!        %if (in_current stream = 3) %then streamX == in_stream3
+!        %if (in_current stream = 4) %then streamX == in_stream4
 
-        %result = tell( in_streams( in_current stream )_handle )
-    %end
+        %signal 9, 4, in_current stream %unless (streamX_handle # 0)
 
-    %external %integer %function tell output
-
-        %if need to initialise %then initialise io
-
-        ! can't select an invalid stream id (not stdout)
-        %signal 9, 9 %unless (0 < out_currentstream <= MAXSTREAM)
-        ! can't select a closed file
-        %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
-
-        %result = tell( out_streams( out_current stream )_handle )
+        %result = tell( streamX_handle )
     %end
 
     %external %string(255) %function input name
+        %record(impstream)%name streamX
         %string(255) name
 
-        %if need to initialise %then initialise io
+        %if need to initialise %then initialise io system
 
         ! can't select an invalid stream id
-        %signal 9, 9 %unless (0 <= in_current stream <= MAXSTREAM)
+        %signal 9, 9 %unless (0 <= in_current stream <= MAX INPUT STREAM)
         ! can't select a closed file
-        %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
+        streamX == in_streams( in_current stream )
+!        %if (in_current stream = 0) %then streamX == in_stream0
+!        %if (in_current stream = 1) %then streamX == in_stream1
+!        %if (in_current stream = 2) %then streamX == in_stream2
+!        %if (in_current stream = 3) %then streamX == in_stream3
+!        %if (in_current stream = 4) %then streamX == in_stream4
 
-        name = in_streams( in_current stream )_file name
+        %signal 9, 4, in_current stream %unless (streamX_handle # 0)
+
+        name = streamX_file name
 
         %result = name
     %end
 
-    %external %string(255) %function output name
-        %if need to initialise %then initialise io
-
-        ! can't select an invalid stream id
-        %signal 9, 9 %unless (0 <= out_current stream <= MAXSTREAM)
-        ! can't select a closed file
-        %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
-
-        %result = out_streams( out_current stream )_file name
-    %end
-
     %external %routine select input( %integer stream id )
-        %if need to initialise %then initialise io
+        %record(impstream)%name streamX
+
+        %if need to initialise %then initialise io system
 
         ! can't select an invalid stream id
-        %signal 9, 9 %unless (0 <= stream id <= MAXSTREAM)
+        %signal 9, 9 %unless (0 <= stream id <= MAX INPUT STREAM)
         ! can't select a closed file
-        %signal 9, 4, stream id %unless (in_streams( stream id )_handle # 0)
+        streamX == in_streams( stream id )
+!        %if (stream id = 0) %then streamX == in_stream0
+!        %if (stream id = 1) %then streamX == in_stream1
+!        %if (stream id = 2) %then streamX == in_stream2
+!        %if (stream id = 3) %then streamX == in_stream3
+!        %if (stream id = 4) %then streamX == in_stream4
+
+        %signal 9, 4, stream id %unless (streamX_handle # 0)
 
         in_current stream = stream id;
     %end
 
-    %external %routine select output( %integer stream id )
-        %if need to initialise %then initialise io
-
-        ! can't select an invalid stream id
-        %signal 9, 9 %unless (0 <= stream id <= MAXSTREAM)
-
-        ! can't select a closed file
-        %signal 9, 5, stream id %unless (out_streams( stream id )_handle # 0)
-
-        out_current stream = stream id;
-    %end
-
     %external %routine close input
-        %if need to initialise %then initialise io
+        %record(impstream)%name streamX
+
+        %if need to initialise %then initialise io system
 
         ! can't close terminal input
         ! can't close an already closed file
-        %if (0 < in_current stream <= MAXSTREAM ) %and (in_streams( in_current stream )_handle # 0) %start
-            close( in_streams( in_current stream )_handle )
-            initialise stream( in_streams( in_current stream ) )
-        %finish
-    %end
+        %if (0 < in_current stream <= MAX INPUT STREAM ) %start
+            streamX == in_streams( in_current stream )
+!            %if (in_current stream = 1) %then streamX == in_stream1
+!            %if (in_current stream = 2) %then streamX == in_stream2
+!            %if (in_current stream = 3) %then streamX == in_stream3
+!            %if (in_current stream = 4) %then streamX == in_stream4
 
-    %external %routine close output
-        %if need to initialise %then initialise io
-
-        ! can't close terminal output
-        ! can't close an already closed file
-        %if (0 < out_current stream <= MAXSTREAM ) %and (out_streams( out_current stream )_handle # 0) %start
-            close( out_streams( out_current stream )_handle )
-            initialise stream( out_streams( out_current stream ) )
+            %if (streamX_handle # 0) %start
+                close( streamX_handle )
+                initialise stream( streamX )
+            %finish
         %finish
     %end
 
     %external %routine open input( %integer stream  id, %string(255) file name )
+        %record(impstream)%name streamX
         %integer handle
         %integer flags = IS INPUT ! IS TEXT
         %string(4) mode = "r"
         %string(255) xxx
         %string(4) yyy
 
-        xxx = filename
-        yyy = mode
-
-        ! Tweak xxx,yyy to be C strings
-        ! Why? because we are sending them to a C function expecting C strings
-        imptocstring( xxx )
-        imptocstring( yyy )
-
-        %if need to initialise %then initialise io
+        %if need to initialise %then initialise io system
 
         ! Error out if streamid not in legal range
-        %signal 9, 9, stream id %unless (0 < stream id <= MAXSTREAM )
+        %signal 9, 9, stream id %unless (0 < stream id <= MAX INPUT STREAM )
 
         ! If file not open
-        %if (in_streams( stream id )_handle = 0) %start
+        streamX == in_streams( stream id )
+!        %if (stream id = 1) %then streamX == in_stream1
+!        %if (stream id = 2) %then streamX == in_stream2
+!        %if (stream id = 3) %then streamX == in_stream3
+!        %if (stream id = 4) %then streamX == in_stream4
+
+        %if (streamX_handle = 0) %start
+
+            xxx = filename
+            yyy = mode
+
+            ! Tweak xxx,yyy to be C strings
+            ! Why? because we are sending them to a C function expecting C strings
+            imptocstring( xxx )
+            imptocstring( yyy )
+
             handle = openfile( addr(yyy), addr(xxx) )
 
             %if (handle = 0) %start
@@ -494,34 +412,48 @@ debugnewline
 debugstring("OPENINPUT: filename='".filename."' now open for stream(".itos(stream id,0).")")
 debugnewline
 %finish
-                in_streams( stream id )_handle = handle
-                in_streams( stream id )_file name = file name
-                in_streams( stream id )_flags = flags
+                streamX == in_streams( stream id )
+!                %if (stream id = 1) %then streamX == in_stream1
+!                %if (stream id = 2) %then streamX == in_stream2
+!                %if (stream id = 3) %then streamX == in_stream3
+!                %if (stream id = 4) %then streamX == in_stream4
+
+                streamX_handle = handle
+                streamX_file name = file name
+                streamX_flags = flags
             %finish
         %finish
     %end
 
     %external %routine open binary input( %integer stream  id, %string(255) file name )
+        %record(impstream)%name streamX
         %integer handle
         %integer flags = IS INPUT ! IS BINARY
         %string(4) mode = "rb"
         %string(255) xxx
         %string(4) yyy
 
-        xxx = filename
-        yyy = mode
+        %if need to initialise %then initialise io system
 
-        ! Tweak xxx,yyy to be C strings
-        ! Why? because we are sending them to a C function expecting C strings
-        imptocstring( xxx )
-        imptocstring( yyy )
-
-        %if need to initialise %then initialise io
-
-        %signal 9, 9, stream id %unless (0 < stream id <= MAXSTREAM )
+        %signal 9, 9, stream id %unless (0 < stream id <= MAX INPUT STREAM )
 
         ! If file not open
-        %if (in_streams( stream id )_handle = 0) %start
+        streamX == in_streams( stream id )
+!        %if (stream id = 1) %then streamX == in_stream1
+!        %if (stream id = 2) %then streamX == in_stream2
+!        %if (stream id = 3) %then streamX == in_stream3
+!        %if (stream id = 4) %then streamX == in_stream4
+
+        %if (streamX_handle = 0) %start
+
+            xxx = filename
+            yyy = mode
+
+            ! Tweak xxx,yyy to be C strings
+            ! Why? because we are sending them to a C function expecting C strings
+            imptocstring( xxx )
+            imptocstring( yyy )
+
             handle = openfile( addr(yyy), addr(xxx) )
 
             %if (handle = 0) %start
@@ -537,35 +469,349 @@ debugnewline
 debugstring("OPENBINARYINPUT: filename='".filename."' now open for stream(".itos(stream id,0).")")
 debugnewline
 %finish
-                in_streams( stream id )_handle = handle
-                in_streams( stream id )_file name = file name
-                in_streams( stream id )_flags = flags
+                streamX == in_streams( stream id )
+!                %if (stream id = 1) %then streamX == in_stream1
+!                %if (stream id = 2) %then streamX == in_stream2
+!                %if (stream id = 3) %then streamX == in_stream3
+!                %if (stream id = 4) %then streamX == in_stream4
+
+                streamX_handle = handle
+                streamX_file name = file name
+                streamX_flags = flags
+            %finish
+        %finish
+    %end
+
+    %external %integer %function next symbol
+        %record(impstream)%name streamX
+        %integer ch,i
+
+        %if need to initialise %then initialise io system
+
+        %signal 9, 9, in_current stream %unless (0 <= in_current stream <= MAX INPUT STREAM )
+
+        streamX == in_streams( in_current stream )
+!        %if (in_current stream = 0) %then streamX == in_stream0
+!        %if (in_current stream = 1) %then streamX == in_stream1
+!        %if (in_current stream = 2) %then streamX == in_stream2
+!        %if (in_current stream = 3) %then streamX == in_stream3
+!        %if (in_current stream = 4) %then streamX == in_stream4
+
+        %signal 9, 4, in_current stream %unless (streamX_handle # 0)
+
+        ! Check to see if we already have a lookahead char (actually integer)
+        %if (streamX_lookahead < 0) %start
+            %if (in_current stream = 0) %start
+                %if (tty needs a prompt # 0) %start
+                    tty needs a prompt = 0;
+
+                    %for i = 1,1,length( input prompt ) %cycle
+                        put char( error stream_handle, charno( input prompt, i ) )
+                    %repeat
+
+                %finish
+            %finish
+
+            ch = get char ( streamX_handle )
+            ! remember ch for future use
+            streamX_lookahead = ch
+
+            ! NL => we should prompt next time
+            %if (in_current stream = 0) %and (ch = nl) %then tty needs a prompt = 1;
+
+            ! Are we attempting to read after the end of file
+            %signal 9,0, in_current stream %if (ch < 0)        
+
+        %finish
+        
+        %result = streamX_lookahead
+    %end
+
+    %external %routine read symbol( %integer %name ch )
+        %record(impstream)%name streamX
+
+        %if need to initialise %then initialise io system
+
+        ch = next symbol
+        streamX == in_streams( in_current stream )
+!        %if (in_current stream = 0) %then streamX == in_stream0
+!        %if (in_current stream = 1) %then streamX == in_stream1
+!        %if (in_current stream = 2) %then streamX == in_stream2
+!        %if (in_current stream = 3) %then streamX == in_stream3
+!        %if (in_current stream = 4) %then streamX == in_stream4
+
+        streamX_lookahead = -1
+
+        ! Are we attempting to read after the end of file
+        %signal 9,1, in_current stream %if (ch < 0)        
+
+    %end
+!------------------------------------------------------------------------------
+! Output routines
+!------------------------------------------------------------------------------
+    %routine initialise output system
+        %record(impstream)%name streamX
+
+        %integer i
+
+        out_current stream = 0
+
+        %for i = 0,1,MAX OUTPUT STREAM %cycle
+            streamX == out_streams(i)
+            initialise stream( streamX )
+        %repeat
+!        streamX = out_stream0
+!        initialise stream( streamX )
+!        streamX = out_stream1
+!        initialise stream( streamX )
+!        streamX = out_stream2
+!        initialise stream( streamX )
+!        streamX = out_stream3
+!        initialise stream( streamX )
+
+        streamX == out_streams(0)
+!        streamx == out_stream0
+
+        streamX_handle = get std out handle
+        streamX_file name = "stdout"
+        streamX_flags = IS OUTPUT ! IS TEXT
+
+        ! Don't forget to initialise the debug output stream
+        streamX == error stream
+        initialise stream( streamX )
+        streamX_handle = get std err handle
+        streamX_file name = "stderr"
+        streamX_flags = IS OUTPUT ! IS TEXT
+    %end
+
+    %routine terminate output system
+        %record(impstream)%name streamX
+        %integer i
+
+        out_current stream = -1
+
+        %for i = 1,1,MAX OUTPUT STREAM %cycle
+            streamX == out_streams(i)
+            finalise stream( streamX )
+        %repeat
+!        streamX == out_stream1
+!        finalise stream( streamX )
+!        streamX == out_stream2
+!        finalise stream( streamX )
+!        streamX == out_stream3
+!        finalise stream( streamX )
+    %end
+
+    %external %routine debug symbol( %integer c )
+        %if need to initialise %then initialise io system
+
+        %if (error stream_handle # 0) %then put char( error stream_handle, c )
+    %end
+
+    %external %routine debug real( %long %real d )
+        %if need to initialise %then initialise io system
+
+        %if (error stream_handle # 0) %then put double( error stream_handle, d )
+    %end
+
+    %external %integer %function writebuffer( %name ptr, %integer count )
+        %record(impstream)%name streamX
+        %integer len,adr,type
+        %integer itemsz
+        %integer i
+        %integer res
+
+        len = size of(ptr)
+        adr = addr(ptr)
+        type = type of(ptr)
+
+%if ((DEBUGMODE & dbgio) # 0) %start
+debug string("READBUFFER: address(ptr)=".int2ascii(adr,16,0) );  debug newline
+debug string("READBUFFER: size of(ptr)=".int2ascii(len,16,0) );  debug newline
+debug string("READBUFFER: type of(ptr)=".int2ascii(type,16,0) ); debug newline
+debug string("READBUFFER:        count=".itos(count,0) );        debug newline
+%finish
+
+        ! check if we can write a valid data type
+        %signal 5,5,type %unless acceptabletype(type) %and (len = count)
+
+        ! assume we are reading data into a byte array (or string)
+        itemsz = -1
+
+        %if (type = integertype)  %then itemsz = integersize
+        %if (type = realtype)     %then itemsz = realsize
+        %if (type = stringtype)   %then itemsz = len
+        %if (type = bytetype)     %then itemsz = bytesize
+        %if (type = longrealtype) %then itemsz = longrealsize
+        %if (type = recordtype)   %then itemsz = len
+
+        %if need to initialise %then initialise io system
+
+        ! can't select an invalid stream id (not stdout)
+        %signal 9, 9 %unless (0 < out_currentstream <= MAX OUTPUT STREAM)
+        ! can't select a closed file
+        streamX == out_streams( out_current stream )
+!        %if (out_current stream = 1) %then streamX == out_stream1
+!        %if (out_current stream = 2) %then streamX == out_stream2
+!        %if (out_current stream = 3) %then streamX == out_stream3
+
+        %signal 9, 5, out_current stream %unless (streamX_handle # 0)
+
+        ! We actually load the buffer as an array of bytes
+        ! We need the stream handle, count of items space, item size, buffer address
+        ! Where, count * itemsz = size in bytes of buffer storage
+        %result = writebytes( streamX_handle, count, itemsz, byteinteger( addr(ptr) ) )
+    %end
+
+    %external %integer %function output stream
+        %if need to initialise %then initialise io system
+
+        %result = out_current stream
+    %end
+
+    %external %routine reset output
+        %record(impstream)%name streamX
+
+        %if need to initialise %then initialise io system
+
+        ! can't select an invalid stream id (not stdout)
+        %signal 9, 9 %unless (0 < out_currentstream <= MAX OUTPUT STREAM)
+        ! can't select a closed file
+        streamX == out_streams( out_current stream )
+!        %if (out_current stream = 1) %then streamX == out_stream1
+!        %if (out_current stream = 2) %then streamX == out_stream2
+!        %if (out_current stream = 3) %then streamX == out_stream3
+
+        %signal 9, 5, out_current stream %unless (streamX_handle # 0)
+
+        file rewind( streamX_handle )
+    %end
+
+    %external %routine seek output( %integer displacement, pos )
+        %record(impstream)%name streamX
+
+        %if need to initialise %then initialise io system
+
+        ! can't select an invalid stream id (not stdout)
+        %signal 9, 9 %unless (0 < out_currentstream <= MAX OUTPUT STREAM)
+        ! can't select a closed file
+        streamX == out_streams( out_current stream )
+!        %if (out_current stream = 1) %then streamX == out_stream1
+!        %if (out_current stream = 2) %then streamX == out_stream2
+!        %if (out_current stream = 3) %then streamX == out_stream3
+
+        %signal 9, 5, out_current stream %unless (streamX_handle # 0)
+
+        %if (0 <= pos <= 2) %start
+            file seek( streamX_handle, displacement, pos )
+        %finish
+    %end
+
+    %external %integer %function tell output
+        %record(impstream)%name streamX
+
+        %if need to initialise %then initialise io system
+
+        ! can't select an invalid stream id (not stdout)
+        %signal 9, 9 %unless (0 < out_currentstream <= MAX OUTPUT STREAM)
+        ! can't select a closed file
+        streamX == out_streams( out_current stream )
+!        %if (out_current stream = 1) %then streamX == out_stream1
+!        %if (out_current stream = 2) %then streamX == out_stream2
+!        %if (out_current stream = 3) %then streamX == out_stream3
+
+        %signal 9, 5, out_current stream %unless (streamX_handle # 0)
+
+        %result = tell( streamX_handle )
+    %end
+
+    %external %string(255) %function output name
+        %record(impstream)%name streamX
+
+        %if need to initialise %then initialise io system
+
+        ! can't select an invalid stream id
+        %signal 9, 9 %unless (0 <= out_current stream <= MAX OUTPUT STREAM)
+        ! can't select a closed file
+        streamX == out_streams( out_current stream )
+!        %if (out_current stream = 0) %then streamX == out_stream0
+!        %if (out_current stream = 1) %then streamX == out_stream1
+!        %if (out_current stream = 2) %then streamX == out_stream2
+!        %if (out_current stream = 3) %then streamX == out_stream3
+
+        %signal 9, 5, out_current stream %unless (streamX_handle # 0)
+
+        %result = streamX_file name
+    %end
+
+    %external %routine select output( %integer stream id )
+        %record(impstream)%name streamX
+
+        %if need to initialise %then initialise io system
+
+        ! can't select an invalid stream id
+        %signal 9, 9 %unless (0 <= stream id <= MAX OUTPUT STREAM)
+
+        ! can't select a closed file
+        streamX == out_streams( stream id )
+!        %if (stream id = 0) %then streamX == out_stream0
+!        %if (stream id = 1) %then streamX == out_stream1
+!        %if (stream id = 2) %then streamX == out_stream2
+!        %if (stream id = 3) %then streamX == out_stream3
+
+        %signal 9, 5, stream id %unless (streamX_handle # 0)
+
+        out_current stream = stream id
+    %end
+
+    %external %routine close output
+        %record(impstream)%name streamX
+
+        %if need to initialise %then initialise io system
+
+        ! can't close terminal output
+        ! can't close an already closed file
+        %if (0 < out_current stream <= MAX OUTPUT STREAM ) %start
+            streamX == out_streams( out_current stream )
+!            %if (out_current stream = 1) %then streamX == out_stream1
+!            %if (out_current stream = 2) %then streamX == out_stream2
+!            %if (out_current stream = 3) %then streamX == out_stream3
+
+            %if (streamX_handle # 0) %start
+                close( streamX_handle )
+                initialise stream( streamX )
             %finish
         %finish
     %end
 
     %external %routine open output( %integer stream  id, %string(255) file name )
+        %record(impstream)%name streamX
         %integer handle
         %integer flags = IS OUTPUT ! IS TEXT
         %string(4) mode = "w"
         %string(255) xxx
         %string(4) yyy
 
-        xxx = filename
-        yyy = mode
-
-        ! Tweak xxx,yyy to be C strings
-        ! Why? because we are sending them to a C function expecting C strings
-        imptocstring( xxx )
-        imptocstring( yyy )
-
-        %if need to initialise %then initialise io
+        %if need to initialise %then initialise io system
 
         ! Error out if streamid not in legal range
-        %signal 9, 9, stream id %unless (0 < stream id <= MAXSTREAM )
+        %signal 9, 9, stream id %unless (0 < stream id <= MAX OUTPUT STREAM )
 
         ! If file not open
-        %if (out_streams( stream id )_handle = 0) %start
+        streamX == out_streams( stream id )
+!        %if (stream id = 1) %then streamX == out_stream1
+!        %if (stream id = 2) %then streamX == out_stream2
+!        %if (stream id = 3) %then streamX == out_stream3
+
+        %if (streamX_handle = 0) %start
+            xxx = filename
+            yyy = mode
+
+            ! Tweak xxx,yyy to be C strings
+            ! Why? because we are sending them to a C function expecting C strings
+            imptocstring( xxx )
+            imptocstring( yyy )
+
             handle = openfile( addr(yyy), addr(xxx) )
 
             %if (handle = 0) %start
@@ -581,33 +827,40 @@ debugnewline
 debugstring("OPENOUTPUT: filename='".filename."' now open for stream(".itos(stream id,0).")")
 debugnewline
 %finish
-                out_streams( stream id )_handle = handle
-                out_streams( stream id )_file name = file name
-                out_streams( stream id )_flags = flags
+                streamX_handle = handle
+                streamX_file name = file name
+                streamX_flags = flags
             %finish
         %finish
     %end
 
     %external %routine open binary output( %integer stream  id, %string(255) file name )
+        %record(impstream)%name streamX
         %integer handle
         %integer flags = IS OUTPUT ! IS BINARY
         %string(4) mode = "wb"
         %string(255) xxx
         %string(4) yyy
 
-        xxx = filename
-        yyy = mode
+        %if need to initialise %then initialise io system
 
-        ! Tweak xxx,yyy to be C strings
-        ! Why? because we are sending them to a C function expecting C strings
-        imptocstring( xxx )
-        imptocstring( yyy )
-
-        %if need to initialise %then initialise io
-        %signal 9, 9, stream id %unless (0 < stream id <= MAXSTREAM )
+        %signal 9, 9, stream id %unless (0 < stream id <= MAX OUTPUT STREAM )
 
         ! If file not open
-        %if (out_streams( stream id )_handle = 0) %start
+        streamX == out_streams( stream id )
+!        %if (stream id = 1) %then streamX == out_stream1
+!        %if (stream id = 2) %then streamX == out_stream2
+!        %if (stream id = 3) %then streamX == out_stream3
+
+        %if (streamX_handle = 0) %start
+            xxx = filename
+            yyy = mode
+
+            ! Tweak xxx,yyy to be C strings
+            ! Why? because we are sending them to a C function expecting C strings
+            imptocstring( xxx )
+            imptocstring( yyy )
+
             handle = openfile( addr(yyy), addr(xxx) )
 
             %if (handle = 0) %start
@@ -623,106 +876,99 @@ debugnewline
 debugstring("OPENBINARYOUTPUT: filename='".filename."' now open for stream(".itos(stream id,0).")")
 debugnewline
 %finish
-                out_streams( stream id )_handle = handle
-                out_streams( stream id )_file name = file name
-                out_streams( stream id )_flags = flags
+                streamX_handle = handle
+                streamX_file name = file name
+                streamX_flags = flags
             %finish
         %finish
     %end
 
     %external %routine flush output
+        %record(impstream)%name streamX
 
-        %if need to initialise %then initialise io
+        %if need to initialise %then initialise io system
+
         ! only interrogate actual opened files (including stdout)
-        %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
-        %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+        %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAX OUTPUT STREAM )
 
-        flush( out_streams( out_current stream )_handle )
-    %end
+        streamX == out_streams( out_current stream )
+!        %if (out_current stream = 0) %then streamX == out_stream0
+!        %if (out_current stream = 1) %then streamX == out_stream1
+!        %if (out_current stream = 2) %then streamX == out_stream2
+!        %if (out_current stream = 3) %then streamX == out_stream3
 
-    %own %string(31) input prompt = "prompt ->"
-    %own %integer tty needs a prompt = 1
+        %signal 9, 5, out_current stream %unless (streamX_handle # 0)
 
-    %external %routine prompt( %string(31) s )
-        input prompt = s
-    %end
-
-    %external %integer %function next symbol
-        %integer ch
-        %integer i
-
-        %if need to initialise %then initialise io
-        %signal 9, 9, in_current stream %unless (0 <= in_current stream <= MAXSTREAM )
-        %signal 9, 4, in_current stream %unless (in_streams( in_current stream )_handle # 0)
-
-        ! Check to see if we already have a lookahead char (actually integer)
-        %if (in_streams( in_current stream )_lookahead < 0) %start
-            %if (in_current stream = 0) %start
-                %if (tty needs a prompt # 0) %start
-                    tty needs a prompt = 0;
-
-                    %for i = 1,1,length( input prompt ) %cycle
-                        put char( error stream_handle, charno( input prompt, i ) )
-                    %repeat
-
-                %finish
-            %finish
-
-            ch = get char ( in_streams( in_current stream )_handle )
-            ! remember ch for future use
-            in_streams( in_current stream )_lookahead = ch
-
-            ! NL => we should prompt next time
-            %if (in_current stream = 0) %and (ch = nl) %then tty needs a prompt = 1;
-
-            ! Are we attempting to read after the end of file
-            %signal 9,0, in_current stream %if (ch < 0)        
-
-        %finish
-        
-        %result = in_streams( in_current stream )_lookahead
-    %end
-
-    %external %routine read symbol( %integer %name ch )
-
-        %if need to initialise %then initialise io
-
-        ch = next symbol
-        in_streams( in_current stream )_lookahead = -1
-
-        ! Are we attempting to read after the end of file
-        %signal 9,1, in_current stream %if (ch < 0)        
-
+        flush( streamX_handle )
     %end
 
     %external %routine print symbol( %integer c )
-        %if need to initialise %then initialise io
+        %record(impstream)%name streamX
 
-        %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
-        %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+        %if need to initialise %then initialise io system
+
+        %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAX OUTPUT STREAM )
+
+        streamX == out_streams( out_current stream )
+!        %if (out_current stream = 0) %then streamX == out_stream0
+!        %if (out_current stream = 1) %then streamX == out_stream1
+!        %if (out_current stream = 2) %then streamX == out_stream2
+!        %if (out_current stream = 3) %then streamX == out_stream3
+
+        %signal 9, 5, out_current stream %unless (streamX_handle # 0)
 
         ! Not sure what the official IMP behaviour is for output on a closed file.
         ! We choose to silently ignore it...
         ! check file open before writing?
-        %if (out_streams( out_current stream )_handle # 0) %start
-            put char( out_streams( out_current stream )_handle, c)
+        %if (streamX_handle # 0) %start
+            put char( streamX_handle, c)
             %if (c = nl) %then flush output 
         %finish
     %end
 
     %external %routine print real( %long %real d )
-        %if need to initialise %then initialise io
+        %record(impstream)%name streamX
 
-        %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAXSTREAM )
-        %signal 9, 5, out_current stream %unless (out_streams( out_current stream )_handle # 0)
+        %if need to initialise %then initialise io system
+
+        %signal 9, 9, out_current stream %unless (0 <= out_current stream <= MAX OUTPUT STREAM )
+
+        streamX == out_streams( out_current stream )
+!        %if (out_current stream = 0) %then streamX == out_stream0
+!        %if (out_current stream = 1) %then streamX == out_stream1
+!        %if (out_current stream = 2) %then streamX == out_stream2
+!        %if (out_current stream = 3) %then streamX == out_stream3
+
+        %signal 9, 5, out_current stream %unless (streamX_handle # 0)
 
         ! Not sure what the official IMP behaviour is for output on a closed file.
         ! We choose to silently ignore it...
         ! check file open before writing?
-        %if (out_streams( out_current stream )_handle # 0) %then put double( out_streams( out_current stream )_handle, d)
+        %if (streamX_handle # 0) %then put double( streamX_handle, d)
+    %end
+!------------------------------------------------------------------------------
+! Initialisation routines
+!------------------------------------------------------------------------------
+    %external %routine initialise io system
+        %integer i
+
+        null stream_handle = 0
+        null stream_file name = "null"
+
+        initialise input system
+        initialise output system
+
+        initialised state = initialised
     %end
 
-    %routine parse list( %string(255) list, %integer direction)
+    %external %routine terminate io system
+        terminate input system
+        terminate output system
+
+        initialised state = uninitialised
+    %end
+
+    %routine parse input list( %string(255) list )
         %string(255) x,a,c,mode,file
         %integer streamid
 
@@ -730,7 +976,7 @@ debugnewline
         streamid = 1
         %while length(x) > 0 %cycle
 
-            %exit %unless (streamid <= get max stream)
+            %exit %unless (1 <= streamid <= MAX INPUT STREAM)
 
             ! split the comma separated list
             length(a) = 0
@@ -749,11 +995,46 @@ debugnewline
             %exit %unless length( file ) > 0
 
             %if length(mode) = 0 %start
-                %if (direction = FILE IN) %then open input( streamid, file )
-                %if (direction = FILE OUT) %then open output( streamid, file )
+                open input( streamid, file )
             %finish %else %start
-                %if (direction = FILE IN) %then open binary input( streamid, file )
-                %if (direction = FILE OUT) %then open binary output( streamid, file )
+                open binary input( streamid, file )
+            %finish
+                
+            x = c
+            streamid = streamid + 1
+        %repeat
+    %end
+
+    %routine parse output list( %string(255) list )
+        %string(255) x,a,c,mode,file
+        %integer streamid
+
+        x = list
+        streamid = 1
+        %while length(x) > 0 %cycle
+
+            %exit %unless (1 <= streamid <= MAX OUTPUT STREAM)
+
+            ! split the comma separated list
+            length(a) = 0
+            length(c) = 0
+            x->a.(",").c
+
+            %exit %unless length(a) > 0
+
+            file = a
+            length(mode) = 0
+            %if (charno(a,length(a)) = 'b') %and (charno(a,length(a) - 1 ) = ':') %start
+                length(file) = length(file) - 2
+                mode = ":b"
+            %finish
+
+            %exit %unless length( file ) > 0
+
+            %if length(mode) = 0 %start
+                open output( streamid, file )
+            %finish %else %start
+                open binary output( streamid, file )
             %finish
                 
             x = c
@@ -771,8 +1052,8 @@ debugnewline
 
         s -> a.(b).c
 
-        %if length( a ) > 0 %then parse list( a, FILE IN )
-        %if length( c ) > 0 %then parse list( c, FILE OUT )
+        %if length( a ) > 0 %then parse input list( a )
+        %if length( c ) > 0 %then parse output list( c )
 
         %result = 0
     %end
