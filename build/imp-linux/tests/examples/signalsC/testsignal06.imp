@@ -1,0 +1,31 @@
+%begin
+
+    %include "inc.signals"
+
+    ! Declarations of some Windows O/S routines
+    %external %routine %spec impsleep  %alias "_SNOOZE" ( %integer millis )
+
+    ! declare the external signal handler
+    %external %routine %spec myhandler (%integer signum )
+
+    %constinteger s = 1
+    %integer i,flag
+
+    ! register signal handler for SIGINT
+    flag = impsignal(my handler,SIGINT)
+    printstring( "result of registering signal handler=".itos(flag,0)); newline
+    %if (flag = -1) %start
+        printstring("Failed to register the signal handler");newline
+        %stop
+    %finish %else %start
+        printstring("Successfully registered the signal handler");newline
+    %finish
+
+    printstring("Inside main function");newline
+    %for i=1,1,2000 %cycle; !Infinite loop
+        printstring( itos(i,0)." : Inside main function");newline
+        impsleep(s*1000);  ! Delay for s seconds (units in milliseconds)
+    %repeat
+    
+%end
+%end %of %file

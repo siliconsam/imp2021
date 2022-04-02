@@ -1,0 +1,45 @@
+
+    ! grab the useful signal id's and declare access to the O/S signal, raise routines.
+    ! These are renamed as follows:
+    ! O/S routine == IMP routine
+    !      signal == impsignal
+    !       raise == impraise
+    %include "inc.signals"
+
+    ! A test routine to react to the SIGINT signal
+    ! It allows 'max interrupts' instances of the SIGINT signal
+    ! It re-registers itself upto 'max interrupts' times
+    ! then finally gives up in disgust!!!!
+    !
+    ! Microsoft recommends that no print routine should be used inside a signal handler
+    ! but this is a demo, so what the heck!
+    %external %routine myhandler(%integer signum )
+        %constinteger max interrupts = 5
+        %owninteger interrupt count = 0
+        %integer flag
+
+        interrupt count = interrupt count + 1
+        printstring( "Inside 'signal handler' for signal=(".itos(signum,0).") for 'interrupt count'=".itos(interrupt count,0));newline
+
+        %if (interrupt count < max interrupts) %start
+
+            printstring( "About to re-register 'signal handler' since 'interrupt count'=".itos( interrupt count,0)." < ".itos(max interrupts,0));newline
+
+            ! re-register signal handler for SIGINT
+            ! Use the hack of specifying myhandler as an %external %routine
+            ! If myhandler was an "internal" routine then the linker would NOT see myhandler as a symbol
+            flag = impsignal(my handler,SIGINT)
+
+            printstring( "result of impsignal=".itos(flag,0));newline
+            %if (flag = -1) %start
+                printstring("Failure registering SIGINT 'signal handler'");newline
+            %finish %else %start
+                printstring("Success registering SIGINT 'signal handler'");newline
+            %finish
+
+        %finish %else %start
+            printstring( "Skipping re-register of 'signal handler' since 'interrupt count'=".itos(interrupt count,0)." >= ".itos(max interrupts,0));newline
+        %finish
+    %end
+
+%end %of %file

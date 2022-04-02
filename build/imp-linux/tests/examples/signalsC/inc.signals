@@ -1,0 +1,14 @@
+    ! Allowed signals within Windows
+    %constinteger SIGINT = 2
+    %constinteger SIGILL = 4
+    %constinteger SIGFPE = 8
+    %constinteger SIGSEGV = 11
+    %constinteger SIGTERM = 15
+    %constinteger SIGABRT = 6
+
+    ! Declarations of some Windows O/S routines
+    ! remember IMP reverses parameter order for C
+    %external %integer %function %spec impsignal %alias "_signal" (%routine handler( %integer s ), %integer sx )
+    %external %routine %spec impraise  %alias "_raise"  (%integer s )
+
+%end %of %file

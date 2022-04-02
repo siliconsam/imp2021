@@ -1,0 +1,17 @@
+%begin
+    %long %long %integer top
+    read(top); ! grab a value from the input data
+    %if (top < 1) %then top = 5;
+
+    %begin
+        %long %integer i
+        %long %integer %array table(1:top)
+
+        %for i=1,1,top %cycle
+            table(i) = 2*i
+            printstring("TOP(".itos(i,0).")=".itos(table(i),0));newline
+        %repeat        
+        
+    %end
+
+%endofprogram

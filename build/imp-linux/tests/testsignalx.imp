@@ -6,8 +6,8 @@
     %routine level 5
         %on %event 6 %start
             %string(255) msg
-            get eventmessage( msg )
-            printstring("At level 5 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            msg = event_message
+            printstring("At level 5 handling Event (".itos(event_event,0).",".itos(event_sub,0).",".itos(event_info,0).")");newline
             printstring("Error message ='".msg."'"); newline            
             -> lev5
         %finish
@@ -23,8 +23,8 @@
     %routine level 4
         %on %event 5 %start
             %string(255) msg
-            get eventmessage( msg )
-            printstring("At level 4 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            msg = event_message
+            printstring("At level 4 handling Event (".itos(event_event,0).",".itos(event_sub,0).",".itos(event_info,0).")");newline
             printstring("Error message ='".msg."'"); newline            
             -> lev4
         %finish
@@ -38,8 +38,8 @@
     %routine level 3
         %on %event 4 %start
             %string(255) msg
-            get eventmessage( msg )
-            printstring("At level 3 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            msg = event_message
+            printstring("At level 3 handling Event (".itos(event_event,0).",".itos(event_sub,0).",".itos(event_info,0).")");newline
             printstring("Error message ='".msg."'"); newline            
             -> lev3
         %finish
@@ -53,8 +53,8 @@
     %routine level 2
         %on %event 3 %start
             %string(255) msg
-            get eventmessage( msg )
-            printstring("At level 2 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            msg = event_message
+            printstring("At level 2 handling Event (".itos(event_event,0).",".itos(event_sub,0).",".itos(event_info,0).")");newline
             printstring("Error message ='".msg."'"); newline            
             -> lev2
         %finish
@@ -69,8 +69,8 @@
 
         %on %event 2 %start
             %string(255) msg
-            get eventmessage( msg )
-            printstring("At level 1 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            msg = event_message
+            printstring("At level 1 handling Event (".itos(event_event,0).",".itos(event_sub,0).",".itos(event_info,0).")");newline
             printstring("Error message ='".msg."'"); newline            
             -> lev1
         %finish
@@ -83,8 +83,8 @@
 
     %on %event 1 %start
             %string(255) msg
-            get eventmessage( msg )
-            printstring("At level 0 handling Event (".itos(get event,0).",".itos(get event sub,0).",".itos(get event info,0).")");newline
+            msg = event_message
+            printstring("At level 0 handling Event (".itos(event_event,0).",".itos(event_sub,0).",".itos(event_info,0).")");newline
             printstring("Error message ='".msg."'"); newline            
         -> lev0
     %finish
@@ -103,4 +103,5 @@ lev0:
 
 theend:
     cleardebug
+
 %endofprogram

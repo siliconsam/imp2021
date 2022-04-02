@@ -1,0 +1,36 @@
+%begin
+    %external %routine %spec baggins ( %name n, %string(*)%name var, %integer p,q )
+
+    %string(31) vname
+    %integer to,so
+    %string(255)         v1  = "ABCDEFGHIJ"
+    %string(15)          v2  = "ABCDEFGHIJ"
+
+    %string(63)   %array v3(1:4)
+    %string(31)   %array v4(1:5,1:6)
+
+    newline
+    printstring( "    Running TestPCString" ); newline
+    newline
+
+    vname = "v-string(255)"
+    to = typeof(v1)
+    so = sizeof(v1)
+    baggins ( v1,vname,to,so )
+
+    vname = "v-string(15)"
+    to = typeof(v2)
+    so = sizeof(v2)
+    baggins ( v2,vname,to,so )
+
+    vname = "v-string(63)-array(1D)"
+    to = typeof(v3)
+    so = sizeof(v3)
+    baggins ( v3,vname,to,so )
+
+    vname = "v-string(31)-array(2D)"
+    to = typeof(v4)
+    so = sizeof(v4)
+    baggins ( v4,vname,to,so )
+
+%endofprogram

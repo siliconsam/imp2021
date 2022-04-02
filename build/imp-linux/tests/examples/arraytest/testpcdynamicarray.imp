@@ -1,0 +1,37 @@
+%begin
+    %long %integer top
+
+    newline
+    printstring( "    Running TestPCDynamicArray" ); newline
+    newline
+
+    read(top); ! grab a value from the input data
+    %if (top < 1) %then top = 5;
+
+    %begin
+        %long %integer i
+        %long %integer %array table(1:top)
+
+        ! Write to the dynamic array
+        %for i=1,1,top %cycle
+            table(i) = 2*i
+        %repeat        
+
+        ! read from the dynamic array
+        %for i=1,1,top %cycle
+            printstring( "TOP(" )
+            write( i, 0 )
+!            printstring( itos(i,0) )
+            printstring( ")=" )
+            write( table(i), 0 )
+!            printstring( itos(table(i),0) )
+            newline
+        %repeat        
+
+        ! Should be an illegal array access
+        i = 2*top
+        printstring("TOP(".itos(i,0).")=".itos(table(i),0));newline
+
+    %end
+
+%endofprogram

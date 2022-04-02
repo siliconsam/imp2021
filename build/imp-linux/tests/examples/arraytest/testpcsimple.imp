@@ -1,0 +1,140 @@
+%begin
+
+    %external %routine %spec baggins ( %name n, %string(*)%name var, %integer p,q )
+
+    %string(31) vname
+    %integer to,so
+    %integer             v1  = 16_1FFFF
+    %real                v2  = 1.2345
+    %string(255)         v3  = "ABCDEFGHIJ"
+    %byteinteger         v4  = 128
+    %shortinteger        v5  = 16_1FFF    { illegal value for %shortinteger, legal range is -32768..32767 }
+    %longinteger         v6  = 16_2FFFF
+    %longreal            v7  = 2.4690
+
+    %integer      %array v8 (1:5)
+    %real         %array v9 (-2:2)
+    %string(63)   %array v10(-3:1)
+    %byteinteger  %array v11(4:8)
+    %shortinteger %array v12(5:9)
+    %longinteger  %array v13(6:10)
+    %longreal     %array v14(-7:-3)
+
+    %integer      %array v15(1:5,1:5)
+    %real         %array v16(-2:2,1:5)
+    %string(63)   %array v17(-3:1,1:5)
+    %byteinteger  %array v18(4:8,1:5)
+    %shortinteger %array v19(5:9,1:5)
+    %longinteger  %array v20(6:10,1:5)
+    %longreal     %array v21(-7:-3,1:5)
+
+    newline
+    printstring( "    Running TestPCSimple" ); newline
+    newline
+
+    vname = "v-integer"
+    to = typeof(v1)
+    so = sizeof(v1)
+    baggins ( v1,vname,to,so )
+
+    vname = "v-real"
+    to = typeof(v2)
+    so = sizeof(v2)
+    baggins ( v2,vname,to,so )
+
+    vname = "v-string(255)"
+    to = typeof(v3)
+    so = sizeof(v3)
+    baggins ( v3,vname,to,so )
+
+    vname = "v-byteinteger"
+    to = typeof(v4)
+    so = sizeof(v4)
+    baggins ( v4,vname,to,so )
+
+    vname = "v-short"
+    to = typeof(v5)
+    so = sizeof(v5)
+    baggins ( v5,vname,to,so )
+
+    vname = "v-long"
+    to = typeof(v6)
+    so = sizeof(v6)
+    baggins ( v6,vname,to,so )
+
+    vname = "v-longreal"
+    to = typeof(v7)
+    so = sizeof(v7)
+    baggins ( v7,vname,to,so )
+
+    vname = "v-integer-array(1D)"
+    to = typeof(v8)
+    so = sizeof(v8)
+    baggins ( v8,vname,to,so )
+
+    vname = "v-real-array(1D)"
+    to = typeof(v9)
+    so = sizeof(v9)
+    baggins ( v9,vname,to,so )
+
+    vname = "v-string(63)-array(1D)"
+    to = typeof(v10)
+    so = sizeof(v10)
+    baggins ( v10,vname,to,so )
+
+    vname = "v-byteinteger-array(1D)"
+    to = typeof(v11)
+    so = sizeof(v11)
+    baggins ( v11,vname,to,so )
+
+    vname = "v-short-array(1D)"
+    to = typeof(v12)
+    so = sizeof(v12)
+    baggins ( v12,vname,to,so )
+
+    vname = "v-long-array(1D)"
+    to = typeof(v13)
+    so = sizeof(v13)
+    baggins ( v13,vname,to,so )
+
+    vname = "v-longreal-array(1D)"
+    to = typeof(v14)
+    so = sizeof(v14)
+    baggins ( v14,vname,to,so )
+
+    vname = "v-integer-array(2D)"
+    to = typeof(v15)
+    so = sizeof(v15)
+    baggins ( v15,vname,to,so )
+
+    vname = "v-real-array(2D)"
+    to = typeof(v16)
+    so = sizeof(v16)
+    baggins ( v16,vname,to,so )
+
+    vname = "v-string(63)-array(2D)"
+    to = typeof(v17)
+    so = sizeof(v17)
+    baggins ( v17,vname,to,so )
+
+    vname = "v-byteinteger-array(2D)"
+    to = typeof(v18)
+    so = sizeof(v18)
+    baggins ( v18,vname,to,so )
+
+    vname = "v-short-array(2D)"
+    to = typeof(v19)
+    so = sizeof(v19)
+    baggins ( v19,vname,to,so )
+
+    vname = "v-long-array(2D)"
+    to = typeof(v20)
+    so = sizeof(v20)
+    baggins ( v20,vname,to,so )
+
+    vname = "v-longreal-array(2D)"
+    to = typeof(v21)
+    so = sizeof(v21)
+    baggins ( v21,vname,to,so )
+
+%endofprogram

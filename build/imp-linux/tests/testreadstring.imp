@@ -56,7 +56,7 @@
 
     %end
 
-    set prompt( "Givvus input> " )
+    prompt( "Givvus input> " )
     printstring( "Load a value for s24");newline
     read(s24)
 

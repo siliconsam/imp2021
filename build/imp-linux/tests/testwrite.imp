@@ -12,16 +12,32 @@
     %integer count
     %longreal pi = 3.1415926
 
+    %on %event 5,6,9 %start
+        -> resume %if (event_event = 9) %and (event_sub = 1) %and (event_info = 1)
+        %if (event_event = 6) %and (event_sub = 1) %and (event_info = 2) %start
+            debugstring( "String append overflow: " ); debugnewline
+        %finish
+        %if (event_event = 5) %and (event_sub = 5) %start
+            debugstring( "Invalid type : ".typename(event_info) ); debugnewline
+        %finish
+        debugstring( "      EVENT: ".itos(event_event,0) ); debugnewline
+        debugstring( "        SUB: ".itos(event_sub,0) ); debugnewline
+        debugstring( "       INFO: ".itos(event_info,0) ); debugnewline
+        debugstring( "    MESSAGE: ".event_message ); debugnewline
+
+        %stop       
+    %finish
+
     selectoutput(0)
     printstring("Opening source ".sourcename); newline
     printstring("Opening file ".filename); newline
 
 SETDEBUGLEVEL( 0 { + dbgprog + dbgmain + dbgio} )
-!    openinput(1,sourcename)
+    openinput(1,sourcename)
     selectinput(1)
-!    openoutput(1,filename)
+    openoutput(1,filename)
     selectoutput(1)
-    
+
     count = readbuffer( blurb , 32 )
     printstring("Read blurb count=".itos(count,0));newline
     %for i=0,1,count - 1 %cycle
@@ -37,12 +53,14 @@ SETDEBUGLEVEL( 0 { + dbgprog + dbgmain + dbgio} )
     %for i=1,1,20 %cycle
         print string( "hello, iteration ".itos(i,0) );newline
     %repeat
+->theend
 
     length(longdata) = 0
     %cycle
         length(data) = 0
         %cycle
             readsymbol(ch)
+            resume:
             %if (ch # nl) %and (ch # eof) %start
                 ! QAD method of appending a char to a string
                 ! Also checks against string overflow
@@ -100,7 +118,8 @@ debug newline; debug string("TESTWRITE: writebuffer(blurb)"); debug newline
     count = writebuffer( blurb, length( sourcename )  )     
     newline; printstring("Written blurb count=".itos(count,0));newline
     printstring( "PI="); print real( pi ); newline
-    
+
+theend:
     closeinput
     closeoutput
     selectoutput(0)
