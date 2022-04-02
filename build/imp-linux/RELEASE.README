@@ -1,4 +1,21 @@
 
+Release Version 1.02
+
+sizeof, typeof bugs corrected.
+They will work on any %name parameter.
+
+Extra routines added to the stdperm.imp list
+! These next 5 functions only work on those %name parameters which reference
+! an array's (Dope Vector Pointer,Array Data Address)
+%external %integer       %fn  %spec     array entry size( %name n )
+%external %integer       %fn  %spec     array entry type( %name n )
+%external %integer       %fn  %spec     array dimensions( %name n )
+%external %integer       %fn  %spec     array lower bound( %name n, %integer index )
+%external %integer       %fn  %spec     array upper bound( %name n, %integer index )
+
+These routines allow limited introspection on any array.
+See example code in examples/arraytest folder
+
 Release version 1.01
 
 Known bugs.
