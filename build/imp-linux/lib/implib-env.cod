@@ -12,7 +12,7 @@
         %integer count
 
         arr == getenvironment
- 0004 E8 64 00                              CALL 'GETENVIRONMENT' (EXTERN 100)
+ 0004 E8 67 00                              CALL 'GETENVIRONMENT' (EXTERN 103)
  0007 89 45 F8                              MOV [EBP-8],EAX
 
         count = 0
@@ -67,7 +67,7 @@
  0053 7F 00                                 JG L1004
             ! get the pointer (aka "name") to the C-style char array
             b == byteinteger( integer( addr(getenvironment) + WORDSIZE*(index-1) ) )
- 0055 E8 64 00                              CALL 'GETENVIRONMENT' (EXTERN 100)
+ 0055 E8 67 00                              CALL 'GETENVIRONMENT' (EXTERN 103)
                                       Generating CODE for 'ADDR' (MACRO 4)
                                       CALL 'ADDR' (MACRO 4)
  0058 8B 4D 0C                              MOV ECX,[EBP+12]
@@ -234,7 +234,7 @@
  015D 7F 00                                 JG L1013
             ! get the pointer (aka "name") to the C-style char array 
             b == byteinteger( integer( addr(getenvironment) + WORDSIZE*(index-1) ) )
- 015F E8 64 00                              CALL 'GETENVIRONMENT' (EXTERN 100)
+ 015F E8 67 00                              CALL 'GETENVIRONMENT' (EXTERN 103)
                                       Generating CODE for 'ADDR' (MACRO 4)
                                       CALL 'ADDR' (MACRO 4)
  0162 8B 4D 0C                              MOV ECX,[EBP+12]

@@ -9467,7 +9467,7 @@ more:       newline
  01C9 3D 00 00 00 00                        CMP EAX,0
  01CE 75 00                                 JNE L1004
  01D0 6A 01                                 PUSH 1
- 01D2 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 01D2 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  01D5 83 C4 04                              ADD ESP,4
  01D8 A1 C0 01 00 00                        MOV EAX,[DATA+01C0]
  01DD 89 45 F0                              MOV [EBP-16],EAX
@@ -9490,12 +9490,12 @@ more:       newline
  0213 31 C0                                 XOR EAX,EAX
  0215 8A 07                                 MOV AL,[EDI]
  0217 50                                    PUSH EAX
- 0218 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0218 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  021B 83 C4 04                              ADD ESP,4
  021E EB 00                                 JMP L1005
  0220                      L1006  EQU $
  0220 6A 02                                 PUSH 2
- 0222 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 0222 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  0225 83 C4 04                              ADD ESP,4
  0228                      L1004  EQU $
  0228 C7 05 C0 01 00 00 00 00 00 00         MOV LONG [DATA+01C0],0
@@ -9704,7 +9704,7 @@ more:       newline
  0490 3D 00 00 00 00                        CMP EAX,0
  0495 75 00                                 JNE L1019
  0497 FF 75 08                              PUSH WORD [EBP+8]
- 049A E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 049A E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  049D 83 C4 04                              ADD ESP,4
  04A0 EB 00                                 JMP L1020
  04A2                      L1019  EQU $
@@ -9795,16 +9795,16 @@ more:       newline
  0589 A1 4C 00 00 00                        MOV EAX,[DATA+004C]
  058E 3D 0A 00 00 00                        CMP EAX,10
  0593 74 00                                 JE L1027
- 0595 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 0595 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  0598                      L1027  EQU $
  0598 6A 2A                                 PUSH 42
- 059A E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 059A E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  059D 83 C4 04                              ADD ESP,4
  05A0 FF 35 2C 00 00 00                     PUSH WORD [DATA+002C]
  05A6 6A 04                                 PUSH 4
- 05A8 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 05A8 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  05AB 83 C4 08                              ADD ESP,8
- 05AE E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 05AE E8 3A 00                              CALL 'SPACE' (EXTERN 58)
  05B1 8B 45 08                              MOV EAX,[EBP+8]
  05B4 C1 E0 02                              SHL EAX,2
  05B7 89 C7                                 MOV EDI,EAX
@@ -9818,7 +9818,7 @@ more:       newline
  05CE 68 FF 00 00 00                        PUSH 255
  05D3 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  05D6 83 C4 0C                              ADD ESP,12
- 05D9 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 05D9 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  05DC 81 C4 00 01 00 00                     ADD ESP,256
  05E2 EB 00                                 JMP L1029
  05E4                      L1030  EQU $
@@ -9830,7 +9830,7 @@ more:       newline
  05F3 68 FF 00 00 00                        PUSH 255
  05F8 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  05FB 83 C4 0C                              ADD ESP,12
- 05FE E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 05FE E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0601 81 C4 00 01 00 00                     ADD ESP,256
  0607 EB 00                                 JMP L1029
  0609                      L1031  EQU $
@@ -9842,7 +9842,7 @@ more:       newline
  0618 68 FF 00 00 00                        PUSH 255
  061D E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0620 83 C4 0C                              ADD ESP,12
- 0623 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0623 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0626 81 C4 00 01 00 00                     ADD ESP,256
  062C EB 00                                 JMP L1029
  062E                      L1032  EQU $
@@ -9854,7 +9854,7 @@ more:       newline
  063D 68 FF 00 00 00                        PUSH 255
  0642 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0645 83 C4 0C                              ADD ESP,12
- 0648 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0648 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  064B 81 C4 00 01 00 00                     ADD ESP,256
  0651 EB 00                                 JMP L1029
  0653                      L1033  EQU $
@@ -9866,7 +9866,7 @@ more:       newline
  0662 68 FF 00 00 00                        PUSH 255
  0667 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  066A 83 C4 0C                              ADD ESP,12
- 066D E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 066D E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0670 81 C4 00 01 00 00                     ADD ESP,256
  0676 EB 00                                 JMP L1029
  0678                      L1034  EQU $
@@ -9878,7 +9878,7 @@ more:       newline
  0687 68 FF 00 00 00                        PUSH 255
  068C E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  068F 83 C4 0C                              ADD ESP,12
- 0692 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0692 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0695 81 C4 00 01 00 00                     ADD ESP,256
  069B A1 54 00 00 00                        MOV EAX,[DATA+0054]
  06A0 3D 00 00 00 00                        CMP EAX,0
@@ -9887,12 +9887,12 @@ more:       newline
  06AC 3D 00 00 00 00                        CMP EAX,0
  06B1 7D 00                                 JGE L1036
  06B3 6A 27                                 PUSH 39
- 06B5 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 06B5 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  06B8 83 C4 04                              ADD ESP,4
  06BB EB 00                                 JMP L1037
  06BD                      L1036  EQU $
  06BD 6A 22                                 PUSH 34
- 06BF E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 06BF E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  06C2 83 C4 04                              ADD ESP,4
  06C5                      L1037  EQU $
  06C5 EB 00                                 JMP L1038
@@ -9905,7 +9905,7 @@ more:       newline
  06D6 68 FF 00 00 00                        PUSH 255
  06DB E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  06DE 83 C4 0C                              ADD ESP,12
- 06E1 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 06E1 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  06E4 81 C4 00 01 00 00                     ADD ESP,256
  06EA A1 D8 00 00 00                        MOV EAX,[DATA+00D8]
  06EF 3D 00 00 00 00                        CMP EAX,0
@@ -9918,7 +9918,7 @@ more:       newline
  0705 68 FF 00 00 00                        PUSH 255
  070A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  070D 83 C4 0C                              ADD ESP,12
- 0710 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0710 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0713 81 C4 00 01 00 00                     ADD ESP,256
  0719 EB 00                                 JMP L1040
  071B                      L1039  EQU $
@@ -9930,7 +9930,7 @@ more:       newline
  072A 68 FF 00 00 00                        PUSH 255
  072F E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0732 83 C4 0C                              ADD ESP,12
- 0735 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0735 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0738 81 C4 00 01 00 00                     ADD ESP,256
  073E                      L1040  EQU $
  073E                      L1038  EQU $
@@ -9942,7 +9942,7 @@ more:       newline
  074D 68 FF 00 00 00                        PUSH 255
  0752 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0755 83 C4 0C                              ADD ESP,12
- 0758 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0758 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  075B 81 C4 00 01 00 00                     ADD ESP,256
  0761 EB 00                                 JMP L1029
  0763                      L1041  EQU $
@@ -9954,7 +9954,7 @@ more:       newline
  0772 68 FF 00 00 00                        PUSH 255
  0777 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  077A 83 C4 0C                              ADD ESP,12
- 077D E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 077D E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0780 81 C4 00 01 00 00                     ADD ESP,256
  0786 EB 00                                 JMP L1029
  0788                      L1042  EQU $
@@ -9966,7 +9966,7 @@ more:       newline
  0797 68 FF 00 00 00                        PUSH 255
  079C E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  079F 83 C4 0C                              ADD ESP,12
- 07A2 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 07A2 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  07A5 81 C4 00 01 00 00                     ADD ESP,256
  07AB EB 00                                 JMP L1029
  07AD                      L1043  EQU $
@@ -9978,7 +9978,7 @@ more:       newline
  07BC 68 FF 00 00 00                        PUSH 255
  07C1 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  07C4 83 C4 0C                              ADD ESP,12
- 07C7 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 07C7 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  07CA 81 C4 00 01 00 00                     ADD ESP,256
  07D0 EB 00                                 JMP L1029
  07D2                      L1044  EQU $
@@ -10012,10 +10012,10 @@ more:       newline
  082B 68 FF 00 00 00                        PUSH 255
  0830 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0833 83 C4 0C                              ADD ESP,12
- 0836 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0836 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0839 81 C4 00 01 00 00                     ADD ESP,256
  083F                      L1029  EQU $
- 083F E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 083F E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
             printstring("***  compilation abandoned ***");  newline
  0842 81 EC 00 01 00 00                     SUB ESP,256
  0848 89 E0                                 MOV EAX,ESP
@@ -10025,9 +10025,9 @@ more:       newline
  0851 68 FF 00 00 00                        PUSH 255
  0856 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0859 83 C4 0C                              ADD ESP,12
- 085C E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 085C E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  085F 81 C4 00 01 00 00                     ADD ESP,256
- 0865 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 0865 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
             %exit %if stream = report
  0868 8B 45 F4                              MOV EAX,[EBP-12]
  086B 3D 00 00 00 00                        CMP EAX,0
@@ -10035,12 +10035,12 @@ more:       newline
  0872 EB 00                                 JMP L1046
  0874                      L1045  EQU $
             close output
- 0874 E8 28 00                              CALL 'CLOSEOUTPUT' (EXTERN 40)
+ 0874 E8 2A 00                              CALL 'CLOSEOUTPUT' (EXTERN 42)
             stream = report
  0877 C7 45 F4 00 00 00 00                  MOV LONG [EBP-12],0
             select output(report)
  087E 6A 00                                 PUSH 0
- 0880 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 0880 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  0883 83 C4 04                              ADD ESP,4
         %repeat
  0886 EB 00                                 JMP L1026
@@ -10155,7 +10155,7 @@ more:       newline
  096E C3                                    RET
  096F                      L1056  EQU $
                 space
- 096F E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 096F E8 3A 00                              CALL 'SPACE' (EXTERN 58)
                 p = 1
  0972 C7 45 E8 01 00 00 00                  MOV LONG [EBP-24],1
                 %cycle
@@ -10165,7 +10165,7 @@ more:       newline
  097C 3B 05 00 01 00 00                     CMP EAX,[DATA+0100]
  0982 75 00                                 JNE L1058
  0984 6A 5E                                 PUSH 94
- 0986 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0986 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0989 83 C4 04                              ADD ESP,4
  098C                      L1058  EQU $
                     %exit %if p = pos
@@ -10214,7 +10214,7 @@ more:       newline
  0A00                      L1063  EQU $
                     printsymbol(s)
  0A00 FF 75 EC                              PUSH WORD [EBP-20]
- 0A03 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0A03 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0A06 83 C4 04                              ADD ESP,4
                 %repeat
  0A09 EB 00                                 JMP L1057
@@ -10241,7 +10241,7 @@ more:       newline
  0A3B A1 4C 00 00 00                        MOV EAX,[DATA+004C]
  0A40 3D 0A 00 00 00                        CMP EAX,10
  0A45 74 00                                 JE L1068
- 0A47 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 0A47 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  0A4A                      L1068  EQU $
             st = report
  0A4A C7 45 F0 00 00 00 00                  MOV LONG [EBP-16],0
@@ -10255,20 +10255,20 @@ more:       newline
  0A62                      L1070  EQU $
                 select output(st)
  0A62 FF 75 F0                              PUSH WORD [EBP-16]
- 0A65 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 0A65 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  0A68 83 C4 04                              ADD ESP,4
                 %if n < 0 %then printsymbol('?') %and pos1 = 0 %else printsymbol('*')
  0A6B 8B 45 08                              MOV EAX,[EBP+8]
  0A6E 3D 00 00 00 00                        CMP EAX,0
  0A73 7D 00                                 JGE L1071
  0A75 6A 3F                                 PUSH 63
- 0A77 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0A77 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0A7A 83 C4 04                              ADD ESP,4
  0A7D C7 05 00 01 00 00 00 00 00 00         MOV LONG [DATA+0100],0
  0A87 EB 00                                 JMP L1072
  0A89                      L1071  EQU $
  0A89 6A 2A                                 PUSH 42
- 0A8B E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0A8B E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0A8E 83 C4 04                              ADD ESP,4
  0A91                      L1072  EQU $
                 %if st # report %start
@@ -10286,7 +10286,7 @@ more:       newline
  0AB3 A1 00 01 00 00                        MOV EAX,[DATA+0100]
  0AB8 03 05 34 00 00 00                     ADD EAX,[DATA+0034]
  0ABE 50                                    PUSH EAX
- 0ABF E8 39 00                              CALL 'SPACES' (EXTERN 57)
+ 0ABF E8 3B 00                              CALL 'SPACES' (EXTERN 59)
  0AC2 83 C4 04                              ADD ESP,4
  0AC5 81 EC 00 01 00 00                     SUB ESP,256
  0ACB 89 E0                                 MOV EAX,ESP
@@ -10296,7 +10296,7 @@ more:       newline
  0AD4 68 FF 00 00 00                        PUSH 255
  0AD9 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0ADC 83 C4 0C                              ADD ESP,12
- 0ADF E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0ADF E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0AE2 81 C4 00 01 00 00                     ADD ESP,256
                     %finish
  0AE8                      L1074  EQU $
@@ -10316,18 +10316,18 @@ more:       newline
  0B06 68 FF 00 00 00                        PUSH 255
  0B0B E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0B0E 83 C4 0C                              ADD ESP,12
- 0B11 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0B11 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0B14 81 C4 00 01 00 00                     ADD ESP,256
  0B1A                      L1076  EQU $
                     write(lines, 4);  printsymbol(csym);  space
  0B1A FF 35 2C 00 00 00                     PUSH WORD [DATA+002C]
  0B20 6A 04                                 PUSH 4
- 0B22 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 0B22 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  0B25 83 C4 08                              ADD ESP,8
  0B28 FF 35 60 00 00 00                     PUSH WORD [DATA+0060]
- 0B2E E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0B2E E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0B31 83 C4 04                              ADD ESP,4
- 0B34 E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 0B34 E8 3A 00                              CALL 'SPACE' (EXTERN 58)
                 %finish
  0B37                      L1075  EQU $
                 ->fm(n) %if -5 <= n %and n <= 22
@@ -10351,11 +10351,11 @@ more:       newline
  0B68 68 FF 00 00 00                        PUSH 255
  0B6D E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0B70 83 C4 0C                              ADD ESP,12
- 0B73 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0B73 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0B76 81 C4 00 01 00 00                     ADD ESP,256
  0B7C FF 75 08                              PUSH WORD [EBP+8]
  0B7F 6A 02                                 PUSH 2
- 0B81 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 0B81 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  0B84 83 C4 08                              ADD ESP,8
  0B87 EB 00                                 JMP L1078
 
@@ -10369,7 +10369,7 @@ fm(-5):         printstring("Dubious statement");  dubious = 0;        ->psd
  0B98 68 FF 00 00 00                        PUSH 255
  0B9D E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0BA0 83 C4 0C                              ADD ESP,12
- 0BA3 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0BA3 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0BA6 81 C4 00 01 00 00                     ADD ESP,256
  0BAC C7 05 F8 00 00 00 00 00 00 00         MOV LONG [DATA+00F8],0
  0BB6 EB 00                                 JMP L1080
@@ -10383,7 +10383,7 @@ fm(-4):         printstring("Non-local")
  0BC7 68 FF 00 00 00                        PUSH 255
  0BCC E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0BCF 83 C4 0C                              ADD ESP,12
- 0BD2 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0BD2 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0BD5 81 C4 00 01 00 00                     ADD ESP,256
                 pos1 = for warn;  for warn = 0;                        ->ps
  0BDB A1 F4 00 00 00                        MOV EAX,[DATA+00F4]
@@ -10404,7 +10404,7 @@ fm(-3):         print ident(x, 0);  printstring(" unused");            ->nps
  0C0F 68 FF 00 00 00                        PUSH 255
  0C14 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0C17 83 C4 0C                              ADD ESP,12
- 0C1A E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0C1A E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0C1D 81 C4 00 01 00 00                     ADD ESP,256
  0C23 EB 00                                 JMP L1083
 fm(-2):         printstring("""}""");                                  ->miss
@@ -10417,7 +10417,7 @@ fm(-2):         printstring("""}""");                                  ->miss
  0C34 68 FF 00 00 00                        PUSH 255
  0C39 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0C3C 83 C4 0C                              ADD ESP,12
- 0C3F E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0C3F E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0C42 81 C4 00 01 00 00                     ADD ESP,256
  0C48 EB 00                                 JMP L1085
 fm(-1):         printstring("access");                                 ->psd
@@ -10430,7 +10430,7 @@ fm(-1):         printstring("access");                                 ->psd
  0C59 68 FF 00 00 00                        PUSH 255
  0C5E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0C61 83 C4 0C                              ADD ESP,12
- 0C64 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0C64 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0C67 81 C4 00 01 00 00                     ADD ESP,256
  0C6D EB 00                                 JMP L1080
 fm(0):          printstring("form");                                   ->ps
@@ -10443,7 +10443,7 @@ fm(0):          printstring("form");                                   ->ps
  0C7E 68 FF 00 00 00                        PUSH 255
  0C83 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0C86 83 C4 0C                              ADD ESP,12
- 0C89 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0C89 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0C8C 81 C4 00 01 00 00                     ADD ESP,256
  0C92 EB 00                                 JMP L1078
 fm(1):          printstring("atom");                                   ->ps
@@ -10456,7 +10456,7 @@ fm(1):          printstring("atom");                                   ->ps
  0CA3 68 FF 00 00 00                        PUSH 255
  0CA8 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0CAB 83 C4 0C                              ADD ESP,12
- 0CAE E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0CAE E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0CB1 81 C4 00 01 00 00                     ADD ESP,256
  0CB7 EB 00                                 JMP L1078
 fm(2):          printstring("not declared");                           ->ps
@@ -10469,7 +10469,7 @@ fm(2):          printstring("not declared");                           ->ps
  0CC8 68 FF 00 00 00                        PUSH 255
  0CCD E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0CD0 83 C4 0C                              ADD ESP,12
- 0CD3 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0CD3 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0CD6 81 C4 00 01 00 00                     ADD ESP,256
  0CDC EB 00                                 JMP L1078
 fm(3):          printstring("too complex");                            ->ps
@@ -10482,7 +10482,7 @@ fm(3):          printstring("too complex");                            ->ps
  0CED 68 FF 00 00 00                        PUSH 255
  0CF2 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0CF5 83 C4 0C                              ADD ESP,12
- 0CF8 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0CF8 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0CFB 81 C4 00 01 00 00                     ADD ESP,256
  0D01 EB 00                                 JMP L1078
 fm(4):          printstring("duplicate ");  Print Ident(x, 0);         ->ps
@@ -10495,7 +10495,7 @@ fm(4):          printstring("duplicate ");  Print Ident(x, 0);         ->ps
  0D12 68 FF 00 00 00                        PUSH 255
  0D17 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0D1A 83 C4 0C                              ADD ESP,12
- 0D1D E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0D1D E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0D20 81 C4 00 01 00 00                     ADD ESP,256
  0D26 FF 35 08 00 00 00                     PUSH WORD [DATA+0008]
  0D2C 6A 00                                 PUSH 0
@@ -10512,7 +10512,7 @@ fm(5):          printstring("type");                                   ->ps
  0D45 68 FF 00 00 00                        PUSH 255
  0D4A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0D4D 83 C4 0C                              ADD ESP,12
- 0D50 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0D50 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0D53 81 C4 00 01 00 00                     ADD ESP,256
  0D59 EB 00                                 JMP L1078
 fm(6):          printstring("match");                                  ->psd
@@ -10525,7 +10525,7 @@ fm(6):          printstring("match");                                  ->psd
  0D6A 68 FF 00 00 00                        PUSH 255
  0D6F E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0D72 83 C4 0C                              ADD ESP,12
- 0D75 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0D75 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0D78 81 C4 00 01 00 00                     ADD ESP,256
  0D7E EB 00                                 JMP L1080
 fm(7):          printstring("context");                                ->psd
@@ -10538,7 +10538,7 @@ fm(7):          printstring("context");                                ->psd
  0D8F 68 FF 00 00 00                        PUSH 255
  0D94 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0D97 83 C4 0C                              ADD ESP,12
- 0D9A E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0D9A E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0D9D 81 C4 00 01 00 00                     ADD ESP,256
  0DA3 EB 00                                 JMP L1080
 fm(8):          printstring("%cycle");                                 ->miss
@@ -10551,7 +10551,7 @@ fm(8):          printstring("%cycle");                                 ->miss
  0DB4 68 FF 00 00 00                        PUSH 255
  0DB9 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0DBC 83 C4 0C                              ADD ESP,12
- 0DBF E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0DBF E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0DC2 81 C4 00 01 00 00                     ADD ESP,256
  0DC8 EB 00                                 JMP L1085
 fm(9):          printstring("%start");                                 ->miss
@@ -10564,7 +10564,7 @@ fm(9):          printstring("%start");                                 ->miss
  0DD9 68 FF 00 00 00                        PUSH 255
  0DDE E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0DE1 83 C4 0C                              ADD ESP,12
- 0DE4 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0DE4 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0DE7 81 C4 00 01 00 00                     ADD ESP,256
  0DED EB 00                                 JMP L1085
 fm(10):         printstring("size");  write(lit, 1) %if pos1 = 0;      ->ps
@@ -10577,14 +10577,14 @@ fm(10):         printstring("size");  write(lit, 1) %if pos1 = 0;      ->ps
  0DFE 68 FF 00 00 00                        PUSH 255
  0E03 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0E06 83 C4 0C                              ADD ESP,12
- 0E09 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0E09 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0E0C 81 C4 00 01 00 00                     ADD ESP,256
  0E12 A1 00 01 00 00                        MOV EAX,[DATA+0100]
  0E17 3D 00 00 00 00                        CMP EAX,0
  0E1C 75 00                                 JNE L1098
  0E1E FF 35 A8 01 00 00                     PUSH WORD [DATA+01A8]
  0E24 6A 01                                 PUSH 1
- 0E26 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 0E26 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  0E29 83 C4 08                              ADD ESP,8
  0E2C                      L1098  EQU $
  0E2C EB 00                                 JMP L1078
@@ -10598,7 +10598,7 @@ fm(11):         printstring("bounds")
  0E3D 68 FF 00 00 00                        PUSH 255
  0E42 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0E45 83 C4 0C                              ADD ESP,12
- 0E48 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0E48 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0E4B 81 C4 00 01 00 00                     ADD ESP,256
                 write(ocount, 1) %unless ocount < 0;                   ->ps
  0E51 A1 E4 00 00 00                        MOV EAX,[DATA+00E4]
@@ -10606,7 +10606,7 @@ fm(11):         printstring("bounds")
  0E5B 7C 00                                 JL L1100
  0E5D FF 35 E4 00 00 00                     PUSH WORD [DATA+00E4]
  0E63 6A 01                                 PUSH 1
- 0E65 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 0E65 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  0E68 83 C4 08                              ADD ESP,8
  0E6B                      L1100  EQU $
  0E6B EB 00                                 JMP L1078
@@ -10620,7 +10620,7 @@ fm(12):         printstring("index");                                  ->ps
  0E7C 68 FF 00 00 00                        PUSH 255
  0E81 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0E84 83 C4 0C                              ADD ESP,12
- 0E87 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0E87 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0E8A 81 C4 00 01 00 00                     ADD ESP,256
  0E90 EB 00                                 JMP L1078
 fm(13):         printstring("order");                                  ->psd
@@ -10633,7 +10633,7 @@ fm(13):         printstring("order");                                  ->psd
  0EA1 68 FF 00 00 00                        PUSH 255
  0EA6 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0EA9 83 C4 0C                              ADD ESP,12
- 0EAC E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0EAC E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0EAF 81 C4 00 01 00 00                     ADD ESP,256
  0EB5 EB 00                                 JMP L1080
 fm(14):         printstring("not a location");                         ->ps
@@ -10646,7 +10646,7 @@ fm(14):         printstring("not a location");                         ->ps
  0EC6 68 FF 00 00 00                        PUSH 255
  0ECB E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0ECE 83 C4 0C                              ADD ESP,12
- 0ED1 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0ED1 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0ED4 81 C4 00 01 00 00                     ADD ESP,256
  0EDA EB 00                                 JMP L1078
 fm(15):         printstring("%begin");                                 ->miss
@@ -10659,7 +10659,7 @@ fm(15):         printstring("%begin");                                 ->miss
  0EEB 68 FF 00 00 00                        PUSH 255
  0EF0 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0EF3 83 C4 0C                              ADD ESP,12
- 0EF6 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0EF6 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0EF9 81 C4 00 01 00 00                     ADD ESP,256
  0EFF EB 00                                 JMP L1085
 fm(16):         printstring("%end");                                   ->miss
@@ -10672,7 +10672,7 @@ fm(16):         printstring("%end");                                   ->miss
  0F10 68 FF 00 00 00                        PUSH 255
  0F15 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0F18 83 C4 0C                              ADD ESP,12
- 0F1B E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0F1B E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0F1E 81 C4 00 01 00 00                     ADD ESP,256
  0F24 EB 00                                 JMP L1085
 fm(17):         printstring("%repeat");                                ->miss
@@ -10685,7 +10685,7 @@ fm(17):         printstring("%repeat");                                ->miss
  0F35 68 FF 00 00 00                        PUSH 255
  0F3A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0F3D 83 C4 0C                              ADD ESP,12
- 0F40 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0F40 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0F43 81 C4 00 01 00 00                     ADD ESP,256
  0F49 EB 00                                 JMP L1085
 fm(18):         printstring("%finish");                                ->miss
@@ -10698,7 +10698,7 @@ fm(18):         printstring("%finish");                                ->miss
  0F5A 68 FF 00 00 00                        PUSH 255
  0F5F E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0F62 83 C4 0C                              ADD ESP,12
- 0F65 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0F65 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0F68 81 C4 00 01 00 00                     ADD ESP,256
  0F6E EB 00                                 JMP L1085
 fm(19):         printstring("result");                                 ->miss
@@ -10711,20 +10711,20 @@ fm(19):         printstring("result");                                 ->miss
  0F7F 68 FF 00 00 00                        PUSH 255
  0F84 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0F87 83 C4 0C                              ADD ESP,12
- 0F8A E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0F8A E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0F8D 81 C4 00 01 00 00                     ADD ESP,256
  0F93 EB 00                                 JMP L1085
 fm(20):         printsymbol('"'); print ident(x, 0); printsymbol('"'); ->miss
  0F95                      L1109  EQU $
  0F95 6A 22                                 PUSH 34
- 0F97 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0F97 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0F9A 83 C4 04                              ADD ESP,4
  0F9D FF 35 08 00 00 00                     PUSH WORD [DATA+0008]
  0FA3 6A 00                                 PUSH 0
  0FA5 E8 00 00                              CALL 'PRINTIDENT' (INTERNAL L1016 )
  0FA8 83 C4 08                              ADD ESP,8
  0FAB 6A 22                                 PUSH 34
- 0FAD E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0FAD E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0FB0 83 C4 04                              ADD ESP,4
  0FB3 EB 00                                 JMP L1085
 fm(21):         printstring("context ");  print ident(this, 0);        ->ps
@@ -10737,7 +10737,7 @@ fm(21):         printstring("context ");  print ident(this, 0);        ->ps
  0FC4 68 FF 00 00 00                        PUSH 255
  0FC9 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0FCC 83 C4 0C                              ADD ESP,12
- 0FCF E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 0FCF E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  0FD2 81 C4 00 01 00 00                     ADD ESP,256
  0FD8 FF 35 AC 00 00 00                     PUSH WORD [DATA+00AC]
  0FDE 6A 00                                 PUSH 0
@@ -10754,7 +10754,7 @@ fm(22):         printstring("format");                                 ->ps
  0FF7 68 FF 00 00 00                        PUSH 255
  0FFC E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0FFF 83 C4 0C                              ADD ESP,12
- 1002 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 1002 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  1005 81 C4 00 01 00 00                     ADD ESP,256
  100B EB 00                                 JMP L1078
 
@@ -10768,7 +10768,7 @@ miss:           printstring(" missing");                               ->nps
  101C 68 FF 00 00 00                        PUSH 255
  1021 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  1024 83 C4 0C                              ADD ESP,12
- 1027 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 1027 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  102A 81 C4 00 01 00 00                     ADD ESP,256
  1030 EB 00                                 JMP L1083
 psd:            pos1 = 0
@@ -10779,7 +10779,7 @@ ps:             print ss
  103C E8 00 00                              CALL 'PRINTSS' (INTERNAL L1055 )
 nps:            newline
  103F                      L1083  EQU $
- 103F E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 103F E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                 %exit %if st = listing
  1042 8B 45 F0                              MOV EAX,[EBP-16]
  1045 3D 02 00 00 00                        CMP EAX,2
@@ -10892,13 +10892,13 @@ nps:            newline
             write(lines, 5);  spaces(level*3-1)
  117C FF 35 2C 00 00 00                     PUSH WORD [DATA+002C]
  1182 6A 05                                 PUSH 5
- 1184 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 1184 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  1187 83 C4 08                              ADD ESP,8
  118A 8B 45 18                              MOV EAX,[EBP+24]
  118D F7 2D 9C 02 00 00                     IMUL WORD [COT+029C]
  1193 48                                    DEC EAX
  1194 50                                    PUSH EAX
- 1195 E8 39 00                              CALL 'SPACES' (EXTERN 57)
+ 1195 E8 3B 00                              CALL 'SPACES' (EXTERN 59)
  1198 83 C4 04                              ADD ESP,4
             %if block tag = 0 %start
  119B 8B 45 14                              MOV EAX,[EBP+20]
@@ -10913,7 +10913,7 @@ nps:            newline
  11B4 68 FF 00 00 00                        PUSH 255
  11B9 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  11BC 83 C4 0C                              ADD ESP,12
- 11BF E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 11BF E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  11C2 81 C4 00 01 00 00                     ADD ESP,256
             %finish %else %start
  11C8 EB 00                                 JMP L1122
@@ -10927,7 +10927,7 @@ nps:            newline
  11D9 68 FF 00 00 00                        PUSH 255
  11DE E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  11E1 83 C4 0C                              ADD ESP,12
- 11E4 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 11E4 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  11E7 81 C4 00 01 00 00                     ADD ESP,256
  11ED FF 75 14                              PUSH WORD [EBP+20]
  11F0 6A 00                                 PUSH 0
@@ -10936,7 +10936,7 @@ nps:            newline
             %finish
  11F8                      L1122  EQU $
             newline
- 11F8 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 11F8 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
         %finish
  11FB                      L1120  EQU $
 
@@ -11089,13 +11089,13 @@ nps:            newline
             write(lines, 5);  spaces(level*3-1)
  1331 FF 35 2C 00 00 00                     PUSH WORD [DATA+002C]
  1337 6A 05                                 PUSH 5
- 1339 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 1339 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  133C 83 C4 08                              ADD ESP,8
  133F 8B 45 18                              MOV EAX,[EBP+24]
  1342 F7 2D 9C 02 00 00                     IMUL WORD [COT+029C]
  1348 48                                    DEC EAX
  1349 50                                    PUSH EAX
- 134A E8 39 00                              CALL 'SPACES' (EXTERN 57)
+ 134A E8 3B 00                              CALL 'SPACES' (EXTERN 59)
  134D 83 C4 04                              ADD ESP,4
             printstring("End")
  1350 81 EC 00 01 00 00                     SUB ESP,256
@@ -11106,10 +11106,10 @@ nps:            newline
  135F 68 FF 00 00 00                        PUSH 255
  1364 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  1367 83 C4 0C                              ADD ESP,12
- 136A E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 136A E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  136D 81 C4 00 01 00 00                     ADD ESP,256
             newline
- 1373 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 1373 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
         %finish
  1376                      L1140  EQU $
         delete names(0)
@@ -11541,7 +11541,7 @@ nps:            newline
  171E 3D 82 00 00 00                        CMP EAX,130
  1723 7D 00                                 JGE L1168
                         space
- 1725 E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 1725 E8 3A 00                              CALL 'SPACE' (EXTERN 58)
                         printstring(text(a))
  1728 FF 75 08                              PUSH WORD [EBP+8]
  172B 68 24 00 00 00                        PUSH COT+36
@@ -11556,14 +11556,14 @@ nps:            newline
  1748 68 FF 00 00 00                        PUSH 255
  174D E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  1750 83 C4 0C                              ADD ESP,12
- 1753 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 1753 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  1756 81 C4 00 01 00 00                     ADD ESP,256
                     %finish %else write(a, 3)
  175C EB 00                                 JMP L1169
  175E                      L1168  EQU $
  175E FF 75 08                              PUSH WORD [EBP+8]
  1761 6A 03                                 PUSH 3
- 1763 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 1763 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  1766 83 C4 08                              ADD ESP,8
  1769                      L1169  EQU $
                 %end
@@ -11579,7 +11579,7 @@ nps:            newline
  1778 A1 4C 00 00 00                        MOV EAX,[DATA+004C]
  177D 3D 0A 00 00 00                        CMP EAX,10
  1782 74 00                                 JE L1170
- 1784 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 1784 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  1787                      L1170  EQU $
                 mon pos = pos
  1787 A1 08 01 00 00                        MOV EAX,[DATA+0108]
@@ -11587,10 +11587,10 @@ nps:            newline
                 write(g, 3)
  1792 FF 35 9C 00 00 00                     PUSH WORD [DATA+009C]
  1798 6A 03                                 PUSH 3
- 179A E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 179A E8 39 00                              CALL 'WRITE' (EXTERN 57)
  179D 83 C4 08                              ADD ESP,8
                 space
- 17A0 E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 17A0 E8 3A 00                              CALL 'SPACE' (EXTERN 58)
                 printstring(text(class))
  17A3 FF 35 04 00 00 00                     PUSH WORD [DATA+0004]
  17A9 68 24 00 00 00                        PUSH COT+36
@@ -11605,7 +11605,7 @@ nps:            newline
  17C6 68 FF 00 00 00                        PUSH 255
  17CB E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  17CE 83 C4 0C                              ADD ESP,12
- 17D1 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 17D1 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  17D4 81 C4 00 01 00 00                     ADD ESP,256
                 printsymbol('"') %if gg&trans bit # 0
  17DA A1 A0 00 00 00                        MOV EAX,[DATA+00A0]
@@ -11613,7 +11613,7 @@ nps:            newline
  17E4 3D 00 00 00 00                        CMP EAX,0
  17E9 74 00                                 JE L1171
  17EB 6A 22                                 PUSH 34
- 17ED E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 17ED E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  17F0 83 C4 04                              ADD ESP,4
  17F3                      L1171  EQU $
                 a = gg>>8&15
@@ -11627,16 +11627,16 @@ nps:            newline
  180B 74 00                                 JE L1172
                     printsymbol('{')
  180D 6A 7B                                 PUSH 123
- 180F E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 180F E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  1812 83 C4 04                              ADD ESP,4
                     write(a, 0)
  1815 FF 75 EC                              PUSH WORD [EBP-20]
  1818 6A 00                                 PUSH 0
- 181A E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 181A E8 39 00                              CALL 'WRITE' (EXTERN 57)
  181D 83 C4 08                              ADD ESP,8
                     printsymbol('}')
  1820 6A 7D                                 PUSH 125
- 1822 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 1822 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  1825 83 C4 04                              ADD ESP,4
                 %finish
  1828                      L1172  EQU $
@@ -11663,7 +11663,7 @@ nps:            newline
  186B 68 FF 00 00 00                        PUSH 255
  1870 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  1873 83 C4 0C                              ADD ESP,12
- 1876 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 1876 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  1879 81 C4 00 01 00 00                     ADD ESP,256
                     la1 = atom1
  187F A1 0C 00 00 00                        MOV EAX,[DATA+000C]
@@ -11685,7 +11685,7 @@ nps:            newline
                     write(lsa, 3)
  18B8 FF 35 20 4D 00 00                     PUSH WORD [DATA+4D20]
  18BE 6A 03                                 PUSH 3
- 18C0 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 18C0 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  18C3 83 C4 08                              ADD ESP,8
                     lt = type
  18C6 A1 18 00 00 00                        MOV EAX,[DATA+0018]
@@ -11693,16 +11693,16 @@ nps:            newline
                     write(lt, 5)
  18D1 FF 35 24 4D 00 00                     PUSH WORD [DATA+4D24]
  18D7 6A 05                                 PUSH 5
- 18D9 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 18D9 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  18DC 83 C4 08                              ADD ESP,8
                     printsymbol(']')
  18DF 6A 5D                                 PUSH 93
- 18E1 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 18E1 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  18E4 83 C4 04                              ADD ESP,4
                 %finish
  18E7                      L1174  EQU $
                 newline
- 18E7 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 18E7 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
             %end
  18EA C9                                    LEAVE
  18EB C3                                    RET
@@ -11742,7 +11742,7 @@ nps:            newline
  1944 3D 00 00 00 00                        CMP EAX,0
  1949 7F 00                                 JG L1178
  194B FF 35 4C 00 00 00                     PUSH WORD [DATA+004C]
- 1951 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 1951 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  1954 83 C4 04                              ADD ESP,4
  1957                      L1178  EQU $
                 column = column+1
@@ -11784,7 +11784,7 @@ s1:                 lines = lines+1
  197A 3D 00 00 00 00                        CMP EAX,0
  197F 74 00                                 JE L1182
  1981 FF 35 58 00 00 00                     PUSH WORD [DATA+0058]
- 1987 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 1987 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  198A 83 C4 04                              ADD ESP,4
  198D                      L1182  EQU $
 s11:                pos = 0;  pos1 = 0;  pos2 = 0;  margin = 0;  column = 0
@@ -11815,28 +11815,28 @@ s11:                pos = 0;  pos1 = 0;  pos2 = 0;  margin = 0;  column = 0
  19FA 68 FF 00 00 00                        PUSH 255
  19FF E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  1A02 83 C4 0C                              ADD ESP,12
- 1A05 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 1A05 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  1A08 81 C4 00 01 00 00                     ADD ESP,256
  1A0E FF 35 2C 00 00 00                     PUSH WORD [DATA+002C]
  1A14 6A FC                                 PUSH -4
- 1A16 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 1A16 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  1A19 83 C4 08                              ADD ESP,8
                         %finish %else  write(lines, 5)
  1A1C EB 00                                 JMP L1186
  1A1E                      L1185  EQU $
  1A1E FF 35 2C 00 00 00                     PUSH WORD [DATA+002C]
  1A24 6A 05                                 PUSH 5
- 1A26 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 1A26 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  1A29 83 C4 08                              ADD ESP,8
  1A2C                      L1186  EQU $
                         csym = cont;  printsymbol(csym)
  1A2C A1 5C 00 00 00                        MOV EAX,[DATA+005C]
  1A31 89 05 60 00 00 00                     MOV [DATA+0060],EAX
  1A37 FF 35 60 00 00 00                     PUSH WORD [DATA+0060]
- 1A3D E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 1A3D E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  1A40 83 C4 04                              ADD ESP,4
                         space
- 1A43 E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 1A43 E8 3A 00                              CALL 'SPACE' (EXTERN 58)
                         %if error margin # 0 %start
  1A46 A1 38 00 00 00                        MOV EAX,[DATA+0038]
  1A4B 3D 00 00 00 00                        CMP EAX,0
@@ -11845,7 +11845,7 @@ s11:                pos = 0;  pos1 = 0;  pos2 = 0;  margin = 0;  column = 0
  1A52 FF 0D 2C 00 00 00                     DEC WORD [DATA+002C]
                             spaces(error margin)
  1A58 FF 35 38 00 00 00                     PUSH WORD [DATA+0038]
- 1A5E E8 39 00                              CALL 'SPACES' (EXTERN 57)
+ 1A5E E8 3B 00                              CALL 'SPACES' (EXTERN 59)
  1A61 83 C4 04                              ADD ESP,4
                             error margin = 0
  1A64 C7 05 38 00 00 00 00 00 00 00         MOV LONG [DATA+0038],0
@@ -11855,7 +11855,7 @@ s11:                pos = 0;  pos1 = 0;  pos2 = 0;  margin = 0;  column = 0
  1A78 74 00                                 JE L1188
                                 printsymbol(error sym)
  1A7A FF 35 3C 00 00 00                     PUSH WORD [DATA+003C]
- 1A80 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 1A80 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  1A83 83 C4 04                              ADD ESP,4
                                 pos = 1;  char(1) = error sym
  1A86 C7 05 08 01 00 00 01 00 00 00         MOV LONG [DATA+0108],1
@@ -11915,7 +11915,7 @@ s3:             readsymbol(sym)
  1B1F 3D 00 00 00 00                        CMP EAX,0
  1B24 7F 00                                 JG L1194
  1B26 FF 35 4C 00 00 00                     PUSH WORD [DATA+004C]
- 1B2C E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 1B2C E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  1B2F 83 C4 04                              ADD ESP,4
  1B32                      L1194  EQU $
                 column = column+1
@@ -12489,35 +12489,35 @@ in:                 search base = rbase %if this >= 0 %and d # 0;  !record elem 
  20FD 68 FF 00 00 00                        PUSH 255
  2102 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  2105 83 C4 0C                              ADD ESP,12
- 2108 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 2108 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  210B 81 C4 00 01 00 00                     ADD ESP,256
                         write(atom1, 3)
  2111 FF 35 0C 00 00 00                     PUSH WORD [DATA+000C]
  2117 6A 03                                 PUSH 3
- 2119 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 2119 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  211C 83 C4 08                              ADD ESP,8
                         write(type, 1)
  211F FF 35 18 00 00 00                     PUSH WORD [DATA+0018]
  2125 6A 01                                 PUSH 1
- 2127 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 2127 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  212A 83 C4 08                              ADD ESP,8
                         write(app, 3)
  212D FF 35 1C 00 00 00                     PUSH WORD [DATA+001C]
  2133 6A 03                                 PUSH 3
- 2135 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 2135 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  2138 83 C4 08                              ADD ESP,8
                         write(format, 5)
  213B FF 35 20 00 00 00                     PUSH WORD [DATA+0020]
  2141 6A 05                                 PUSH 5
- 2143 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 2143 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  2146 83 C4 08                              ADD ESP,8
                         write(atom flags, 3)
  2149 FF 35 78 00 00 00                     PUSH WORD [DATA+0078]
  214F 6A 03                                 PUSH 3
- 2151 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 2151 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  2154 83 C4 08                              ADD ESP,8
                         newline
- 2157 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 2157 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                     %finish
  215A                      L1238  EQU $
 
@@ -15976,11 +15976,11 @@ failed:     %if diag&32 # 0 %start
  4669 68 FF 00 00 00                        PUSH 255
  466E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  4671 83 C4 0C                              ADD ESP,12
- 4674 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 4674 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  4677 81 C4 00 01 00 00                     ADD ESP,256
  467D FF 35 0C 00 00 00                     PUSH WORD [DATA+000C]
  4683 6A 03                                 PUSH 3
- 4685 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 4685 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  4688 83 C4 08                              ADD ESP,8
                 printstring("  Atom2 =");    write(atom2, 3)
  468B 81 EC 00 01 00 00                     SUB ESP,256
@@ -15991,11 +15991,11 @@ failed:     %if diag&32 # 0 %start
  469A 68 FF 00 00 00                        PUSH 255
  469F E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  46A2 83 C4 0C                              ADD ESP,12
- 46A5 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 46A5 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  46A8 81 C4 00 01 00 00                     ADD ESP,256
  46AE FF 35 10 00 00 00                     PUSH WORD [DATA+0010]
  46B4 6A 03                                 PUSH 3
- 46B6 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 46B6 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  46B9 83 C4 08                              ADD ESP,8
                 printstring("  subatom =");  write(subatom, 3); newline
  46BC 81 EC 00 01 00 00                     SUB ESP,256
@@ -16006,13 +16006,13 @@ failed:     %if diag&32 # 0 %start
  46CB 68 FF 00 00 00                        PUSH 255
  46D0 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  46D3 83 C4 0C                              ADD ESP,12
- 46D6 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 46D6 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  46D9 81 C4 00 01 00 00                     ADD ESP,256
  46DF FF 35 14 00 00 00                     PUSH WORD [DATA+0014]
  46E5 6A 03                                 PUSH 3
- 46E7 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 46E7 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  46EA 83 C4 08                              ADD ESP,8
- 46ED E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 46ED E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                 printstring("Type =");       write(type, 1)
  46F0 81 EC 00 01 00 00                     SUB ESP,256
  46F6 89 E0                                 MOV EAX,ESP
@@ -16022,11 +16022,11 @@ failed:     %if diag&32 # 0 %start
  46FF 68 FF 00 00 00                        PUSH 255
  4704 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  4707 83 C4 0C                              ADD ESP,12
- 470A E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 470A E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  470D 81 C4 00 01 00 00                     ADD ESP,256
  4713 FF 35 18 00 00 00                     PUSH WORD [DATA+0018]
  4719 6A 01                                 PUSH 1
- 471B E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 471B E8 39 00                              CALL 'WRITE' (EXTERN 57)
  471E 83 C4 08                              ADD ESP,8
                 printstring("   Ptype =");   write(ptype, 1);   newline
  4721 81 EC 00 01 00 00                     SUB ESP,256
@@ -16037,13 +16037,13 @@ failed:     %if diag&32 # 0 %start
  4730 68 FF 00 00 00                        PUSH 255
  4735 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  4738 83 C4 0C                              ADD ESP,12
- 473B E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 473B E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  473E 81 C4 00 01 00 00                     ADD ESP,256
  4744 FF 35 8C 00 00 00                     PUSH WORD [DATA+008C]
  474A 6A 01                                 PUSH 1
- 474C E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 474C E8 39 00                              CALL 'WRITE' (EXTERN 57)
  474F 83 C4 08                              ADD ESP,8
- 4752 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 4752 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                 printstring("App =");        write(app, 1)
  4755 81 EC 00 01 00 00                     SUB ESP,256
  475B 89 E0                                 MOV EAX,ESP
@@ -16053,11 +16053,11 @@ failed:     %if diag&32 # 0 %start
  4764 68 FF 00 00 00                        PUSH 255
  4769 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  476C 83 C4 0C                              ADD ESP,12
- 476F E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 476F E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  4772 81 C4 00 01 00 00                     ADD ESP,256
  4778 FF 35 1C 00 00 00                     PUSH WORD [DATA+001C]
  477E 6A 01                                 PUSH 1
- 4780 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 4780 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  4783 83 C4 08                              ADD ESP,8
                 printstring("   Papp =");    write(papp, 1);    newline
  4786 81 EC 00 01 00 00                     SUB ESP,256
@@ -16068,13 +16068,13 @@ failed:     %if diag&32 # 0 %start
  4795 68 FF 00 00 00                        PUSH 255
  479A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  479D 83 C4 0C                              ADD ESP,12
- 47A0 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 47A0 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  47A3 81 C4 00 01 00 00                     ADD ESP,256
  47A9 FF 35 90 00 00 00                     PUSH WORD [DATA+0090]
  47AF 6A 01                                 PUSH 1
- 47B1 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 47B1 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  47B4 83 C4 08                              ADD ESP,8
- 47B7 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 47B7 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                 printstring("Format =");     write(format, 1)
  47BA 81 EC 00 01 00 00                     SUB ESP,256
  47C0 89 E0                                 MOV EAX,ESP
@@ -16084,11 +16084,11 @@ failed:     %if diag&32 # 0 %start
  47C9 68 FF 00 00 00                        PUSH 255
  47CE E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  47D1 83 C4 0C                              ADD ESP,12
- 47D4 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 47D4 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  47D7 81 C4 00 01 00 00                     ADD ESP,256
  47DD FF 35 20 00 00 00                     PUSH WORD [DATA+0020]
  47E3 6A 01                                 PUSH 1
- 47E5 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 47E5 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  47E8 83 C4 08                              ADD ESP,8
                 printstring("   Pformat ="); write(pformat, 1); newline
  47EB 81 EC 00 01 00 00                     SUB ESP,256
@@ -16099,13 +16099,13 @@ failed:     %if diag&32 # 0 %start
  47FA 68 FF 00 00 00                        PUSH 255
  47FF E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  4802 83 C4 0C                              ADD ESP,12
- 4805 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 4805 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  4808 81 C4 00 01 00 00                     ADD ESP,256
  480E FF 35 94 00 00 00                     PUSH WORD [DATA+0094]
  4814 6A 01                                 PUSH 1
- 4816 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 4816 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  4819 83 C4 08                              ADD ESP,8
- 481C E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 481C E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                 !%signal 13,15
             %finish
  481F                      L1537  EQU $
@@ -17337,7 +17337,7 @@ gn:             %if next = 0 %start;                   ! end of phrase
  49D9 8A 0D D0 4E 00 00                     MOV CL,[DATA+4ED0]
  49DF 29 C8                                 SUB EAX,ECX
  49E1 50                                    PUSH EAX
- 49E2 E8 39 00                              CALL 'SPACES' (EXTERN 57)
+ 49E2 E8 3B 00                              CALL 'SPACES' (EXTERN 59)
  49E5 83 C4 04                              ADD ESP,4
  49E8                      L1556  EQU $
                     name = text(class)
@@ -17357,10 +17357,10 @@ gn:             %if next = 0 %start;                   ! end of phrase
                     write(x, 2)
  4A10 FF 35 08 00 00 00                     PUSH WORD [DATA+0008]
  4A16 6A 02                                 PUSH 2
- 4A18 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 4A18 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  4A1B 83 C4 08                              ADD ESP,8
                     space
- 4A1E E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 4A1E E8 3A 00                              CALL 'SPACE' (EXTERN 58)
                     printstring(name)
  4A21 81 EC 00 01 00 00                     SUB ESP,256
  4A27 89 E0                                 MOV EAX,ESP
@@ -17370,10 +17370,10 @@ gn:             %if next = 0 %start;                   ! end of phrase
  4A30 68 FF 00 00 00                        PUSH 255
  4A35 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  4A38 83 C4 0C                              ADD ESP,12
- 4A3B E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 4A3B E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  4A3E 81 C4 00 01 00 00                     ADD ESP,256
                     space
- 4A44 E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 4A44 E8 3A 00                              CALL 'SPACE' (EXTERN 58)
                     count = count-1
  4A47 FF 0D DC 4E 00 00                     DEC WORD [DATA+4EDC]
                     %if count <= 0 %start
@@ -17385,7 +17385,7 @@ gn:             %if next = 0 %start;                   ! end of phrase
                         name = ""
  4A63 C6 05 D0 4E 00 00 00                  MOV BYTE [DATA+4ED0],0
                         newline
- 4A6A E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 4A6A E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                     %finish
  4A6D                      L1557  EQU $
                 %finish
@@ -18252,7 +18252,7 @@ gn:             %if next = 0 %start;                   ! end of phrase
  529C A1 4C 00 00 00                        MOV EAX,[DATA+004C]
  52A1 3D 0A 00 00 00                        CMP EAX,10
  52A6 74 00                                 JE L1615
- 52A8 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 52A8 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  52AB                      L1615  EQU $
                 printstring("ss =")
  52AB 81 EC 00 01 00 00                     SUB ESP,256
@@ -18263,15 +18263,15 @@ gn:             %if next = 0 %start;                   ! end of phrase
  52BA 68 FF 00 00 00                        PUSH 255
  52BF E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  52C2 83 C4 0C                              ADD ESP,12
- 52C5 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 52C5 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  52C8 81 C4 00 01 00 00                     ADD ESP,256
                 write(ss, 1)
  52CE FF 35 C4 00 00 00                     PUSH WORD [DATA+00C4]
  52D4 6A 01                                 PUSH 1
- 52D6 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 52D6 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  52D9 83 C4 08                              ADD ESP,8
                 newline
- 52DC E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 52DC E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                 count = 5
  52DF C7 05 DC 4E 00 00 05 00 00 00         MOV LONG [DATA+4EDC],5
                 name = ""
@@ -18327,7 +18327,7 @@ top:        %if next # link %start
  536F A1 DC 4E 00 00                        MOV EAX,[DATA+4EDC]
  5374 3D 05 00 00 00                        CMP EAX,5
  5379 74 00                                 JE L1620
- 537B E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 537B E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  537E                      L1620  EQU $
 
             %if lmode&(loop!then!else) # 0 %start;     ! pending labels and jumps
@@ -20926,7 +20926,7 @@ c(87):      set const(pstack(1));                      ! mass
  6E0A E8 18 00                              CALL 'SELECTINPUT' (EXTERN 24)
  6E0D 83 C4 04                              ADD ESP,4
  6E10 6A 02                                 PUSH 2
- 6E12 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 6E12 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  6E15 83 C4 04                              ADD ESP,4
     tag(max tag) = 0;                                  ! %begin defn
  6E18 68 20 03 00 00                        PUSH 800
@@ -20982,7 +20982,7 @@ c(87):      set const(pstack(1));                      ! mass
  6EC6 68 FF 00 00 00                        PUSH 255
  6ECB E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  6ECE 83 C4 0C                              ADD ESP,12
- 6ED1 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 6ED1 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  6ED4 81 C4 00 01 00 00                     ADD ESP,256
 !    printstring("         Preston IMP2020 Compiler - Version ")
     printstring(version);  newlines(2)
@@ -20994,10 +20994,10 @@ c(87):      set const(pstack(1));                      ! mass
  6EE9 68 FF 00 00 00                        PUSH 255
  6EEE E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  6EF1 83 C4 0C                              ADD ESP,12
- 6EF4 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 6EF4 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  6EF7 81 C4 00 01 00 00                     ADD ESP,256
  6EFD 6A 02                                 PUSH 2
- 6EFF E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 6EFF E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  6F02 83 C4 04                              ADD ESP,4
     op('l', 0)
  6F05 6A 6C                                 PUSH 108
@@ -21024,7 +21024,7 @@ c(87):      set const(pstack(1));                      ! mass
     x = listing
  6F32 C7 05 08 00 00 00 02 00 00 00         MOV LONG [DATA+0008],2
     newline
- 6F3C E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 6F3C E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     %cycle
  6F3F                      L1895  EQU $
         %if faulty = 0 %start
@@ -21034,7 +21034,7 @@ c(87):      set const(pstack(1));                      ! mass
             write(stats, 5)
  6F4B FF 35 44 00 00 00                     PUSH WORD [DATA+0044]
  6F51 6A 05                                 PUSH 5
- 6F53 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 6F53 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  6F56 83 C4 08                              ADD ESP,8
             printstring(" Statements compiled")
  6F59 81 EC 00 01 00 00                     SUB ESP,256
@@ -21045,7 +21045,7 @@ c(87):      set const(pstack(1));                      ! mass
  6F68 68 FF 00 00 00                        PUSH 255
  6F6D E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  6F70 83 C4 0C                              ADD ESP,12
- 6F73 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 6F73 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  6F76 81 C4 00 01 00 00                     ADD ESP,256
         %else
  6F7C EB 00                                 JMP L1897
@@ -21059,12 +21059,12 @@ c(87):      set const(pstack(1));                      ! mass
  6F8D 68 FF 00 00 00                        PUSH 255
  6F92 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  6F95 83 C4 0C                              ADD ESP,12
- 6F98 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 6F98 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  6F9B 81 C4 00 01 00 00                     ADD ESP,256
             write(faulty, 1)
  6FA1 FF 35 24 00 00 00                     PUSH WORD [DATA+0024]
  6FA7 6A 01                                 PUSH 1
- 6FA9 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 6FA9 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  6FAC 83 C4 08                              ADD ESP,8
             printstring(" fault")
  6FAF 81 EC 00 01 00 00                     SUB ESP,256
@@ -21075,20 +21075,20 @@ c(87):      set const(pstack(1));                      ! mass
  6FBE 68 FF 00 00 00                        PUSH 255
  6FC3 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  6FC6 83 C4 0C                              ADD ESP,12
- 6FC9 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 6FC9 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  6FCC 81 C4 00 01 00 00                     ADD ESP,256
             printsymbol('s') %unless faulty = 1
  6FD2 A1 24 00 00 00                        MOV EAX,[DATA+0024]
  6FD7 3D 01 00 00 00                        CMP EAX,1
  6FDC 74 00                                 JE L1898
  6FDE 6A 73                                 PUSH 115
- 6FE0 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 6FE0 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  6FE3 83 C4 04                              ADD ESP,4
  6FE6                      L1898  EQU $
         %finish
  6FE6                      L1897  EQU $
         newline
- 6FE6 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 6FE6 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
         %exit %if x = report
  6FE9 A1 08 00 00 00                        MOV EAX,[DATA+0008]
  6FEE 3D 00 00 00 00                        CMP EAX,0
@@ -21099,7 +21099,7 @@ c(87):      set const(pstack(1));                      ! mass
  6FF7 C7 05 08 00 00 00 00 00 00 00         MOV LONG [DATA+0008],0
         selectoutput(report)
  7001 6A 00                                 PUSH 0
- 7003 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 7003 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  7006 83 C4 04                              ADD ESP,4
     %repeat
  7009 EB 00                                 JMP L1895

@@ -173,7 +173,7 @@
  0119 83 C4 04                              ADD ESP,4
  011C 3D 00 00 00 00                        CMP EAX,0
  0121 74 00                                 JE L1014
- 0123 E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 0123 E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
  0126 EB 00                                 JMP L1013
  0128                      L1014  EQU $
 
@@ -230,7 +230,7 @@
                 %finish
  0187                      L1019  EQU $
                 skip symbol
- 0187 E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 0187 E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
             %repeat
  018A EB 00                                 JMP L1016
  018C                      L1018  EQU $
@@ -372,7 +372,7 @@
                 found = 1
  02DB C7 85 DC FE FF FF 01 00 00 00         MOV LONG [EBP-292],1
                 skip symbol
- 02E5 E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 02E5 E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
                 r = r * Base + digit
  02E8 DD 85 D4 FE FF FF                     FLD QWORD [EBP-300]
  02EE DB 85 E0 FE FF FF                     FILD [EBP-288]
@@ -406,7 +406,7 @@
  0330 8B 85 B0 FE FF FF                     MOV EAX,[EBP-336]
  0336 89 85 E0 FE FF FF                     MOV [EBP-288],EAX
             skipsymbol
- 033C E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 033C E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
         %repeat
  033F EB 00                                 JMP L1025
  0341                      L1034  EQU $
@@ -548,7 +548,7 @@
  0482 3D 2E 00 00 00                        CMP EAX,46
  0487 75 00                                 JNE L1044
             skip symbol
- 0489 E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 0489 E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
             frac = 0
  048C D9 EE                                 FLDZ
  048E DD 9D C4 FE FF FF                     FSTP QWORD [EBP-316]
@@ -588,7 +588,7 @@
                 found = 1
  0500 C7 85 DC FE FF FF 01 00 00 00         MOV LONG [EBP-292],1
                 skip symbol
- 050A E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 050A E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
             %repeat
  050D EB 00                                 JMP L1045
  050F                      L1048  EQU $

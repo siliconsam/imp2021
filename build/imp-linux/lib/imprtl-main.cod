@@ -71,7 +71,7 @@
  0045 83 C4 0C                              ADD ESP,12
 
             debugnewline
- 0048 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 0048 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
             debugstring( "**** Arrgh!" )
  004B 81 EC 00 01 00 00                     SUB ESP,256
  0051 89 E0                                 MOV EAX,ESP
@@ -81,7 +81,7 @@
  005A 68 FF 00 00 00                        PUSH 255
  005F E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0062 83 C4 0C                              ADD ESP,12
- 0065 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0065 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  0068 81 C4 00 01 00 00                     ADD ESP,256
             debugstring( " Last chance event handler triggered from line=" )
  006E 81 EC 00 01 00 00                     SUB ESP,256
@@ -92,14 +92,14 @@
  007D 68 FF 00 00 00                        PUSH 255
  0082 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0085 83 C4 0C                              ADD ESP,12
- 0088 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0088 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  008B 81 C4 00 01 00 00                     ADD ESP,256
             debugstring( itos(line,0) )
  0091 FF 75 E8                              PUSH WORD [EBP-24]
  0094 6A 00                                 PUSH 0
  0096 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
  009C 50                                    PUSH EAX
- 009D E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 009D E8 42 00                              CALL 'ITOS' (EXTERN 66)
  00A0 83 C4 0C                              ADD ESP,12
  00A3 81 EC 00 01 00 00                     SUB ESP,256
  00A9 89 E0                                 MOV EAX,ESP
@@ -109,10 +109,10 @@
  00B3 68 FF 00 00 00                        PUSH 255
  00B8 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  00BB 83 C4 0C                              ADD ESP,12
- 00BE E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 00BE E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  00C1 81 C4 00 01 00 00                     ADD ESP,256
             debugnewline
- 00C7 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 00C7 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
             debugstring( "**** Triggered by error (event,sub,extra)=" )
  00CA 81 EC 00 01 00 00                     SUB ESP,256
  00D0 89 E0                                 MOV EAX,ESP
@@ -122,7 +122,7 @@
  00D9 68 FF 00 00 00                        PUSH 255
  00DE E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  00E1 83 C4 0C                              ADD ESP,12
- 00E4 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 00E4 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  00E7 81 C4 00 01 00 00                     ADD ESP,256
             debugstring( "(" )
  00ED 81 EC 00 01 00 00                     SUB ESP,256
@@ -133,14 +133,14 @@
  00FC 68 FF 00 00 00                        PUSH 255
  0101 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0104 83 C4 0C                              ADD ESP,12
- 0107 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0107 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  010A 81 C4 00 01 00 00                     ADD ESP,256
             debugstring( itos(eventno,0).",".itos(sub,0).",".itos(info,0) )
  0110 FF 75 F4                              PUSH WORD [EBP-12]
  0113 6A 00                                 PUSH 0
  0115 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
  011B 50                                    PUSH EAX
- 011C E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 011C E8 42 00                              CALL 'ITOS' (EXTERN 66)
  011F 83 C4 0C                              ADD ESP,12
  0122 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
  0128 50                                    PUSH EAX
@@ -153,7 +153,7 @@
  013D 6A 00                                 PUSH 0
  013F 8D 85 E8 FC FF FF                     LEA EAX,[EBP-792]
  0145 50                                    PUSH EAX
- 0146 E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 0146 E8 42 00                              CALL 'ITOS' (EXTERN 66)
  0149 83 C4 0C                              ADD ESP,12
  014C 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
  0152 50                                    PUSH EAX
@@ -173,7 +173,7 @@
  0180 6A 00                                 PUSH 0
  0182 8D 85 E8 FB FF FF                     LEA EAX,[EBP-1048]
  0188 50                                    PUSH EAX
- 0189 E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 0189 E8 42 00                              CALL 'ITOS' (EXTERN 66)
  018C 83 C4 0C                              ADD ESP,12
  018F 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
  0195 50                                    PUSH EAX
@@ -190,7 +190,7 @@
  01B8 68 FF 00 00 00                        PUSH 255
  01BD E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  01C0 83 C4 0C                              ADD ESP,12
- 01C3 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 01C3 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  01C6 81 C4 00 01 00 00                     ADD ESP,256
             debugstring( ")" )
  01CC 81 EC 00 01 00 00                     SUB ESP,256
@@ -201,10 +201,10 @@
  01DB 68 FF 00 00 00                        PUSH 255
  01E0 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  01E3 83 C4 0C                              ADD ESP,12
- 01E6 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 01E6 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  01E9 81 C4 00 01 00 00                     ADD ESP,256
             debugnewline
- 01EF E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 01EF E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
             debugstring( "     Error message is '".msg."'" )
  01F2 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
  01F8 50                                    PUSH EAX
@@ -235,10 +235,10 @@
  024B 68 FF 00 00 00                        PUSH 255
  0250 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0253 83 C4 0C                              ADD ESP,12
- 0256 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0256 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  0259 81 C4 00 01 00 00                     ADD ESP,256
             debugnewline
- 025F E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 025F E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
 
             %if eventno=6 %and sub = 2 %and info = 1 %start
  0262 8B 45 F4                              MOV EAX,[EBP-12]
@@ -259,7 +259,7 @@
  028F 68 FF 00 00 00                        PUSH 255
  0294 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0297 83 C4 0C                              ADD ESP,12
- 029A E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 029A E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  029D 81 C4 00 01 00 00                     ADD ESP,256
                 debugstring("Missing command line parameter(s) ")
  02A3 81 EC 00 01 00 00                     SUB ESP,256
@@ -270,7 +270,7 @@
  02B2 68 FF 00 00 00                        PUSH 255
  02B7 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  02BA 83 C4 0C                              ADD ESP,12
- 02BD E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 02BD E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  02C0 81 C4 00 01 00 00                     ADD ESP,256
                 debugstring("for input/output file(s)")
  02C6 81 EC 00 01 00 00                     SUB ESP,256
@@ -281,10 +281,10 @@
  02D5 68 FF 00 00 00                        PUSH 255
  02DA E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  02DD 83 C4 0C                              ADD ESP,12
- 02E0 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 02E0 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  02E3 81 C4 00 01 00 00                     ADD ESP,256
                 debug newline
- 02E9 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 02E9 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
             %finish
  02EC                      L1004  EQU $
 
@@ -309,7 +309,7 @@
  0319 68 FF 00 00 00                        PUSH 255
  031E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0321 83 C4 0C                              ADD ESP,12
- 0324 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0324 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  0327 81 C4 00 01 00 00                     ADD ESP,256
                     debugstring("Missing/invalid command line parameter for ")
  032D 81 EC 00 01 00 00                     SUB ESP,256
@@ -320,7 +320,7 @@
  033C 68 FF 00 00 00                        PUSH 255
  0341 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0344 83 C4 0C                              ADD ESP,12
- 0347 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0347 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  034A 81 C4 00 01 00 00                     ADD ESP,256
                 %finish
  0350                      L1007  EQU $
@@ -337,10 +337,10 @@
  0369 68 FF 00 00 00                        PUSH 255
  036E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0371 83 C4 0C                              ADD ESP,12
- 0374 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0374 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  0377 81 C4 00 01 00 00                     ADD ESP,256
                     debug newline
- 037D E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 037D E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
                 %finish
  0380                      L1008  EQU $
                 %if (sub = 5) %start
@@ -356,10 +356,10 @@
  0399 68 FF 00 00 00                        PUSH 255
  039E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  03A1 83 C4 0C                              ADD ESP,12
- 03A4 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 03A4 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  03A7 81 C4 00 01 00 00                     ADD ESP,256
                     debug newline
- 03AD E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 03AD E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
                 %finish
  03B0                      L1009  EQU $
                 %if (sub = 4) %or (sub = 5) %start
@@ -379,7 +379,7 @@
  03D3 68 FF 00 00 00                        PUSH 255
  03D8 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  03DB 83 C4 0C                              ADD ESP,12
- 03DE E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 03DE E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  03E1 81 C4 00 01 00 00                     ADD ESP,256
                 %finish
  03E7                      L1011  EQU $
@@ -400,7 +400,7 @@
  0400 68 FF 00 00 00                        PUSH 255
  0405 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0408 83 C4 0C                              ADD ESP,12
- 040B E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 040B E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  040E 81 C4 00 01 00 00                     ADD ESP,256
                 debugstring("Missing/invalid command line parameter(s)")
  0414 81 EC 00 01 00 00                     SUB ESP,256
@@ -411,15 +411,15 @@
  0423 68 FF 00 00 00                        PUSH 255
  0428 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  042B 83 C4 0C                              ADD ESP,12
- 042E E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 042E E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  0431 81 C4 00 01 00 00                     ADD ESP,256
                 debug newline
- 0437 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 0437 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
             %finish
  043A                      L1012  EQU $
 
             debugnewline
- 043A E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 043A E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
 
             %stop
  043D E8 0C 00                              CALL '_IMPSTOP' (EXTERN 12)
@@ -438,7 +438,7 @@
         ! ass-u-me no debug required
         set debug level( 0 )
  0452 6A 00                                 PUSH 0
- 0454 E8 47 00                              CALL 'SETDEBUGLEVEL' (EXTERN 71)
+ 0454 E8 49 00                              CALL 'SETDEBUGLEVEL' (EXTERN 73)
  0457 83 C4 04                              ADD ESP,4
 
         %if (length( getenv( getenvindex( "IMP_DEBUG" ) ) ) # 0) %start
@@ -450,12 +450,12 @@
  0469 68 FF 00 00 00                        PUSH 255
  046E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0471 83 C4 0C                              ADD ESP,12
- 0474 E8 51 00                              CALL 'GETENVINDEX' (EXTERN 81)
+ 0474 E8 53 00                              CALL 'GETENVINDEX' (EXTERN 83)
  0477 81 C4 00 01 00 00                     ADD ESP,256
  047D 50                                    PUSH EAX
  047E 8D 85 E8 FD FF FF                     LEA EAX,[EBP-536]
  0484 50                                    PUSH EAX
- 0485 E8 50 00                              CALL 'GETENV' (EXTERN 80)
+ 0485 E8 52 00                              CALL 'GETENV' (EXTERN 82)
  0488 83 C4 08                              ADD ESP,8
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
@@ -466,13 +466,13 @@
             ! ok, we want ALL debug levels
             set debug level ( 16_ffffffff )
  049A 6A FF                                 PUSH -1
- 049C E8 47 00                              CALL 'SETDEBUGLEVEL' (EXTERN 71)
+ 049C E8 49 00                              CALL 'SETDEBUGLEVEL' (EXTERN 73)
  049F 83 C4 04                              ADD ESP,4
         %finish
  04A2                      L1013  EQU $
 
         initialise io system
- 04A2 E8 66 00                              CALL 'INITIALISEIOSYSTEM' (EXTERN 102)
+ 04A2 E8 69 00                              CALL 'INITIALISEIOSYSTEM' (EXTERN 105)
 
         ! ok, let's see which flavour of IMP program we have
         ! We defer selection of %external %routine XXX %alias "__impmain" IMP program type
@@ -483,18 +483,18 @@
 
         ! don't forget to close down the I/O system
         terminate io system
- 04A8 E8 67 00                              CALL 'TERMINATEIOSYSTEM' (EXTERN 103)
+ 04A8 E8 6A 00                              CALL 'TERMINATEIOSYSTEM' (EXTERN 106)
 
         ! Switch off all debug now we are about to exit
         set debug level ( 0 )
  04AB 6A 00                                 PUSH 0
- 04AD E8 47 00                              CALL 'SETDEBUGLEVEL' (EXTERN 71)
+ 04AD E8 49 00                              CALL 'SETDEBUGLEVEL' (EXTERN 73)
  04B0 83 C4 04                              ADD ESP,4
 
         ! If the IMP program exits through %endofprog then report success to the shell
         exit(0)
  04B3 6A 00                                 PUSH 0
- 04B5 E8 63 00                              CALL 'EXIT' (EXTERN 99)
+ 04B5 E8 66 00                              CALL 'EXIT' (EXTERN 102)
  04B8 83 C4 04                              ADD ESP,4
     %end
  04BB C9                                    LEAVE
@@ -558,10 +558,10 @@
  052F 68 FF 00 00 00                        PUSH 255
  0534 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0537 83 C4 0C                              ADD ESP,12
- 053A E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 053A E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  053D 81 C4 00 01 00 00                     ADD ESP,256
         debug newline
- 0543 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 0543 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
         debugstring( "   NB: the '".tostring(FILE SEP)."' separates the input files from the output files" )
                                       Generating CODE for 'TO STRING' (MACRO 3)
                                       CALL 'TO STRING' (MACRO 3)
@@ -594,10 +594,10 @@
  059E 68 FF 00 00 00                        PUSH 255
  05A3 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  05A6 83 C4 0C                              ADD ESP,12
- 05A9 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 05A9 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  05AC 81 C4 00 01 00 00                     ADD ESP,256
         debug newline
- 05B2 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 05B2 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
         debugstring( "   NB: debug triggers extra run time debug messages)" )
  05B5 81 EC 00 01 00 00                     SUB ESP,256
  05BB 89 E0                                 MOV EAX,ESP
@@ -607,10 +607,10 @@
  05C4 68 FF 00 00 00                        PUSH 255
  05C9 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  05CC 83 C4 0C                              ADD ESP,12
- 05CF E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 05CF E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  05D2 81 C4 00 01 00 00                     ADD ESP,256
         debug newline
- 05D8 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 05D8 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
         debugstring( "   NB: For debug activation (even if there are no I/O files requested) the '".tostring(FILE SEP)."' is mandatory" )
                                       Generating CODE for 'TO STRING' (MACRO 3)
                                       CALL 'TO STRING' (MACRO 3)
@@ -643,13 +643,13 @@
  0633 68 FF 00 00 00                        PUSH 255
  0638 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  063B 83 C4 0C                              ADD ESP,12
- 063E E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 063E E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  0641 81 C4 00 01 00 00                     ADD ESP,256
         debug newline
- 0647 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 0647 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
         exit(1)
  064A 6A 01                                 PUSH 1
- 064C E8 63 00                              CALL 'EXIT' (EXTERN 99)
+ 064C E8 66 00                              CALL 'EXIT' (EXTERN 102)
  064F 83 C4 04                              ADD ESP,4
     %end
  0652 C9                                    LEAVE
@@ -768,7 +768,7 @@
         %integer errcount = 0
  0749 C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
         %integer argcount = getargcount
- 0750 E8 52 00                              CALL 'GETARGCOUNT' (EXTERN 82)
+ 0750 E8 54 00                              CALL 'GETARGCOUNT' (EXTERN 84)
  0753 89 45 F4                              MOV [EBP-12],EAX
 
         ! Type 1 IMP PROGRAM?
@@ -804,7 +804,7 @@
  0772 6A 01                                 PUSH 1
  0774 8D 85 F4 FE FF FF                     LEA EAX,[EBP-268]
  077A 50                                    PUSH EAX
- 077B E8 53 00                              CALL 'GETARG' (EXTERN 83)
+ 077B E8 55 00                              CALL 'GETARG' (EXTERN 85)
  077E 83 C4 08                              ADD ESP,8
  0781 81 EC 00 01 00 00                     SUB ESP,256
  0787 89 E0                                 MOV EAX,ESP
@@ -814,7 +814,7 @@
  0791 68 FF 00 00 00                        PUSH 255
  0796 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0799 83 C4 0C                              ADD ESP,12
- 079C E8 65 00                              CALL 'SPLITIOLIST' (EXTERN 101)
+ 079C E8 68 00                              CALL 'SPLITIOLIST' (EXTERN 104)
  079F 81 C4 00 01 00 00                     ADD ESP,256
  07A5 3D 00 00 00 00                        CMP EAX,0
  07AA 74 00                                 JE L1026
@@ -834,17 +834,17 @@
  07B9 8B 45 F4                              MOV EAX,[EBP-12]
  07BC 3D 02 00 00 00                        CMP EAX,2
  07C1 7E 00                                 JLE L1028
- 07C3 E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 07C3 E8 48 00                              CALL 'DEBUGMODE' (EXTERN 72)
  07C6 0D 02 00 00 00                        OR EAX,2
  07CB 0D 01 00 00 00                        OR EAX,1
  07D0 0D 20 00 00 00                        OR EAX,32
  07D5 50                                    PUSH EAX
- 07D6 E8 47 00                              CALL 'SETDEBUGLEVEL' (EXTERN 71)
+ 07D6 E8 49 00                              CALL 'SETDEBUGLEVEL' (EXTERN 73)
  07D9 83 C4 04                              ADD ESP,4
  07DC                      L1028  EQU $
 
             %if ((debug mode & DBGMAIN) # 0) %start
- 07DC E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 07DC E8 48 00                              CALL 'DEBUGMODE' (EXTERN 72)
  07DF 25 02 00 00 00                        AND EAX,2
  07E4 3D 00 00 00 00                        CMP EAX,0
  07E9 74 00                                 JE L1029
@@ -857,19 +857,19 @@
  07FA 68 FF 00 00 00                        PUSH 255
  07FF E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0802 83 C4 0C                              ADD ESP,12
- 0805 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0805 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  0808 81 C4 00 01 00 00                     ADD ESP,256
                 debug newline
- 080E E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 080E E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
             %finish
  0811                      L1029  EQU $
 
             ! ok, let's go IMPing!!
             impmain
- 0811 E8 64 00                              CALL 'IMPMAIN' (EXTERN 100)
+ 0811 E8 67 00                              CALL 'IMPMAIN' (EXTERN 103)
 
             %if ((debug mode & DBGMAIN) # 0) %start
- 0814 E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 0814 E8 48 00                              CALL 'DEBUGMODE' (EXTERN 72)
  0817 25 02 00 00 00                        AND EAX,2
  081C 3D 00 00 00 00                        CMP EAX,0
  0821 74 00                                 JE L1030
@@ -882,10 +882,10 @@
  0832 68 FF 00 00 00                        PUSH 255
  0837 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  083A 83 C4 0C                              ADD ESP,12
- 083D E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 083D E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  0840 81 C4 00 01 00 00                     ADD ESP,256
                 debug newline
- 0846 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 0846 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
             %finish
  0849                      L1030  EQU $
         %finish
@@ -905,7 +905,7 @@
         ! It is the IMP programmers responsibility to open files and read the command line
 
         %if ((debug mode & DBGMAIN) # 0) %start
- 084F E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 084F E8 48 00                              CALL 'DEBUGMODE' (EXTERN 72)
  0852 25 02 00 00 00                        AND EAX,2
  0857 3D 00 00 00 00                        CMP EAX,0
  085C 74 00                                 JE L1032
@@ -918,19 +918,19 @@
  086D 68 FF 00 00 00                        PUSH 255
  0872 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0875 83 C4 0C                              ADD ESP,12
- 0878 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 0878 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  087B 81 C4 00 01 00 00                     ADD ESP,256
             debug newline
- 0881 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 0881 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
         %finish
  0884                      L1032  EQU $
 
         ! ok, let's go IMPing!!
         impmain
- 0884 E8 64 00                              CALL 'IMPMAIN' (EXTERN 100)
+ 0884 E8 67 00                              CALL 'IMPMAIN' (EXTERN 103)
 
         %if ((debug mode & DBGMAIN) # 0) %start
- 0887 E8 46 00                              CALL 'DEBUGMODE' (EXTERN 70)
+ 0887 E8 48 00                              CALL 'DEBUGMODE' (EXTERN 72)
  088A 25 02 00 00 00                        AND EAX,2
  088F 3D 00 00 00 00                        CMP EAX,0
  0894 74 00                                 JE L1033
@@ -943,10 +943,10 @@
  08A5 68 FF 00 00 00                        PUSH 255
  08AA E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  08AD 83 C4 0C                              ADD ESP,12
- 08B0 E8 33 00                              CALL 'DEBUGSTRING' (EXTERN 51)
+ 08B0 E8 35 00                              CALL 'DEBUGSTRING' (EXTERN 53)
  08B3 81 C4 00 01 00 00                     ADD ESP,256
             debug newline
- 08B9 E8 34 00                              CALL 'DEBUGNEWLINE' (EXTERN 52)
+ 08B9 E8 36 00                              CALL 'DEBUGNEWLINE' (EXTERN 54)
         %finish
  08BC                      L1033  EQU $
     %end
@@ -960,7 +960,7 @@
  08C2 6A 01                                 PUSH 1
  08C4 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
  08CA 50                                    PUSH EAX
- 08CB E8 53 00                              CALL 'GETARG' (EXTERN 83)
+ 08CB E8 55 00                              CALL 'GETARG' (EXTERN 85)
  08CE 83 C4 08                              ADD ESP,8
  08D1 81 EC 00 01 00 00                     SUB ESP,256
  08D7 89 E0                                 MOV EAX,ESP
@@ -1006,7 +1006,8 @@
     %external %routine     %spec prim file seek       %alias "fseek" ( %integer handle, displacement, pos )
     %external %routine     %spec prim close           %alias "fclose" ( %integer handle )
     %external %integer %fn %spec prim readbytes       %alias "fread" ( %integer handle, count, itemsz, %byte %name buffer )
-    %external %integer %fn %spec prim writebytes      %alias "fwrite" ( %integer handle, count, itemsz,%byte %name buffer )
+    %external %integer %fn %spec prim writebytes      %alias "fwrite" ( %integer handle, count, itemsz, %byte %name buffer )
+    %external %integer %fn %spec prim eof             %alias "feof" ( %integer handle )
     %external %integer %fn %spec prim get char        %alias "fgetc" ( %integer handle )
     %external %routine     %spec prim put char        %alias "fputc" ( %integer handle,ch )
     %external %routine     %spec prim flush           %alias "fflush" ( %integer handle )
@@ -1016,7 +1017,7 @@
  0906 C8 00 00 01                           ENTER 0000,1
         prim exit( status )
  090A FF 75 08                              PUSH WORD [EBP+8]
- 090D E8 68 00                              CALL 'PRIMEXIT' (EXTERN 104)
+ 090D E8 6B 00                              CALL 'PRIMEXIT' (EXTERN 107)
  0910 83 C4 04                              ADD ESP,4
     %end
  0913 C9                                    LEAVE
@@ -1026,7 +1027,7 @@
  0915                      L1037  EQU $
  0915 C8 00 00 01                           ENTER 0000,1
         %result = prim get err
- 0919 E8 69 00                              CALL 'PRIMGETERR' (EXTERN 105)
+ 0919 E8 6C 00                              CALL 'PRIMGETERR' (EXTERN 108)
  091C C9                                    LEAVE
  091D C3                                    RET
     %end
@@ -1035,7 +1036,7 @@
  091E                      L1038  EQU $
  091E C8 00 00 01                           ENTER 0000,1
         %result = prim geterrhandle
- 0922 E8 6A 00                              CALL 'PRIMGETERRHANDLE' (EXTERN 106)
+ 0922 E8 6D 00                              CALL 'PRIMGETERRHANDLE' (EXTERN 109)
  0925 C9                                    LEAVE
  0926 C3                                    RET
     %end
@@ -1044,7 +1045,7 @@
  0927                      L1039  EQU $
  0927 C8 00 00 01                           ENTER 0000,1
         %result = prim getinhandle
- 092B E8 6B 00                              CALL 'PRIMGETINHANDLE' (EXTERN 107)
+ 092B E8 6E 00                              CALL 'PRIMGETINHANDLE' (EXTERN 110)
  092E C9                                    LEAVE
  092F C3                                    RET
     %end
@@ -1053,7 +1054,7 @@
  0930                      L1040  EQU $
  0930 C8 00 00 01                           ENTER 0000,1
         %result = prim getouthandle
- 0934 E8 6C 00                              CALL 'PRIMGETOUTHANDLE' (EXTERN 108)
+ 0934 E8 6F 00                              CALL 'PRIMGETOUTHANDLE' (EXTERN 111)
  0937 C9                                    LEAVE
  0938 C3                                    RET
     %end
@@ -1067,7 +1068,7 @@
  0943 83 EC 08                              SUB ESP,8
  0946 89 E6                                 MOV ESI,ESP
  0948 DD 1E                                 FSTP QWORD [ESI]
- 094A E8 6D 00                              CALL 'PRIMWRITEDOUBLE' (EXTERN 109)
+ 094A E8 70 00                              CALL 'PRIMWRITEDOUBLE' (EXTERN 112)
  094D 83 C4 0C                              ADD ESP,12
     %end
  0950 C9                                    LEAVE
@@ -1079,7 +1080,7 @@
         %result = prim openfile( mode address, file name address )
  0956 FF 75 0C                              PUSH WORD [EBP+12]
  0959 FF 75 08                              PUSH WORD [EBP+8]
- 095C E8 6E 00                              CALL 'PRIMOPENFILE' (EXTERN 110)
+ 095C E8 71 00                              CALL 'PRIMOPENFILE' (EXTERN 113)
  095F 83 C4 08                              ADD ESP,8
  0962 C9                                    LEAVE
  0963 C3                                    RET
@@ -1090,7 +1091,7 @@
  0964 C8 00 00 01                           ENTER 0000,1
         %result = prim tell( handle )
  0968 FF 75 08                              PUSH WORD [EBP+8]
- 096B E8 6F 00                              CALL 'PRIMTELL' (EXTERN 111)
+ 096B E8 72 00                              CALL 'PRIMTELL' (EXTERN 114)
  096E 83 C4 04                              ADD ESP,4
  0971 C9                                    LEAVE
  0972 C3                                    RET
@@ -1101,7 +1102,7 @@
  0973 C8 00 00 01                           ENTER 0000,1
         prim file rewind( handle )
  0977 FF 75 08                              PUSH WORD [EBP+8]
- 097A E8 70 00                              CALL 'PRIMFILEREWIND' (EXTERN 112)
+ 097A E8 73 00                              CALL 'PRIMFILEREWIND' (EXTERN 115)
  097D 83 C4 04                              ADD ESP,4
     %end
  0980 C9                                    LEAVE
@@ -1114,7 +1115,7 @@
  0986 FF 75 10                              PUSH WORD [EBP+16]
  0989 FF 75 0C                              PUSH WORD [EBP+12]
  098C FF 75 08                              PUSH WORD [EBP+8]
- 098F E8 71 00                              CALL 'PRIMFILESEEK' (EXTERN 113)
+ 098F E8 74 00                              CALL 'PRIMFILESEEK' (EXTERN 116)
  0992 83 C4 0C                              ADD ESP,12
     %end
  0995 C9                                    LEAVE
@@ -1125,7 +1126,7 @@
  0997 C8 00 00 01                           ENTER 0000,1
         prim close( handle )
  099B FF 75 08                              PUSH WORD [EBP+8]
- 099E E8 72 00                              CALL 'PRIMCLOSE' (EXTERN 114)
+ 099E E8 75 00                              CALL 'PRIMCLOSE' (EXTERN 117)
  09A1 83 C4 04                              ADD ESP,4
     %end
  09A4 C9                                    LEAVE
@@ -1139,7 +1140,7 @@
  09AD FF 75 10                              PUSH WORD [EBP+16]
  09B0 FF 75 0C                              PUSH WORD [EBP+12]
  09B3 FF 75 08                              PUSH WORD [EBP+8]
- 09B6 E8 73 00                              CALL 'PRIMREADBYTES' (EXTERN 115)
+ 09B6 E8 76 00                              CALL 'PRIMREADBYTES' (EXTERN 118)
  09B9 83 C4 10                              ADD ESP,16
  09BC C9                                    LEAVE
  09BD C3                                    RET
@@ -1153,45 +1154,64 @@
  09C5 FF 75 10                              PUSH WORD [EBP+16]
  09C8 FF 75 0C                              PUSH WORD [EBP+12]
  09CB FF 75 08                              PUSH WORD [EBP+8]
- 09CE E8 74 00                              CALL 'PRIMWRITEBYTES' (EXTERN 116)
+ 09CE E8 77 00                              CALL 'PRIMWRITEBYTES' (EXTERN 119)
  09D1 83 C4 10                              ADD ESP,16
  09D4 C9                                    LEAVE
  09D5 C3                                    RET
     %end
 
-    %external %integer %fn get char( %integer handle )
+    %external %predicate file end( %integer handle )
  09D6                      L1049  EQU $
  09D6 C8 00 00 01                           ENTER 0000,1
-        %result = prim get char( handle )
+        %false %if prim eof( handle ) = 0
  09DA FF 75 08                              PUSH WORD [EBP+8]
- 09DD E8 75 00                              CALL 'PRIMGETCHAR' (EXTERN 117)
+ 09DD E8 78 00                              CALL 'PRIMEOF' (EXTERN 120)
  09E0 83 C4 04                              ADD ESP,4
- 09E3 C9                                    LEAVE
- 09E4 C3                                    RET
+ 09E3 3D 00 00 00 00                        CMP EAX,0
+ 09E8 75 00                                 JNE L1050
+ 09EA B8 00 00 00 00                        MOV EAX,0
+ 09EF C9                                    LEAVE
+ 09F0 C3                                    RET
+ 09F1                      L1050  EQU $
+        %true
+ 09F1 B8 FF FF FF FF                        MOV EAX,-1
+ 09F6 C9                                    LEAVE
+ 09F7 C3                                    RET
+    %end
+
+    %external %integer %fn get char( %integer handle )
+ 09F8                      L1051  EQU $
+ 09F8 C8 00 00 01                           ENTER 0000,1
+        %result = prim get char( handle )
+ 09FC FF 75 08                              PUSH WORD [EBP+8]
+ 09FF E8 79 00                              CALL 'PRIMGETCHAR' (EXTERN 121)
+ 0A02 83 C4 04                              ADD ESP,4
+ 0A05 C9                                    LEAVE
+ 0A06 C3                                    RET
     %end
 
     %external %routine put char( %integer handle,ch )
- 09E5                      L1050  EQU $
- 09E5 C8 00 00 01                           ENTER 0000,1
+ 0A07                      L1052  EQU $
+ 0A07 C8 00 00 01                           ENTER 0000,1
         prim put char( handle,ch )
- 09E9 FF 75 0C                              PUSH WORD [EBP+12]
- 09EC FF 75 08                              PUSH WORD [EBP+8]
- 09EF E8 76 00                              CALL 'PRIMPUTCHAR' (EXTERN 118)
- 09F2 83 C4 08                              ADD ESP,8
+ 0A0B FF 75 0C                              PUSH WORD [EBP+12]
+ 0A0E FF 75 08                              PUSH WORD [EBP+8]
+ 0A11 E8 7A 00                              CALL 'PRIMPUTCHAR' (EXTERN 122)
+ 0A14 83 C4 08                              ADD ESP,8
     %end
- 09F5 C9                                    LEAVE
- 09F6 C3                                    RET
+ 0A17 C9                                    LEAVE
+ 0A18 C3                                    RET
 
     %external %routine flush( %integer handle )
- 09F7                      L1051  EQU $
- 09F7 C8 00 00 01                           ENTER 0000,1
+ 0A19                      L1053  EQU $
+ 0A19 C8 00 00 01                           ENTER 0000,1
         prim flush( handle )
- 09FB FF 75 08                              PUSH WORD [EBP+8]
- 09FE E8 77 00                              CALL 'PRIMFLUSH' (EXTERN 119)
- 0A01 83 C4 04                              ADD ESP,4
+ 0A1D FF 75 08                              PUSH WORD [EBP+8]
+ 0A20 E8 7B 00                              CALL 'PRIMFLUSH' (EXTERN 123)
+ 0A23 83 C4 04                              ADD ESP,4
     %end
- 0A04 C9                                    LEAVE
- 0A05 C3                                    RET
+ 0A26 C9                                    LEAVE
+ 0A27 C3                                    RET
 
 %endoffile
       _TEXT  ENDS

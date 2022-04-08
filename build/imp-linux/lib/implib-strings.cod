@@ -4,7 +4,7 @@
  0000 C8 00 00 01                           ENTER 0000,1
         printsymbol(nl)
  0004 6A 0A                                 PUSH 10
- 0006 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0006 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0009 83 C4 04                              ADD ESP,4
     %end
  000C C9                                    LEAVE
@@ -16,7 +16,7 @@
  000E C8 00 00 01                           ENTER 0000,1
         printsymbol(' ')
  0012 6A 20                                 PUSH 32
- 0014 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0014 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0017 83 C4 04                              ADD ESP,4
     %end
  001A C9                                    LEAVE
@@ -33,7 +33,7 @@
  0028 7E 00                                 JLE L1004
             printsymbol(nl)
  002A 6A 0A                                 PUSH 10
- 002C E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 002C E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  002F 83 C4 04                              ADD ESP,4
             count = count - 1
  0032 FF 4D 08                              DEC WORD [EBP+8]
@@ -55,7 +55,7 @@
  0045 7E 00                                 JLE L1007
             printsymbol(' ')
  0047 6A 20                                 PUSH 32
- 0049 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0049 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  004C 83 C4 04                              ADD ESP,4
             count = count - 1
  004F FF 4D 08                              DEC WORD [EBP+8]
@@ -97,7 +97,7 @@
  0081 8A 00                                 MOV AL,[EAX]
  0083 25 FF 00 00 00                        AND EAX,255
  0088 50                                    PUSH EAX
- 0089 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0089 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  008C 83 C4 04                              ADD ESP,4
         %repeat
  008F EB 00                                 JMP L1009
@@ -107,87 +107,72 @@
  0092 C3                                    RET
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
-    %external %routine skipsymbol
+    %external %string(255) %function sub string(%string(255) s, %integer from, to)
  0093                      L1011  EQU $
  0093 C8 00 00 01                           ENTER 0000,1
-        %integer trash
-
-        readsymbol(trash)
- 0097 8D 45 F8                              LEA EAX,[EBP-8]
- 009A 50                                    PUSH EAX
- 009B E8 1F 00                              CALL 'READSYMBOL' (EXTERN 31)
- 009E 83 C4 04                              ADD ESP,4
-    %end
- 00A1 C9                                    LEAVE
- 00A2 C3                                    RET
-{----------------------------------------------------------------------------}
-{----------------------------------------------------------------------------}
-    %external %string(255) %function sub string(%string(255) s, %integer from, to)
- 00A3                      L1012  EQU $
- 00A3 C8 00 00 01                           ENTER 0000,1
         %integer get, put
         %string(255) temp
 
         ! Do some defensive error checking first
         %signal 6, 2, from %unless 0 <= from <= length(s)
- 00A7 8B 45 10                              MOV EAX,[EBP+16]
- 00AA 3D 00 00 00 00                        CMP EAX,0
- 00AF 7C 00                                 JL L1013
+ 0097 8B 45 10                              MOV EAX,[EBP+16]
+ 009A 3D 00 00 00 00                        CMP EAX,0
+ 009F 7C 00                                 JL L1012
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 00B1 31 C9                                 XOR ECX,ECX
- 00B3 8A 4D 14                              MOV CL,[EBP+20]
- 00B6 39 C8                                 CMP EAX,ECX
- 00B8 7E 00                                 JLE L1014
- 00BA                      L1013  EQU $
- 00BA B8 33 00 00 00                        MOV EAX,51
+ 00A1 31 C9                                 XOR ECX,ECX
+ 00A3 8A 4D 14                              MOV CL,[EBP+20]
+ 00A6 39 C8                                 CMP EAX,ECX
+ 00A8 7E 00                                 JLE L1013
+ 00AA                      L1012  EQU $
+ 00AA B8 2C 00 00 00                        MOV EAX,44
+ 00AF 50                                    PUSH EAX
+ 00B0 B8 06 00 00 00                        MOV EAX,6
+ 00B5 50                                    PUSH EAX
+ 00B6 B8 02 00 00 00                        MOV EAX,2
+ 00BB 50                                    PUSH EAX
+ 00BC 8B 45 10                              MOV EAX,[EBP+16]
  00BF 50                                    PUSH EAX
- 00C0 B8 06 00 00 00                        MOV EAX,6
- 00C5 50                                    PUSH EAX
- 00C6 B8 02 00 00 00                        MOV EAX,2
- 00CB 50                                    PUSH EAX
- 00CC 8B 45 10                              MOV EAX,[EBP+16]
- 00CF 50                                    PUSH EAX
- 00D0 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
- 00D3 83 C4 10                              ADD ESP,16
- 00D6                      L1014  EQU $
+ 00C0 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 00C3 83 C4 10                              ADD ESP,16
+ 00C6                      L1013  EQU $
         %signal 6, 2, to   %unless 0 <= to   <= length(s)
- 00D6 8B 45 0C                              MOV EAX,[EBP+12]
- 00D9 3D 00 00 00 00                        CMP EAX,0
- 00DE 7C 00                                 JL L1015
+ 00C6 8B 45 0C                              MOV EAX,[EBP+12]
+ 00C9 3D 00 00 00 00                        CMP EAX,0
+ 00CE 7C 00                                 JL L1014
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 00E0 31 C9                                 XOR ECX,ECX
- 00E2 8A 4D 14                              MOV CL,[EBP+20]
- 00E5 39 C8                                 CMP EAX,ECX
- 00E7 7E 00                                 JLE L1016
- 00E9                      L1015  EQU $
- 00E9 B8 34 00 00 00                        MOV EAX,52
+ 00D0 31 C9                                 XOR ECX,ECX
+ 00D2 8A 4D 14                              MOV CL,[EBP+20]
+ 00D5 39 C8                                 CMP EAX,ECX
+ 00D7 7E 00                                 JLE L1015
+ 00D9                      L1014  EQU $
+ 00D9 B8 2D 00 00 00                        MOV EAX,45
+ 00DE 50                                    PUSH EAX
+ 00DF B8 06 00 00 00                        MOV EAX,6
+ 00E4 50                                    PUSH EAX
+ 00E5 B8 02 00 00 00                        MOV EAX,2
+ 00EA 50                                    PUSH EAX
+ 00EB 8B 45 0C                              MOV EAX,[EBP+12]
  00EE 50                                    PUSH EAX
- 00EF B8 06 00 00 00                        MOV EAX,6
- 00F4 50                                    PUSH EAX
- 00F5 B8 02 00 00 00                        MOV EAX,2
- 00FA 50                                    PUSH EAX
- 00FB 8B 45 0C                              MOV EAX,[EBP+12]
- 00FE 50                                    PUSH EAX
- 00FF E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
- 0102 83 C4 10                              ADD ESP,16
- 0105                      L1016  EQU $
+ 00EF E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 00F2 83 C4 10                              ADD ESP,16
+ 00F5                      L1015  EQU $
         %signal 5, 3       %unless from <= to
- 0105 8B 45 10                              MOV EAX,[EBP+16]
- 0108 3B 45 0C                              CMP EAX,[EBP+12]
- 010B 7E 00                                 JLE L1017
- 010D B8 35 00 00 00                        MOV EAX,53
- 0112 50                                    PUSH EAX
- 0113 B8 05 00 00 00                        MOV EAX,5
- 0118 50                                    PUSH EAX
- 0119 B8 03 00 00 00                        MOV EAX,3
- 011E 50                                    PUSH EAX
- 011F 31 C0                                 XOR EAX,EAX
- 0121 50                                    PUSH EAX
- 0122 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
- 0125 83 C4 10                              ADD ESP,16
- 0128                      L1017  EQU $
+ 00F5 8B 45 10                              MOV EAX,[EBP+16]
+ 00F8 3B 45 0C                              CMP EAX,[EBP+12]
+ 00FB 7E 00                                 JLE L1016
+ 00FD B8 2E 00 00 00                        MOV EAX,46
+ 0102 50                                    PUSH EAX
+ 0103 B8 05 00 00 00                        MOV EAX,5
+ 0108 50                                    PUSH EAX
+ 0109 B8 03 00 00 00                        MOV EAX,3
+ 010E 50                                    PUSH EAX
+ 010F 31 C0                                 XOR EAX,EAX
+ 0111 50                                    PUSH EAX
+ 0112 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 0115 83 C4 10                              ADD ESP,16
+ 0118                      L1016  EQU $
 
         ! We don't use string operations, and instead hand-poke
         ! the characters, relying on the compiler primitive map
@@ -196,193 +181,193 @@
         length(temp) = (to - from) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0128 8B 45 0C                              MOV EAX,[EBP+12]
- 012B 2B 45 10                              SUB EAX,[EBP+16]
- 012E 40                                    INC EAX
- 012F 88 85 F4 FE FF FF                     MOV [EBP-268],AL
+ 0118 8B 45 0C                              MOV EAX,[EBP+12]
+ 011B 2B 45 10                              SUB EAX,[EBP+16]
+ 011E 40                                    INC EAX
+ 011F 88 85 F4 FE FF FF                     MOV [EBP-268],AL
         put = 1
- 0135 C7 45 F4 01 00 00 00                  MOV LONG [EBP-12],1
+ 0125 C7 45 F4 01 00 00 00                  MOV LONG [EBP-12],1
         get = from
- 013C 8B 45 10                              MOV EAX,[EBP+16]
- 013F 89 45 F8                              MOV [EBP-8],EAX
+ 012C 8B 45 10                              MOV EAX,[EBP+16]
+ 012F 89 45 F8                              MOV [EBP-8],EAX
         %while get <= to %cycle
- 0142                      L1018  EQU $
- 0142 8B 45 F8                              MOV EAX,[EBP-8]
- 0145 3B 45 0C                              CMP EAX,[EBP+12]
- 0148 7F 00                                 JG L1019
+ 0132                      L1017  EQU $
+ 0132 8B 45 F8                              MOV EAX,[EBP-8]
+ 0135 3B 45 0C                              CMP EAX,[EBP+12]
+ 0138 7F 00                                 JG L1018
             charno(temp, put) = charno(s, get)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 014A 8D 85 F4 FE FF FF                     LEA EAX,[EBP-268]
- 0150 03 45 F4                              ADD EAX,[EBP-12]
+ 013A 8D 85 F4 FE FF FF                     LEA EAX,[EBP-268]
+ 0140 03 45 F4                              ADD EAX,[EBP-12]
                                       CALL 'CHARNO' (MACRO 12)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 0153 8D 4D 14                              LEA ECX,[EBP+20]
- 0156 03 4D F8                              ADD ECX,[EBP-8]
+ 0143 8D 4D 14                              LEA ECX,[EBP+20]
+ 0146 03 4D F8                              ADD ECX,[EBP-8]
                                       CALL 'CHARNO' (MACRO 12)
- 0159 8A 11                                 MOV DL,[ECX]
- 015B 88 10                                 MOV [EAX],DL
+ 0149 8A 11                                 MOV DL,[ECX]
+ 014B 88 10                                 MOV [EAX],DL
             put = put + 1
- 015D FF 45 F4                              INC WORD [EBP-12]
+ 014D FF 45 F4                              INC WORD [EBP-12]
             get = get + 1
- 0160 FF 45 F8                              INC WORD [EBP-8]
+ 0150 FF 45 F8                              INC WORD [EBP-8]
         %repeat
- 0163 EB 00                                 JMP L1018
- 0165                      L1019  EQU $
+ 0153 EB 00                                 JMP L1017
+ 0155                      L1018  EQU $
 
         %result = temp
- 0165 8B 45 08                              MOV EAX,[EBP+8]
- 0168 50                                    PUSH EAX
- 0169 8D 8D F4 FE FF FF                     LEA ECX,[EBP-268]
- 016F 51                                    PUSH ECX
- 0170 68 FF 00 00 00                        PUSH 255
- 0175 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
- 0178 83 C4 0C                              ADD ESP,12
- 017B C9                                    LEAVE
- 017C C3                                    RET
+ 0155 8B 45 08                              MOV EAX,[EBP+8]
+ 0158 50                                    PUSH EAX
+ 0159 8D 8D F4 FE FF FF                     LEA ECX,[EBP-268]
+ 015F 51                                    PUSH ECX
+ 0160 68 FF 00 00 00                        PUSH 255
+ 0165 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 0168 83 C4 0C                              ADD ESP,12
+ 016B C9                                    LEAVE
+ 016C C3                                    RET
     %end
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
     %external %routine To Lower(%string(*)%name s)
- 017D                      L1020  EQU $
- 017D C8 00 00 01                           ENTER 0000,1
+ 016D                      L1019  EQU $
+ 016D C8 00 00 01                           ENTER 0000,1
         %integer i
         %byte %name p
 
         %for i=1,1,length(s) %cycle
                                       Generating CODE for 'LENGTH' (MACRO 11)
- 0181 8B 45 08                              MOV EAX,[EBP+8]
+ 0171 8B 45 08                              MOV EAX,[EBP+8]
                                       CALL 'LENGTH' (MACRO 11)
- 0184 8A 00                                 MOV AL,[EAX]
- 0186 25 FF 00 00 00                        AND EAX,255
- 018B 89 45 F0                              MOV [EBP-16],EAX
- 018E C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
- 0195                      L1021  EQU $
- 0195 8B 45 F8                              MOV EAX,[EBP-8]
- 0198 3B 45 F0                              CMP EAX,[EBP-16]
- 019B 74 00                                 JE L1022
- 019D 40                                    INC EAX
- 019E 89 45 F8                              MOV [EBP-8],EAX
+ 0174 8A 00                                 MOV AL,[EAX]
+ 0176 25 FF 00 00 00                        AND EAX,255
+ 017B 89 45 F0                              MOV [EBP-16],EAX
+ 017E C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
+ 0185                      L1020  EQU $
+ 0185 8B 45 F8                              MOV EAX,[EBP-8]
+ 0188 3B 45 F0                              CMP EAX,[EBP-16]
+ 018B 74 00                                 JE L1021
+ 018D 40                                    INC EAX
+ 018E 89 45 F8                              MOV [EBP-8],EAX
             p == charno(s,i)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 01A1 8B 45 08                              MOV EAX,[EBP+8]
- 01A4 03 45 F8                              ADD EAX,[EBP-8]
+ 0191 8B 45 08                              MOV EAX,[EBP+8]
+ 0194 03 45 F8                              ADD EAX,[EBP-8]
                                       CALL 'CHARNO' (MACRO 12)
- 01A7 89 45 F4                              MOV [EBP-12],EAX
+ 0197 89 45 F4                              MOV [EBP-12],EAX
             %if 'A' <= p <= 'Z' %then p = p + ('a'-'A')
- 01AA 8B 75 F4                              MOV ESI,[EBP-12]
- 01AD 31 C0                                 XOR EAX,EAX
- 01AF 8A 06                                 MOV AL,[ESI]
- 01B1 3D 41 00 00 00                        CMP EAX,65
- 01B6 7C 00                                 JL L1023
- 01B8 3D 5A 00 00 00                        CMP EAX,90
- 01BD 7F 00                                 JG L1023
- 01BF 8B 7D F4                              MOV EDI,[EBP-12]
- 01C2 80 07 20                              ADD BYTE [EDI],32
- 01C5                      L1023  EQU $
+ 019A 8B 75 F4                              MOV ESI,[EBP-12]
+ 019D 31 C0                                 XOR EAX,EAX
+ 019F 8A 06                                 MOV AL,[ESI]
+ 01A1 3D 41 00 00 00                        CMP EAX,65
+ 01A6 7C 00                                 JL L1022
+ 01A8 3D 5A 00 00 00                        CMP EAX,90
+ 01AD 7F 00                                 JG L1022
+ 01AF 8B 7D F4                              MOV EDI,[EBP-12]
+ 01B2 80 07 20                              ADD BYTE [EDI],32
+ 01B5                      L1022  EQU $
         %repeat
- 01C5 EB 00                                 JMP L1021
- 01C7                      L1022  EQU $
+ 01B5 EB 00                                 JMP L1020
+ 01B7                      L1021  EQU $
     %end
- 01C7 C9                                    LEAVE
- 01C8 C3                                    RET
+ 01B7 C9                                    LEAVE
+ 01B8 C3                                    RET
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
     %external %routine To Upper(%string(*)%name s)
- 01C9                      L1024  EQU $
- 01C9 C8 00 00 01                           ENTER 0000,1
+ 01B9                      L1023  EQU $
+ 01B9 C8 00 00 01                           ENTER 0000,1
         %integer i
         %byte %name p
 
         %for i=1,1,length(s) %cycle
                                       Generating CODE for 'LENGTH' (MACRO 11)
- 01CD 8B 45 08                              MOV EAX,[EBP+8]
+ 01BD 8B 45 08                              MOV EAX,[EBP+8]
                                       CALL 'LENGTH' (MACRO 11)
- 01D0 8A 00                                 MOV AL,[EAX]
- 01D2 25 FF 00 00 00                        AND EAX,255
- 01D7 89 45 F0                              MOV [EBP-16],EAX
- 01DA C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
- 01E1                      L1025  EQU $
- 01E1 8B 45 F8                              MOV EAX,[EBP-8]
- 01E4 3B 45 F0                              CMP EAX,[EBP-16]
- 01E7 74 00                                 JE L1026
- 01E9 40                                    INC EAX
- 01EA 89 45 F8                              MOV [EBP-8],EAX
+ 01C0 8A 00                                 MOV AL,[EAX]
+ 01C2 25 FF 00 00 00                        AND EAX,255
+ 01C7 89 45 F0                              MOV [EBP-16],EAX
+ 01CA C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
+ 01D1                      L1024  EQU $
+ 01D1 8B 45 F8                              MOV EAX,[EBP-8]
+ 01D4 3B 45 F0                              CMP EAX,[EBP-16]
+ 01D7 74 00                                 JE L1025
+ 01D9 40                                    INC EAX
+ 01DA 89 45 F8                              MOV [EBP-8],EAX
             p == charno(s,i)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 01ED 8B 45 08                              MOV EAX,[EBP+8]
- 01F0 03 45 F8                              ADD EAX,[EBP-8]
+ 01DD 8B 45 08                              MOV EAX,[EBP+8]
+ 01E0 03 45 F8                              ADD EAX,[EBP-8]
                                       CALL 'CHARNO' (MACRO 12)
- 01F3 89 45 F4                              MOV [EBP-12],EAX
+ 01E3 89 45 F4                              MOV [EBP-12],EAX
             %if 'a' <= p <= 'z' %then p = p - ('a'-'A')
- 01F6 8B 5D F4                              MOV EBX,[EBP-12]
- 01F9 31 C0                                 XOR EAX,EAX
- 01FB 8A 03                                 MOV AL,[EBX]
- 01FD 3D 61 00 00 00                        CMP EAX,97
- 0202 7C 00                                 JL L1027
- 0204 3D 7A 00 00 00                        CMP EAX,122
- 0209 7F 00                                 JG L1027
- 020B 8B 75 F4                              MOV ESI,[EBP-12]
- 020E 80 2E 20                              SUB BYTE [ESI],32
- 0211                      L1027  EQU $
+ 01E6 8B 5D F4                              MOV EBX,[EBP-12]
+ 01E9 31 C0                                 XOR EAX,EAX
+ 01EB 8A 03                                 MOV AL,[EBX]
+ 01ED 3D 61 00 00 00                        CMP EAX,97
+ 01F2 7C 00                                 JL L1026
+ 01F4 3D 7A 00 00 00                        CMP EAX,122
+ 01F9 7F 00                                 JG L1026
+ 01FB 8B 75 F4                              MOV ESI,[EBP-12]
+ 01FE 80 2E 20                              SUB BYTE [ESI],32
+ 0201                      L1026  EQU $
         %repeat
- 0211 EB 00                                 JMP L1025
- 0213                      L1026  EQU $
+ 0201 EB 00                                 JMP L1024
+ 0203                      L1025  EQU $
     %end
- 0213 C9                                    LEAVE
- 0214 C3                                    RET
+ 0203 C9                                    LEAVE
+ 0204 C3                                    RET
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
     %external %string(255) %function trim(%string(255) s, %integer max)
- 0215                      L1028  EQU $
- 0215 C8 00 00 01                           ENTER 0000,1
+ 0205                      L1027  EQU $
+ 0205 C8 00 00 01                           ENTER 0000,1
 
         ! Do some defensive error checking first
         %signal 6, 2, max %if max < 0
- 0219 8B 45 0C                              MOV EAX,[EBP+12]
- 021C 3D 00 00 00 00                        CMP EAX,0
- 0221 7D 00                                 JGE L1029
- 0223 B8 61 00 00 00                        MOV EAX,97
+ 0209 8B 45 0C                              MOV EAX,[EBP+12]
+ 020C 3D 00 00 00 00                        CMP EAX,0
+ 0211 7D 00                                 JGE L1028
+ 0213 B8 5A 00 00 00                        MOV EAX,90
+ 0218 50                                    PUSH EAX
+ 0219 B8 06 00 00 00                        MOV EAX,6
+ 021E 50                                    PUSH EAX
+ 021F B8 02 00 00 00                        MOV EAX,2
+ 0224 50                                    PUSH EAX
+ 0225 8B 45 0C                              MOV EAX,[EBP+12]
  0228 50                                    PUSH EAX
- 0229 B8 06 00 00 00                        MOV EAX,6
- 022E 50                                    PUSH EAX
- 022F B8 02 00 00 00                        MOV EAX,2
- 0234 50                                    PUSH EAX
- 0235 8B 45 0C                              MOV EAX,[EBP+12]
- 0238 50                                    PUSH EAX
- 0239 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
- 023C 83 C4 10                              ADD ESP,16
- 023F                      L1029  EQU $
+ 0229 E8 0B 00                              CALL '_IMPSIGNAL' (EXTERN 11)
+ 022C 83 C4 10                              ADD ESP,16
+ 022F                      L1028  EQU $
 
         ! tweak our parameter and return it
         %if length(s) > max %then length(s) = max
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 023F 31 C0                                 XOR EAX,EAX
- 0241 8A 45 10                              MOV AL,[EBP+16]
- 0244 3B 45 0C                              CMP EAX,[EBP+12]
- 0247 7E 00                                 JLE L1030
+ 022F 31 C0                                 XOR EAX,EAX
+ 0231 8A 45 10                              MOV AL,[EBP+16]
+ 0234 3B 45 0C                              CMP EAX,[EBP+12]
+ 0237 7E 00                                 JLE L1029
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0249 8B 45 0C                              MOV EAX,[EBP+12]
- 024C 88 45 10                              MOV [EBP+16],AL
- 024F                      L1030  EQU $
+ 0239 8B 45 0C                              MOV EAX,[EBP+12]
+ 023C 88 45 10                              MOV [EBP+16],AL
+ 023F                      L1029  EQU $
 
         %result = s
- 024F 8B 45 08                              MOV EAX,[EBP+8]
- 0252 50                                    PUSH EAX
- 0253 8D 4D 10                              LEA ECX,[EBP+16]
- 0256 51                                    PUSH ECX
- 0257 68 FF 00 00 00                        PUSH 255
- 025C E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
- 025F 83 C4 0C                              ADD ESP,12
- 0262 C9                                    LEAVE
- 0263 C3                                    RET
+ 023F 8B 45 08                              MOV EAX,[EBP+8]
+ 0242 50                                    PUSH EAX
+ 0243 8D 4D 10                              LEA ECX,[EBP+16]
+ 0246 51                                    PUSH ECX
+ 0247 68 FF 00 00 00                        PUSH 255
+ 024C E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 024F 83 C4 0C                              ADD ESP,12
+ 0252 C9                                    LEAVE
+ 0253 C3                                    RET
     %end
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
     %external %string(255) %function int2ascii( %integer nn, base, places )
- 0264                      L1031  EQU $
- 0264 C8 00 00 01                           ENTER 0000,1
+ 0254                      L1030  EQU $
+ 0254 C8 00 00 01                           ENTER 0000,1
 
         %own %string(36) basechar = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         %string(255) reversed, human
@@ -394,31 +379,31 @@
         ! Of course if we add more characters then ...
         ! NB a number to base 1 cannot sensibly be displayed
         %if (base < 2) %then base = 10
- 0268 8B 45 10                              MOV EAX,[EBP+16]
- 026B 3D 02 00 00 00                        CMP EAX,2
- 0270 7D 00                                 JGE L1032
- 0272 C7 45 10 0A 00 00 00                  MOV LONG [EBP+16],10
- 0279                      L1032  EQU $
+ 0258 8B 45 10                              MOV EAX,[EBP+16]
+ 025B 3D 02 00 00 00                        CMP EAX,2
+ 0260 7D 00                                 JGE L1031
+ 0262 C7 45 10 0A 00 00 00                  MOV LONG [EBP+16],10
+ 0269                      L1031  EQU $
         %if (base > 36) %then base = 10
- 0279 8B 45 10                              MOV EAX,[EBP+16]
- 027C 3D 24 00 00 00                        CMP EAX,36
- 0281 7E 00                                 JLE L1033
- 0283 C7 45 10 0A 00 00 00                  MOV LONG [EBP+16],10
- 028A                      L1033  EQU $
+ 0269 8B 45 10                              MOV EAX,[EBP+16]
+ 026C 3D 24 00 00 00                        CMP EAX,36
+ 0271 7E 00                                 JLE L1032
+ 0273 C7 45 10 0A 00 00 00                  MOV LONG [EBP+16],10
+ 027A                      L1032  EQU $
 
         length(reversed) = 0
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 028A C6 85 FC FE FF FF 00                  MOV BYTE [EBP-260],0
+ 027A C6 85 FC FE FF FF 00                  MOV BYTE [EBP-260],0
         n = nn
- 0291 8B 45 14                              MOV EAX,[EBP+20]
- 0294 89 85 F8 FD FF FF                     MOV [EBP-520],EAX
+ 0281 8B 45 14                              MOV EAX,[EBP+20]
+ 0284 89 85 F8 FD FF FF                     MOV [EBP-520],EAX
         %if (n = 0) %start
- 029A 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
- 02A0 3D 00 00 00 00                        CMP EAX,0
- 02A5 75 00                                 JNE L1034
+ 028A 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
+ 0290 3D 00 00 00 00                        CMP EAX,0
+ 0295 75 00                                 JNE L1033
             r = 0
- 02A7 C7 85 F0 FD FF FF 00 00 00 00         MOV LONG [EBP-528],0
+ 0297 C7 85 F0 FD FF FF 00 00 00 00         MOV LONG [EBP-528],0
             ! string index starts at 1 - but r starts from 0
             ! so if r = 0 we want char 1 in the "basechar" string etc...
             length(reversed) = length(reversed) + 1
@@ -426,58 +411,58 @@
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 02B1 FE 85 FC FE FF FF                     INC BYTE [EBP-260]
+ 02A1 FE 85 FC FE FF FF                     INC BYTE [EBP-260]
             charno(reversed,length(reversed)) = charno(basechar,r + 1)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 02B7 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
- 02BD 31 C9                                 XOR ECX,ECX
- 02BF 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
- 02C5 01 C8                                 ADD EAX,ECX
+ 02A7 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 02AD 31 C9                                 XOR ECX,ECX
+ 02AF 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
+ 02B5 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 02C7 8B 8D F0 FD FF FF                     MOV ECX,[EBP-528]
- 02CD 41                                    INC ECX
+ 02B7 8B 8D F0 FD FF FF                     MOV ECX,[EBP-528]
+ 02BD 41                                    INC ECX
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 02CE 81 C1 00 00 00 00                     ADD ECX,DATA+0
+ 02BE 81 C1 00 00 00 00                     ADD ECX,DATA+0
                                       CALL 'CHARNO' (MACRO 12)
- 02D4 8A 11                                 MOV DL,[ECX]
- 02D6 88 10                                 MOV [EAX],DL
+ 02C4 8A 11                                 MOV DL,[ECX]
+ 02C6 88 10                                 MOV [EAX],DL
         %else
- 02D8 EB 00                                 JMP L1035
- 02DA                      L1034  EQU $
+ 02C8 EB 00                                 JMP L1034
+ 02CA                      L1033  EQU $
             ! Now to avoid problems with -MAXINT
             %if (n > 0) %start
- 02DA 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
- 02E0 3D 00 00 00 00                        CMP EAX,0
- 02E5 7E 00                                 JLE L1036
+ 02CA 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
+ 02D0 3D 00 00 00 00                        CMP EAX,0
+ 02D5 7E 00                                 JLE L1035
                 negative = 0
- 02E7 C7 85 E8 FD FF FF 00 00 00 00         MOV LONG [EBP-536],0
+ 02D7 C7 85 E8 FD FF FF 00 00 00 00         MOV LONG [EBP-536],0
                 n = -n
- 02F1 F7 9D F8 FD FF FF                     NEG WORD [EBP-520]
+ 02E1 F7 9D F8 FD FF FF                     NEG WORD [EBP-520]
             %else
- 02F7 EB 00                                 JMP L1037
- 02F9                      L1036  EQU $
+ 02E7 EB 00                                 JMP L1036
+ 02E9                      L1035  EQU $
                 negative = 1
- 02F9 C7 85 E8 FD FF FF 01 00 00 00         MOV LONG [EBP-536],1
+ 02E9 C7 85 E8 FD FF FF 01 00 00 00         MOV LONG [EBP-536],1
             %finish
- 0303                      L1037  EQU $
+ 02F3                      L1036  EQU $
 
             %while (n < 0) %cycle
- 0303                      L1038  EQU $
- 0303 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
- 0309 3D 00 00 00 00                        CMP EAX,0
- 030E 7D 00                                 JGE L1039
+ 02F3                      L1037  EQU $
+ 02F3 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
+ 02F9 3D 00 00 00 00                        CMP EAX,0
+ 02FE 7D 00                                 JGE L1038
                 np = n // base
- 0310 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
- 0316 99                                    CWD
- 0317 F7 7D 10                              IDIV WORD [EBP+16]
- 031A 89 85 F4 FD FF FF                     MOV [EBP-524],EAX
+ 0300 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
+ 0306 99                                    CWD
+ 0307 F7 7D 10                              IDIV WORD [EBP+16]
+ 030A 89 85 F4 FD FF FF                     MOV [EBP-524],EAX
                 r = (np * base) - n
- 0320 8B 85 F4 FD FF FF                     MOV EAX,[EBP-524]
- 0326 F7 6D 10                              IMUL WORD [EBP+16]
- 0329 2B 85 F8 FD FF FF                     SUB EAX,[EBP-520]
- 032F 89 85 F0 FD FF FF                     MOV [EBP-528],EAX
+ 0310 8B 85 F4 FD FF FF                     MOV EAX,[EBP-524]
+ 0316 F7 6D 10                              IMUL WORD [EBP+16]
+ 0319 2B 85 F8 FD FF FF                     SUB EAX,[EBP-520]
+ 031F 89 85 F0 FD FF FF                     MOV [EBP-528],EAX
                 ! string index starts at 1 - but r starts from 0
                 ! so if r = 0 we want char 1 in the "basechar" string etc...
                 length(reversed) = length(reversed) + 1
@@ -485,329 +470,329 @@
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0335 FE 85 FC FE FF FF                     INC BYTE [EBP-260]
+ 0325 FE 85 FC FE FF FF                     INC BYTE [EBP-260]
                 charno(reversed,length(reversed)) = charno(basechar,r + 1)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 033B 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
- 0341 31 C9                                 XOR ECX,ECX
- 0343 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
- 0349 01 C8                                 ADD EAX,ECX
+ 032B 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0331 31 C9                                 XOR ECX,ECX
+ 0333 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
+ 0339 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 034B 8B 8D F0 FD FF FF                     MOV ECX,[EBP-528]
- 0351 41                                    INC ECX
+ 033B 8B 8D F0 FD FF FF                     MOV ECX,[EBP-528]
+ 0341 41                                    INC ECX
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 0352 81 C1 00 00 00 00                     ADD ECX,DATA+0
+ 0342 81 C1 00 00 00 00                     ADD ECX,DATA+0
                                       CALL 'CHARNO' (MACRO 12)
- 0358 8A 11                                 MOV DL,[ECX]
- 035A 88 10                                 MOV [EAX],DL
+ 0348 8A 11                                 MOV DL,[ECX]
+ 034A 88 10                                 MOV [EAX],DL
                 n = np
- 035C 8B 85 F4 FD FF FF                     MOV EAX,[EBP-524]
- 0362 89 85 F8 FD FF FF                     MOV [EBP-520],EAX
+ 034C 8B 85 F4 FD FF FF                     MOV EAX,[EBP-524]
+ 0352 89 85 F8 FD FF FF                     MOV [EBP-520],EAX
             %repeat
- 0368 EB 00                                 JMP L1038
- 036A                      L1039  EQU $
+ 0358 EB 00                                 JMP L1037
+ 035A                      L1038  EQU $
 
             %if (negative > 0) %start
- 036A 8B 85 E8 FD FF FF                     MOV EAX,[EBP-536]
- 0370 3D 00 00 00 00                        CMP EAX,0
- 0375 7E 00                                 JLE L1040
+ 035A 8B 85 E8 FD FF FF                     MOV EAX,[EBP-536]
+ 0360 3D 00 00 00 00                        CMP EAX,0
+ 0365 7E 00                                 JLE L1039
                 length(reversed) = length(reversed) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0377 FE 85 FC FE FF FF                     INC BYTE [EBP-260]
+ 0367 FE 85 FC FE FF FF                     INC BYTE [EBP-260]
                 charno(reversed,length(reversed)) = '-'
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 037D 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
- 0383 31 C9                                 XOR ECX,ECX
- 0385 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
- 038B 01 C8                                 ADD EAX,ECX
+ 036D 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 0373 31 C9                                 XOR ECX,ECX
+ 0375 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
+ 037B 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 038D C6 00 2D                              MOV BYTE [EAX],45
+ 037D C6 00 2D                              MOV BYTE [EAX],45
             %finish
- 0390                      L1040  EQU $
+ 0380                      L1039  EQU $
         %finish
- 0390                      L1035  EQU $
+ 0380                      L1034  EQU $
 
         ! Now we adjust Places, also slightly mysteriously
         %if places <= 0 %then places = -places %else places = places + 1
- 0390 8B 45 0C                              MOV EAX,[EBP+12]
- 0393 3D 00 00 00 00                        CMP EAX,0
- 0398 7F 00                                 JG L1041
- 039A F7 5D 0C                              NEG WORD [EBP+12]
- 039D EB 00                                 JMP L1042
- 039F                      L1041  EQU $
- 039F FF 45 0C                              INC WORD [EBP+12]
- 03A2                      L1042  EQU $
+ 0380 8B 45 0C                              MOV EAX,[EBP+12]
+ 0383 3D 00 00 00 00                        CMP EAX,0
+ 0388 7F 00                                 JG L1040
+ 038A F7 5D 0C                              NEG WORD [EBP+12]
+ 038D EB 00                                 JMP L1041
+ 038F                      L1040  EQU $
+ 038F FF 45 0C                              INC WORD [EBP+12]
+ 0392                      L1041  EQU $
 
         ! Pad out the digits with blank spaces if places more than actual number of 'digits'
         %if (places > length(reversed)) %start
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 03A2 8B 45 0C                              MOV EAX,[EBP+12]
- 03A5 31 C9                                 XOR ECX,ECX
- 03A7 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
- 03AD 39 C8                                 CMP EAX,ECX
- 03AF 7E 00                                 JLE L1043
+ 0392 8B 45 0C                              MOV EAX,[EBP+12]
+ 0395 31 C9                                 XOR ECX,ECX
+ 0397 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
+ 039D 39 C8                                 CMP EAX,ECX
+ 039F 7E 00                                 JLE L1042
             %while length(reversed) < places %cycle
- 03B1                      L1044  EQU $
+ 03A1                      L1043  EQU $
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 03B1 31 C0                                 XOR EAX,EAX
- 03B3 8A 85 FC FE FF FF                     MOV AL,[EBP-260]
- 03B9 3B 45 0C                              CMP EAX,[EBP+12]
- 03BC 7D 00                                 JGE L1045
+ 03A1 31 C0                                 XOR EAX,EAX
+ 03A3 8A 85 FC FE FF FF                     MOV AL,[EBP-260]
+ 03A9 3B 45 0C                              CMP EAX,[EBP+12]
+ 03AC 7D 00                                 JGE L1044
                 length(reversed) = length(reversed) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 03BE FE 85 FC FE FF FF                     INC BYTE [EBP-260]
+ 03AE FE 85 FC FE FF FF                     INC BYTE [EBP-260]
                 charno(reversed,length(reversed)) = ' '
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 03C4 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
- 03CA 31 C9                                 XOR ECX,ECX
- 03CC 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
- 03D2 01 C8                                 ADD EAX,ECX
+ 03B4 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 03BA 31 C9                                 XOR ECX,ECX
+ 03BC 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
+ 03C2 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 03D4 C6 00 20                              MOV BYTE [EAX],32
+ 03C4 C6 00 20                              MOV BYTE [EAX],32
             %repeat
- 03D7 EB 00                                 JMP L1044
- 03D9                      L1045  EQU $
+ 03C7 EB 00                                 JMP L1043
+ 03C9                      L1044  EQU $
         %finish
- 03D9                      L1043  EQU $
+ 03C9                      L1042  EQU $
 
         ! Now reverse the digits for human readability.
         length(human) = 0
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 03D9 C6 85 FC FD FF FF 00                  MOV BYTE [EBP-516],0
+ 03C9 C6 85 FC FD FF FF 00                  MOV BYTE [EBP-516],0
         %for i = length(reversed), -1, 1 %cycle
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 03E0 31 C0                                 XOR EAX,EAX
- 03E2 8A 85 FC FE FF FF                     MOV AL,[EBP-260]
- 03E8 40                                    INC EAX
- 03E9 89 85 EC FD FF FF                     MOV [EBP-532],EAX
- 03EF                      L1046  EQU $
- 03EF 8B 85 EC FD FF FF                     MOV EAX,[EBP-532]
- 03F5 3D 01 00 00 00                        CMP EAX,1
- 03FA 74 00                                 JE L1047
- 03FC 48                                    DEC EAX
- 03FD 89 85 EC FD FF FF                     MOV [EBP-532],EAX
+ 03D0 31 C0                                 XOR EAX,EAX
+ 03D2 8A 85 FC FE FF FF                     MOV AL,[EBP-260]
+ 03D8 40                                    INC EAX
+ 03D9 89 85 EC FD FF FF                     MOV [EBP-532],EAX
+ 03DF                      L1045  EQU $
+ 03DF 8B 85 EC FD FF FF                     MOV EAX,[EBP-532]
+ 03E5 3D 01 00 00 00                        CMP EAX,1
+ 03EA 74 00                                 JE L1046
+ 03EC 48                                    DEC EAX
+ 03ED 89 85 EC FD FF FF                     MOV [EBP-532],EAX
             length(human) = length(human) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0403 FE 85 FC FD FF FF                     INC BYTE [EBP-516]
+ 03F3 FE 85 FC FD FF FF                     INC BYTE [EBP-516]
             charno(human,length(human)) = charno( reversed, i )
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 0409 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
- 040F 31 C9                                 XOR ECX,ECX
- 0411 8A 8D FC FD FF FF                     MOV CL,[EBP-516]
- 0417 01 C8                                 ADD EAX,ECX
+ 03F9 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
+ 03FF 31 C9                                 XOR ECX,ECX
+ 0401 8A 8D FC FD FF FF                     MOV CL,[EBP-516]
+ 0407 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 0419 8D 8D FC FE FF FF                     LEA ECX,[EBP-260]
- 041F 03 8D EC FD FF FF                     ADD ECX,[EBP-532]
+ 0409 8D 8D FC FE FF FF                     LEA ECX,[EBP-260]
+ 040F 03 8D EC FD FF FF                     ADD ECX,[EBP-532]
                                       CALL 'CHARNO' (MACRO 12)
- 0425 8A 11                                 MOV DL,[ECX]
- 0427 88 10                                 MOV [EAX],DL
+ 0415 8A 11                                 MOV DL,[ECX]
+ 0417 88 10                                 MOV [EAX],DL
         %repeat
- 0429 EB 00                                 JMP L1046
- 042B                      L1047  EQU $
+ 0419 EB 00                                 JMP L1045
+ 041B                      L1046  EQU $
 
         %result = human
- 042B 8B 45 08                              MOV EAX,[EBP+8]
- 042E 50                                    PUSH EAX
- 042F 8D 8D FC FD FF FF                     LEA ECX,[EBP-516]
- 0435 51                                    PUSH ECX
- 0436 68 FF 00 00 00                        PUSH 255
- 043B E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
- 043E 83 C4 0C                              ADD ESP,12
- 0441 C9                                    LEAVE
- 0442 C3                                    RET
+ 041B 8B 45 08                              MOV EAX,[EBP+8]
+ 041E 50                                    PUSH EAX
+ 041F 8D 8D FC FD FF FF                     LEA ECX,[EBP-516]
+ 0425 51                                    PUSH ECX
+ 0426 68 FF 00 00 00                        PUSH 255
+ 042B E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 042E 83 C4 0C                              ADD ESP,12
+ 0431 C9                                    LEAVE
+ 0432 C3                                    RET
     %end
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
     ! format the number to the given number base
     ! and prefix by the number base expressed in base 10
     %external %string(255) %function formatNumber( %integer n,base,places)
- 0443                      L1048  EQU $
- 0443 C8 00 00 01                           ENTER 0000,1
+ 0433                      L1047  EQU $
+ 0433 C8 00 00 01                           ENTER 0000,1
         %string(255) s,x
         %integer i
 
         %if base = 10 %start
- 0447 8B 45 10                              MOV EAX,[EBP+16]
- 044A 3D 0A 00 00 00                        CMP EAX,10
- 044F 75 00                                 JNE L1049
+ 0437 8B 45 10                              MOV EAX,[EBP+16]
+ 043A 3D 0A 00 00 00                        CMP EAX,10
+ 043F 75 00                                 JNE L1048
             x = int2ascii( n, base, places)
- 0451 FF 75 14                              PUSH WORD [EBP+20]
- 0454 FF 75 10                              PUSH WORD [EBP+16]
- 0457 FF 75 0C                              PUSH WORD [EBP+12]
- 045A 8D 85 F8 FC FF FF                     LEA EAX,[EBP-776]
- 0460 50                                    PUSH EAX
- 0461 E8 00 00                              CALL 'INT2ASCII' (INTERNAL L1031 )
- 0464 83 C4 10                              ADD ESP,16
- 0467 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
- 046D 50                                    PUSH EAX
- 046E 8D 8D F8 FC FF FF                     LEA ECX,[EBP-776]
- 0474 51                                    PUSH ECX
- 0475 68 FF 00 00 00                        PUSH 255
- 047A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
- 047D 83 C4 0C                              ADD ESP,12
+ 0441 FF 75 14                              PUSH WORD [EBP+20]
+ 0444 FF 75 10                              PUSH WORD [EBP+16]
+ 0447 FF 75 0C                              PUSH WORD [EBP+12]
+ 044A 8D 85 F8 FC FF FF                     LEA EAX,[EBP-776]
+ 0450 50                                    PUSH EAX
+ 0451 E8 00 00                              CALL 'INT2ASCII' (INTERNAL L1030 )
+ 0454 83 C4 10                              ADD ESP,16
+ 0457 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
+ 045D 50                                    PUSH EAX
+ 045E 8D 8D F8 FC FF FF                     LEA ECX,[EBP-776]
+ 0464 51                                    PUSH ECX
+ 0465 68 FF 00 00 00                        PUSH 255
+ 046A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 046D 83 C4 0C                              ADD ESP,12
         %else
- 0480 EB 00                                 JMP L1050
- 0482                      L1049  EQU $
+ 0470 EB 00                                 JMP L1049
+ 0472                      L1048  EQU $
             s = int2ascii( n, base, 0)
- 0482 FF 75 14                              PUSH WORD [EBP+20]
- 0485 FF 75 10                              PUSH WORD [EBP+16]
- 0488 6A 00                                 PUSH 0
- 048A 8D 85 F8 FC FF FF                     LEA EAX,[EBP-776]
- 0490 50                                    PUSH EAX
- 0491 E8 00 00                              CALL 'INT2ASCII' (INTERNAL L1031 )
- 0494 83 C4 10                              ADD ESP,16
- 0497 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
- 049D 50                                    PUSH EAX
- 049E 8D 8D F8 FC FF FF                     LEA ECX,[EBP-776]
- 04A4 51                                    PUSH ECX
- 04A5 68 FF 00 00 00                        PUSH 255
- 04AA E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
- 04AD 83 C4 0C                              ADD ESP,12
+ 0472 FF 75 14                              PUSH WORD [EBP+20]
+ 0475 FF 75 10                              PUSH WORD [EBP+16]
+ 0478 6A 00                                 PUSH 0
+ 047A 8D 85 F8 FC FF FF                     LEA EAX,[EBP-776]
+ 0480 50                                    PUSH EAX
+ 0481 E8 00 00                              CALL 'INT2ASCII' (INTERNAL L1030 )
+ 0484 83 C4 10                              ADD ESP,16
+ 0487 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 048D 50                                    PUSH EAX
+ 048E 8D 8D F8 FC FF FF                     LEA ECX,[EBP-776]
+ 0494 51                                    PUSH ECX
+ 0495 68 FF 00 00 00                        PUSH 255
+ 049A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 049D 83 C4 0C                              ADD ESP,12
             x = int2ascii( base, 10, places - length(s)  - 1 )
- 04B0 FF 75 10                              PUSH WORD [EBP+16]
- 04B3 6A 0A                                 PUSH 10
+ 04A0 FF 75 10                              PUSH WORD [EBP+16]
+ 04A3 6A 0A                                 PUSH 10
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 04B5 8B 45 0C                              MOV EAX,[EBP+12]
- 04B8 31 C9                                 XOR ECX,ECX
- 04BA 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
- 04C0 29 C8                                 SUB EAX,ECX
- 04C2 48                                    DEC EAX
- 04C3 50                                    PUSH EAX
- 04C4 8D 85 F8 FC FF FF                     LEA EAX,[EBP-776]
- 04CA 50                                    PUSH EAX
- 04CB E8 00 00                              CALL 'INT2ASCII' (INTERNAL L1031 )
- 04CE 83 C4 10                              ADD ESP,16
- 04D1 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
- 04D7 50                                    PUSH EAX
- 04D8 8D 8D F8 FC FF FF                     LEA ECX,[EBP-776]
- 04DE 51                                    PUSH ECX
- 04DF 68 FF 00 00 00                        PUSH 255
- 04E4 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
- 04E7 83 C4 0C                              ADD ESP,12
+ 04A5 8B 45 0C                              MOV EAX,[EBP+12]
+ 04A8 31 C9                                 XOR ECX,ECX
+ 04AA 8A 8D FC FE FF FF                     MOV CL,[EBP-260]
+ 04B0 29 C8                                 SUB EAX,ECX
+ 04B2 48                                    DEC EAX
+ 04B3 50                                    PUSH EAX
+ 04B4 8D 85 F8 FC FF FF                     LEA EAX,[EBP-776]
+ 04BA 50                                    PUSH EAX
+ 04BB E8 00 00                              CALL 'INT2ASCII' (INTERNAL L1030 )
+ 04BE 83 C4 10                              ADD ESP,16
+ 04C1 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
+ 04C7 50                                    PUSH EAX
+ 04C8 8D 8D F8 FC FF FF                     LEA ECX,[EBP-776]
+ 04CE 51                                    PUSH ECX
+ 04CF 68 FF 00 00 00                        PUSH 255
+ 04D4 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 04D7 83 C4 0C                              ADD ESP,12
 
             length(x) = length(x) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 04EA FE 85 FC FD FF FF                     INC BYTE [EBP-516]
+ 04DA FE 85 FC FD FF FF                     INC BYTE [EBP-516]
             charno(x,length(x)) = '_'
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 04F0 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
- 04F6 31 C9                                 XOR ECX,ECX
- 04F8 8A 8D FC FD FF FF                     MOV CL,[EBP-516]
- 04FE 01 C8                                 ADD EAX,ECX
+ 04E0 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
+ 04E6 31 C9                                 XOR ECX,ECX
+ 04E8 8A 8D FC FD FF FF                     MOV CL,[EBP-516]
+ 04EE 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 0500 C6 00 5F                              MOV BYTE [EAX],95
+ 04F0 C6 00 5F                              MOV BYTE [EAX],95
             %for i = 1,1,length(s) %cycle
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0503 31 C0                                 XOR EAX,EAX
- 0505 8A 85 FC FE FF FF                     MOV AL,[EBP-260]
- 050B 89 85 F4 FC FF FF                     MOV [EBP-780],EAX
- 0511 C7 85 F8 FD FF FF 00 00 00 00         MOV LONG [EBP-520],0
- 051B                      L1051  EQU $
- 051B 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
- 0521 3B 85 F4 FC FF FF                     CMP EAX,[EBP-780]
- 0527 74 00                                 JE L1052
- 0529 40                                    INC EAX
- 052A 89 85 F8 FD FF FF                     MOV [EBP-520],EAX
+ 04F3 31 C0                                 XOR EAX,EAX
+ 04F5 8A 85 FC FE FF FF                     MOV AL,[EBP-260]
+ 04FB 89 85 F4 FC FF FF                     MOV [EBP-780],EAX
+ 0501 C7 85 F8 FD FF FF 00 00 00 00         MOV LONG [EBP-520],0
+ 050B                      L1050  EQU $
+ 050B 8B 85 F8 FD FF FF                     MOV EAX,[EBP-520]
+ 0511 3B 85 F4 FC FF FF                     CMP EAX,[EBP-780]
+ 0517 74 00                                 JE L1051
+ 0519 40                                    INC EAX
+ 051A 89 85 F8 FD FF FF                     MOV [EBP-520],EAX
                 length(x) = length(x) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0530 FE 85 FC FD FF FF                     INC BYTE [EBP-516]
+ 0520 FE 85 FC FD FF FF                     INC BYTE [EBP-516]
                 charno(x,length(x)) = charno(s,i)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 0536 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
- 053C 31 C9                                 XOR ECX,ECX
- 053E 8A 8D FC FD FF FF                     MOV CL,[EBP-516]
- 0544 01 C8                                 ADD EAX,ECX
+ 0526 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
+ 052C 31 C9                                 XOR ECX,ECX
+ 052E 8A 8D FC FD FF FF                     MOV CL,[EBP-516]
+ 0534 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 0546 8D 8D FC FE FF FF                     LEA ECX,[EBP-260]
- 054C 03 8D F8 FD FF FF                     ADD ECX,[EBP-520]
+ 0536 8D 8D FC FE FF FF                     LEA ECX,[EBP-260]
+ 053C 03 8D F8 FD FF FF                     ADD ECX,[EBP-520]
                                       CALL 'CHARNO' (MACRO 12)
- 0552 8A 11                                 MOV DL,[ECX]
- 0554 88 10                                 MOV [EAX],DL
+ 0542 8A 11                                 MOV DL,[ECX]
+ 0544 88 10                                 MOV [EAX],DL
             %repeat
- 0556 EB 00                                 JMP L1051
- 0558                      L1052  EQU $
+ 0546 EB 00                                 JMP L1050
+ 0548                      L1051  EQU $
         %finish
- 0558                      L1050  EQU $
+ 0548                      L1049  EQU $
 
         %result = x
- 0558 8B 45 08                              MOV EAX,[EBP+8]
- 055B 50                                    PUSH EAX
- 055C 8D 8D FC FD FF FF                     LEA ECX,[EBP-516]
- 0562 51                                    PUSH ECX
- 0563 68 FF 00 00 00                        PUSH 255
- 0568 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
- 056B 83 C4 0C                              ADD ESP,12
- 056E C9                                    LEAVE
- 056F C3                                    RET
+ 0548 8B 45 08                              MOV EAX,[EBP+8]
+ 054B 50                                    PUSH EAX
+ 054C 8D 8D FC FD FF FF                     LEA ECX,[EBP-516]
+ 0552 51                                    PUSH ECX
+ 0553 68 FF 00 00 00                        PUSH 255
+ 0558 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 055B 83 C4 0C                              ADD ESP,12
+ 055E C9                                    LEAVE
+ 055F C3                                    RET
     %end
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
     %external %string(255) %function I to S(%integer n, places)
- 0570                      L1053  EQU $
- 0570 C8 00 00 01                           ENTER 0000,1
+ 0560                      L1052  EQU $
+ 0560 C8 00 00 01                           ENTER 0000,1
         %string(255) s
 	
         s = int2ascii( n, 10, places )
- 0574 FF 75 10                              PUSH WORD [EBP+16]
- 0577 6A 0A                                 PUSH 10
- 0579 FF 75 0C                              PUSH WORD [EBP+12]
- 057C 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
- 0582 50                                    PUSH EAX
- 0583 E8 00 00                              CALL 'INT2ASCII' (INTERNAL L1031 )
- 0586 83 C4 10                              ADD ESP,16
- 0589 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
- 058F 50                                    PUSH EAX
- 0590 8D 8D FC FD FF FF                     LEA ECX,[EBP-516]
- 0596 51                                    PUSH ECX
- 0597 68 FF 00 00 00                        PUSH 255
- 059C E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
- 059F 83 C4 0C                              ADD ESP,12
+ 0564 FF 75 10                              PUSH WORD [EBP+16]
+ 0567 6A 0A                                 PUSH 10
+ 0569 FF 75 0C                              PUSH WORD [EBP+12]
+ 056C 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
+ 0572 50                                    PUSH EAX
+ 0573 E8 00 00                              CALL 'INT2ASCII' (INTERNAL L1030 )
+ 0576 83 C4 10                              ADD ESP,16
+ 0579 8D 85 FC FE FF FF                     LEA EAX,[EBP-260]
+ 057F 50                                    PUSH EAX
+ 0580 8D 8D FC FD FF FF                     LEA ECX,[EBP-516]
+ 0586 51                                    PUSH ECX
+ 0587 68 FF 00 00 00                        PUSH 255
+ 058C E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 058F 83 C4 0C                              ADD ESP,12
 
         %result = s
- 05A2 8B 45 08                              MOV EAX,[EBP+8]
- 05A5 50                                    PUSH EAX
- 05A6 8D 8D FC FE FF FF                     LEA ECX,[EBP-260]
- 05AC 51                                    PUSH ECX
- 05AD 68 FF 00 00 00                        PUSH 255
- 05B2 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
- 05B5 83 C4 0C                              ADD ESP,12
- 05B8 C9                                    LEAVE
- 05B9 C3                                    RET
+ 0592 8B 45 08                              MOV EAX,[EBP+8]
+ 0595 50                                    PUSH EAX
+ 0596 8D 8D FC FE FF FF                     LEA ECX,[EBP-260]
+ 059C 51                                    PUSH ECX
+ 059D 68 FF 00 00 00                        PUSH 255
+ 05A2 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
+ 05A5 83 C4 0C                              ADD ESP,12
+ 05A8 C9                                    LEAVE
+ 05A9 C3                                    RET
     %end
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
@@ -818,222 +803,222 @@
     ! therefore smaller and quicker.  It builds the
     ! characters "backwards" in an array
     %external %routine Write(%integer n, places)
- 05BA                      L1054  EQU $
- 05BA C8 00 00 01                           ENTER 0000,1
+ 05AA                      L1053  EQU $
+ 05AA C8 00 00 01                           ENTER 0000,1
         %string(32) ch;      ! Enough room for a 32 bit integer, plus sign
         %integer new, digit, sign, i
 
         length(ch) = 0
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 05BE C6 45 DB 00                           MOV BYTE [EBP-37],0
+ 05AE C6 45 DB 00                           MOV BYTE [EBP-37],0
         ! First collect the digits
         %if n = 0 %start
- 05C2 8B 45 0C                              MOV EAX,[EBP+12]
- 05C5 3D 00 00 00 00                        CMP EAX,0
- 05CA 75 00                                 JNE L1055
+ 05B2 8B 45 0C                              MOV EAX,[EBP+12]
+ 05B5 3D 00 00 00 00                        CMP EAX,0
+ 05BA 75 00                                 JNE L1054
             length(ch) = length(ch) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 05CC FE 45 DB                              INC BYTE [EBP-37]
+ 05BC FE 45 DB                              INC BYTE [EBP-37]
             charno(ch,length(ch)) = '0'
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 05CF 8D 45 DB                              LEA EAX,[EBP-37]
- 05D2 31 C9                                 XOR ECX,ECX
- 05D4 8A 4D DB                              MOV CL,[EBP-37]
- 05D7 01 C8                                 ADD EAX,ECX
+ 05BF 8D 45 DB                              LEA EAX,[EBP-37]
+ 05C2 31 C9                                 XOR ECX,ECX
+ 05C4 8A 4D DB                              MOV CL,[EBP-37]
+ 05C7 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 05D9 C6 00 30                              MOV BYTE [EAX],48
+ 05C9 C6 00 30                              MOV BYTE [EAX],48
             sign = 0
- 05DC C7 45 CC 00 00 00 00                  MOV LONG [EBP-52],0
+ 05CC C7 45 CC 00 00 00 00                  MOV LONG [EBP-52],0
         %else
- 05E3 EB 00                                 JMP L1056
- 05E5                      L1055  EQU $
+ 05D3 EB 00                                 JMP L1055
+ 05D5                      L1054  EQU $
             sign = 1
- 05E5 C7 45 CC 01 00 00 00                  MOV LONG [EBP-52],1
+ 05D5 C7 45 CC 01 00 00 00                  MOV LONG [EBP-52],1
             ! we make everything negative to avoid the -ve MaxInt wrap problem
             %if n > 0 %start
- 05EC 8B 45 0C                              MOV EAX,[EBP+12]
- 05EF 3D 00 00 00 00                        CMP EAX,0
- 05F4 7E 00                                 JLE L1057
+ 05DC 8B 45 0C                              MOV EAX,[EBP+12]
+ 05DF 3D 00 00 00 00                        CMP EAX,0
+ 05E4 7E 00                                 JLE L1056
                 sign = 0
- 05F6 C7 45 CC 00 00 00 00                  MOV LONG [EBP-52],0
+ 05E6 C7 45 CC 00 00 00 00                  MOV LONG [EBP-52],0
                 n = -n
- 05FD F7 5D 0C                              NEG WORD [EBP+12]
+ 05ED F7 5D 0C                              NEG WORD [EBP+12]
             %finish
- 0600                      L1057  EQU $
+ 05F0                      L1056  EQU $
 
             %while n # 0 %cycle
- 0600                      L1058  EQU $
- 0600 8B 45 0C                              MOV EAX,[EBP+12]
- 0603 3D 00 00 00 00                        CMP EAX,0
- 0608 74 00                                 JE L1059
+ 05F0                      L1057  EQU $
+ 05F0 8B 45 0C                              MOV EAX,[EBP+12]
+ 05F3 3D 00 00 00 00                        CMP EAX,0
+ 05F8 74 00                                 JE L1058
                 new = n // 10
- 060A 8B 45 0C                              MOV EAX,[EBP+12]
- 060D 99                                    CWD
- 060E F7 3D 00 00 00 00                     IDIV WORD [COT+0000]
- 0614 89 45 D4                              MOV [EBP-44],EAX
+ 05FA 8B 45 0C                              MOV EAX,[EBP+12]
+ 05FD 99                                    CWD
+ 05FE F7 3D 00 00 00 00                     IDIV WORD [COT+0000]
+ 0604 89 45 D4                              MOV [EBP-44],EAX
                 digit = (new * 10) - n
- 0617 8B 45 D4                              MOV EAX,[EBP-44]
- 061A F7 2D 00 00 00 00                     IMUL WORD [COT+0000]
- 0620 2B 45 0C                              SUB EAX,[EBP+12]
- 0623 89 45 D0                              MOV [EBP-48],EAX
+ 0607 8B 45 D4                              MOV EAX,[EBP-44]
+ 060A F7 2D 00 00 00 00                     IMUL WORD [COT+0000]
+ 0610 2B 45 0C                              SUB EAX,[EBP+12]
+ 0613 89 45 D0                              MOV [EBP-48],EAX
                 length(ch) = length(ch) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0626 FE 45 DB                              INC BYTE [EBP-37]
+ 0616 FE 45 DB                              INC BYTE [EBP-37]
                 charno(ch,length(ch)) = digit+'0'
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 0629 8D 45 DB                              LEA EAX,[EBP-37]
- 062C 31 C9                                 XOR ECX,ECX
- 062E 8A 4D DB                              MOV CL,[EBP-37]
- 0631 01 C8                                 ADD EAX,ECX
+ 0619 8D 45 DB                              LEA EAX,[EBP-37]
+ 061C 31 C9                                 XOR ECX,ECX
+ 061E 8A 4D DB                              MOV CL,[EBP-37]
+ 0621 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 0633 8B 4D D0                              MOV ECX,[EBP-48]
- 0636 83 C1 30                              ADD ECX,48
- 0639 88 08                                 MOV [EAX],CL
+ 0623 8B 4D D0                              MOV ECX,[EBP-48]
+ 0626 83 C1 30                              ADD ECX,48
+ 0629 88 08                                 MOV [EAX],CL
                 n = new
- 063B 8B 45 D4                              MOV EAX,[EBP-44]
- 063E 89 45 0C                              MOV [EBP+12],EAX
+ 062B 8B 45 D4                              MOV EAX,[EBP-44]
+ 062E 89 45 0C                              MOV [EBP+12],EAX
             %repeat
- 0641 EB 00                                 JMP L1058
- 0643                      L1059  EQU $
+ 0631 EB 00                                 JMP L1057
+ 0633                      L1058  EQU $
         %finish
- 0643                      L1056  EQU $
+ 0633                      L1055  EQU $
 
         ! Now deal with the sign, taking into account the slightly
         ! idiosyncratic behaviour on positive numbers
         %if sign # 0 %start
- 0643 8B 45 CC                              MOV EAX,[EBP-52]
- 0646 3D 00 00 00 00                        CMP EAX,0
- 064B 74 00                                 JE L1060
+ 0633 8B 45 CC                              MOV EAX,[EBP-52]
+ 0636 3D 00 00 00 00                        CMP EAX,0
+ 063B 74 00                                 JE L1059
             length(ch) = length(ch) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 064D FE 45 DB                              INC BYTE [EBP-37]
+ 063D FE 45 DB                              INC BYTE [EBP-37]
             charno(ch,length(ch)) = '-'
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 0650 8D 45 DB                              LEA EAX,[EBP-37]
- 0653 31 C9                                 XOR ECX,ECX
- 0655 8A 4D DB                              MOV CL,[EBP-37]
- 0658 01 C8                                 ADD EAX,ECX
+ 0640 8D 45 DB                              LEA EAX,[EBP-37]
+ 0643 31 C9                                 XOR ECX,ECX
+ 0645 8A 4D DB                              MOV CL,[EBP-37]
+ 0648 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 065A C6 00 2D                              MOV BYTE [EAX],45
+ 064A C6 00 2D                              MOV BYTE [EAX],45
         %else
- 065D EB 00                                 JMP L1061
- 065F                      L1060  EQU $
+ 064D EB 00                                 JMP L1060
+ 064F                      L1059  EQU $
             %if places > 0 %start
- 065F 8B 45 08                              MOV EAX,[EBP+8]
- 0662 3D 00 00 00 00                        CMP EAX,0
- 0667 7E 00                                 JLE L1062
+ 064F 8B 45 08                              MOV EAX,[EBP+8]
+ 0652 3D 00 00 00 00                        CMP EAX,0
+ 0657 7E 00                                 JLE L1061
                 length(ch) = length(ch) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0669 FE 45 DB                              INC BYTE [EBP-37]
+ 0659 FE 45 DB                              INC BYTE [EBP-37]
                 charno(ch,length(ch)) = ' '
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 066C 8D 45 DB                              LEA EAX,[EBP-37]
- 066F 31 C9                                 XOR ECX,ECX
- 0671 8A 4D DB                              MOV CL,[EBP-37]
- 0674 01 C8                                 ADD EAX,ECX
+ 065C 8D 45 DB                              LEA EAX,[EBP-37]
+ 065F 31 C9                                 XOR ECX,ECX
+ 0661 8A 4D DB                              MOV CL,[EBP-37]
+ 0664 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 0676 C6 00 20                              MOV BYTE [EAX],32
+ 0666 C6 00 20                              MOV BYTE [EAX],32
             %finish
- 0679                      L1062  EQU $
+ 0669                      L1061  EQU $
         %finish
- 0679                      L1061  EQU $
+ 0669                      L1060  EQU $
 
         ! Now we adjust Places, also slightly mysteriously
         %if places <= 0 %then places = -places %else places = places + 1
- 0679 8B 45 08                              MOV EAX,[EBP+8]
- 067C 3D 00 00 00 00                        CMP EAX,0
- 0681 7F 00                                 JG L1063
- 0683 F7 5D 08                              NEG WORD [EBP+8]
- 0686 EB 00                                 JMP L1064
- 0688                      L1063  EQU $
- 0688 FF 45 08                              INC WORD [EBP+8]
- 068B                      L1064  EQU $
+ 0669 8B 45 08                              MOV EAX,[EBP+8]
+ 066C 3D 00 00 00 00                        CMP EAX,0
+ 0671 7F 00                                 JG L1062
+ 0673 F7 5D 08                              NEG WORD [EBP+8]
+ 0676 EB 00                                 JMP L1063
+ 0678                      L1062  EQU $
+ 0678 FF 45 08                              INC WORD [EBP+8]
+ 067B                      L1063  EQU $
 
         ! The array at CH now contains the characters (backwards)
         ! and the character count is in NEXT
 
         %while places > length(ch) %cycle
- 068B                      L1065  EQU $
+ 067B                      L1064  EQU $
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 068B 8B 45 08                              MOV EAX,[EBP+8]
- 068E 31 C9                                 XOR ECX,ECX
- 0690 8A 4D DB                              MOV CL,[EBP-37]
- 0693 39 C8                                 CMP EAX,ECX
- 0695 7E 00                                 JLE L1066
+ 067B 8B 45 08                              MOV EAX,[EBP+8]
+ 067E 31 C9                                 XOR ECX,ECX
+ 0680 8A 4D DB                              MOV CL,[EBP-37]
+ 0683 39 C8                                 CMP EAX,ECX
+ 0685 7E 00                                 JLE L1065
             length(ch) = length(ch) + 1
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 0697 FE 45 DB                              INC BYTE [EBP-37]
+ 0687 FE 45 DB                              INC BYTE [EBP-37]
             charno(ch,length(ch)) = ' '
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 069A 8D 45 DB                              LEA EAX,[EBP-37]
- 069D 31 C9                                 XOR ECX,ECX
- 069F 8A 4D DB                              MOV CL,[EBP-37]
- 06A2 01 C8                                 ADD EAX,ECX
+ 068A 8D 45 DB                              LEA EAX,[EBP-37]
+ 068D 31 C9                                 XOR ECX,ECX
+ 068F 8A 4D DB                              MOV CL,[EBP-37]
+ 0692 01 C8                                 ADD EAX,ECX
                                       CALL 'CHARNO' (MACRO 12)
- 06A4 C6 00 20                              MOV BYTE [EAX],32
+ 0694 C6 00 20                              MOV BYTE [EAX],32
             places = places - 1
- 06A7 FF 4D 08                              DEC WORD [EBP+8]
+ 0697 FF 4D 08                              DEC WORD [EBP+8]
         %repeat
- 06AA EB 00                                 JMP L1065
- 06AC                      L1066  EQU $
+ 069A EB 00                                 JMP L1064
+ 069C                      L1065  EQU $
 
         %for i=length(ch),-1,1 %cycle
                                       Generating CODE for 'LENGTH' (MACRO 11)
                                       CALL 'LENGTH' (MACRO 11)
- 06AC 31 C0                                 XOR EAX,EAX
- 06AE 8A 45 DB                              MOV AL,[EBP-37]
- 06B1 40                                    INC EAX
- 06B2 89 45 C8                              MOV [EBP-56],EAX
- 06B5                      L1067  EQU $
- 06B5 8B 45 C8                              MOV EAX,[EBP-56]
- 06B8 3D 01 00 00 00                        CMP EAX,1
- 06BD 74 00                                 JE L1068
- 06BF 48                                    DEC EAX
- 06C0 89 45 C8                              MOV [EBP-56],EAX
+ 069C 31 C0                                 XOR EAX,EAX
+ 069E 8A 45 DB                              MOV AL,[EBP-37]
+ 06A1 40                                    INC EAX
+ 06A2 89 45 C8                              MOV [EBP-56],EAX
+ 06A5                      L1066  EQU $
+ 06A5 8B 45 C8                              MOV EAX,[EBP-56]
+ 06A8 3D 01 00 00 00                        CMP EAX,1
+ 06AD 74 00                                 JE L1067
+ 06AF 48                                    DEC EAX
+ 06B0 89 45 C8                              MOV [EBP-56],EAX
             print symbol( charno(ch,i))
                                       Generating CODE for 'CHARNO' (MACRO 12)
- 06C3 8D 45 DB                              LEA EAX,[EBP-37]
- 06C6 03 45 C8                              ADD EAX,[EBP-56]
+ 06B3 8D 45 DB                              LEA EAX,[EBP-37]
+ 06B6 03 45 C8                              ADD EAX,[EBP-56]
                                       CALL 'CHARNO' (MACRO 12)
- 06C9 8A 00                                 MOV AL,[EAX]
- 06CB 25 FF 00 00 00                        AND EAX,255
- 06D0 50                                    PUSH EAX
- 06D1 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 06D4 83 C4 04                              ADD ESP,4
+ 06B9 8A 00                                 MOV AL,[EAX]
+ 06BB 25 FF 00 00 00                        AND EAX,255
+ 06C0 50                                    PUSH EAX
+ 06C1 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 06C4 83 C4 04                              ADD ESP,4
         %repeat
- 06D7 EB 00                                 JMP L1067
- 06D9                      L1068  EQU $
+ 06C7 EB 00                                 JMP L1066
+ 06C9                      L1067  EQU $
 
     %end
- 06D9 C9                                    LEAVE
- 06DA C3                                    RET
+ 06C9 C9                                    LEAVE
+ 06CA C3                                    RET
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
     ! Print a floating point number out, along the lines of
@@ -1043,255 +1028,255 @@
     ! should be 4.00 but we print 3.99
 
     %external %routine print(%longreal x, %integer places)
- 06DB                      L1069  EQU $
- 06DB C8 00 00 01                           ENTER 0000,1
+ 06CB                      L1068  EQU $
+ 06CB C8 00 00 01                           ENTER 0000,1
         %integer exponent, digit, point, printexpo
 
         %if x = 0 %start
- 06DF DD 45 0C                              FLD QWORD [EBP+12]
- 06E2 D9 EE                                 FLDZ
- 06E4 DE D9                                 FCOMPP ST(1),ST
- 06E6 DF E0                                 FSTSW AX
- 06E8 9E                                    SAHF
- 06E9 75 00                                 JNE L1070
+ 06CF DD 45 0C                              FLD QWORD [EBP+12]
+ 06D2 D9 EE                                 FLDZ
+ 06D4 DE D9                                 FCOMPP ST(1),ST
+ 06D6 DF E0                                 FSTSW AX
+ 06D8 9E                                    SAHF
+ 06D9 75 00                                 JNE L1069
+            printsymbol('0')
+ 06DB 6A 30                                 PUSH 48
+ 06DD E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 06E0 83 C4 04                              ADD ESP,4
+            printsymbol('.')
+ 06E3 6A 2E                                 PUSH 46
+ 06E5 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 06E8 83 C4 04                              ADD ESP,4
             printsymbol('0')
  06EB 6A 30                                 PUSH 48
- 06ED E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 06ED E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  06F0 83 C4 04                              ADD ESP,4
-            printsymbol('.')
- 06F3 6A 2E                                 PUSH 46
- 06F5 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 06F8 83 C4 04                              ADD ESP,4
-            printsymbol('0')
- 06FB 6A 30                                 PUSH 48
- 06FD E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 0700 83 C4 04                              ADD ESP,4
             %while places > 3 %cycle
- 0703                      L1071  EQU $
- 0703 8B 45 08                              MOV EAX,[EBP+8]
- 0706 3D 03 00 00 00                        CMP EAX,3
- 070B 7E 00                                 JLE L1072
+ 06F3                      L1070  EQU $
+ 06F3 8B 45 08                              MOV EAX,[EBP+8]
+ 06F6 3D 03 00 00 00                        CMP EAX,3
+ 06FB 7E 00                                 JLE L1071
                 printsymbol('0')
- 070D 6A 30                                 PUSH 48
- 070F E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 0712 83 C4 04                              ADD ESP,4
+ 06FD 6A 30                                 PUSH 48
+ 06FF E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 0702 83 C4 04                              ADD ESP,4
                 places = places - 1
- 0715 FF 4D 08                              DEC WORD [EBP+8]
+ 0705 FF 4D 08                              DEC WORD [EBP+8]
             %repeat
- 0718 EB 00                                 JMP L1071
- 071A                      L1072  EQU $
+ 0708 EB 00                                 JMP L1070
+ 070A                      L1071  EQU $
             %return
- 071A C9                                    LEAVE
- 071B C3                                    RET
+ 070A C9                                    LEAVE
+ 070B C3                                    RET
         %finish
- 071C                      L1070  EQU $
+ 070C                      L1069  EQU $
 
         %if x < 0 %then printsymbol('-') %and x = -x %and places = places - 1
- 071C DD 45 0C                              FLD QWORD [EBP+12]
- 071F D9 EE                                 FLDZ
- 0721 DE D9                                 FCOMPP ST(1),ST
- 0723 DF E0                                 FSTSW AX
- 0725 9E                                    SAHF
- 0726 76 00                                 JBE L1073
- 0728 6A 2D                                 PUSH 45
- 072A E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 072D 83 C4 04                              ADD ESP,4
- 0730 DD 45 0C                              FLD QWORD [EBP+12]
- 0733 D9 E0                                 FCHS ST(0),ST
- 0735 DD 5D 0C                              FSTP QWORD [EBP+12]
- 0738 FF 4D 08                              DEC WORD [EBP+8]
- 073B                      L1073  EQU $
+ 070C DD 45 0C                              FLD QWORD [EBP+12]
+ 070F D9 EE                                 FLDZ
+ 0711 DE D9                                 FCOMPP ST(1),ST
+ 0713 DF E0                                 FSTSW AX
+ 0715 9E                                    SAHF
+ 0716 76 00                                 JBE L1072
+ 0718 6A 2D                                 PUSH 45
+ 071A E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 071D 83 C4 04                              ADD ESP,4
+ 0720 DD 45 0C                              FLD QWORD [EBP+12]
+ 0723 D9 E0                                 FCHS ST(0),ST
+ 0725 DD 5D 0C                              FSTP QWORD [EBP+12]
+ 0728 FF 4D 08                              DEC WORD [EBP+8]
+ 072B                      L1072  EQU $
 
         %if places < 3 %then places = 3
- 073B 8B 45 08                              MOV EAX,[EBP+8]
- 073E 3D 03 00 00 00                        CMP EAX,3
- 0743 7D 00                                 JGE L1074
- 0745 C7 45 08 03 00 00 00                  MOV LONG [EBP+8],3
- 074C                      L1074  EQU $
+ 072B 8B 45 08                              MOV EAX,[EBP+8]
+ 072E 3D 03 00 00 00                        CMP EAX,3
+ 0733 7D 00                                 JGE L1073
+ 0735 C7 45 08 03 00 00 00                  MOV LONG [EBP+8],3
+ 073C                      L1073  EQU $
    
         exponent = 0
- 074C C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
+ 073C C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
         printexpo = 0
- 0753 C7 45 EC 00 00 00 00                  MOV LONG [EBP-20],0
+ 0743 C7 45 EC 00 00 00 00                  MOV LONG [EBP-20],0
 
         %while x < 1 %cycle
- 075A                      L1075  EQU $
- 075A DD 45 0C                              FLD QWORD [EBP+12]
- 075D DB 05 04 00 00 00                     FILD [COT+0004]
- 0763 DE D9                                 FCOMPP ST(1),ST
- 0765 DF E0                                 FSTSW AX
- 0767 9E                                    SAHF
- 0768 76 00                                 JBE L1076
+ 074A                      L1074  EQU $
+ 074A DD 45 0C                              FLD QWORD [EBP+12]
+ 074D DB 05 04 00 00 00                     FILD [COT+0004]
+ 0753 DE D9                                 FCOMPP ST(1),ST
+ 0755 DF E0                                 FSTSW AX
+ 0757 9E                                    SAHF
+ 0758 76 00                                 JBE L1075
             x = x * 10
- 076A DD 45 0C                              FLD QWORD [EBP+12]
- 076D DB 05 00 00 00 00                     FILD [COT+0000]
- 0773 DE C9                                 FMULP ST(1),ST
- 0775 DD 5D 0C                              FSTP QWORD [EBP+12]
+ 075A DD 45 0C                              FLD QWORD [EBP+12]
+ 075D DB 05 00 00 00 00                     FILD [COT+0000]
+ 0763 DE C9                                 FMULP ST(1),ST
+ 0765 DD 5D 0C                              FSTP QWORD [EBP+12]
             exponent = exponent - 1
- 0778 FF 4D F8                              DEC WORD [EBP-8]
+ 0768 FF 4D F8                              DEC WORD [EBP-8]
         %repeat
- 077B EB 00                                 JMP L1075
- 077D                      L1076  EQU $
+ 076B EB 00                                 JMP L1074
+ 076D                      L1075  EQU $
 
         %while x >= 10 %cycle
- 077D                      L1077  EQU $
+ 076D                      L1076  EQU $
+ 076D DD 45 0C                              FLD QWORD [EBP+12]
+ 0770 DB 05 00 00 00 00                     FILD [COT+0000]
+ 0776 DE D9                                 FCOMPP ST(1),ST
+ 0778 DF E0                                 FSTSW AX
+ 077A 9E                                    SAHF
+ 077B 77 00                                 JA L1077
+            x = x / 10
  077D DD 45 0C                              FLD QWORD [EBP+12]
  0780 DB 05 00 00 00 00                     FILD [COT+0000]
- 0786 DE D9                                 FCOMPP ST(1),ST
- 0788 DF E0                                 FSTSW AX
- 078A 9E                                    SAHF
- 078B 77 00                                 JA L1078
-            x = x / 10
- 078D DD 45 0C                              FLD QWORD [EBP+12]
- 0790 DB 05 00 00 00 00                     FILD [COT+0000]
- 0796 DE F9                                 FDIVP ST(1),ST
- 0798 DD 5D 0C                              FSTP QWORD [EBP+12]
+ 0786 DE F9                                 FDIVP ST(1),ST
+ 0788 DD 5D 0C                              FSTP QWORD [EBP+12]
             exponent = exponent + 1
- 079B FF 45 F8                              INC WORD [EBP-8]
+ 078B FF 45 F8                              INC WORD [EBP-8]
         %repeat
- 079E EB 00                                 JMP L1077
- 07A0                      L1078  EQU $
+ 078E EB 00                                 JMP L1076
+ 0790                      L1077  EQU $
 
         ! Now X is between 1.0 and 9.99 and exponent is set accordingly
         ! If the exponent is "large" we will use scientific notation
         point = places - 2;     ! for useful digits after the "0."
- 07A0 8B 45 08                              MOV EAX,[EBP+8]
- 07A3 2D 02 00 00 00                        SUB EAX,2
- 07A8 89 45 F0                              MOV [EBP-16],EAX
+ 0790 8B 45 08                              MOV EAX,[EBP+8]
+ 0793 2D 02 00 00 00                        SUB EAX,2
+ 0798 89 45 F0                              MOV [EBP-16],EAX
         %if exponent >= places %or exponent < -point %start
- 07AB 8B 45 F8                              MOV EAX,[EBP-8]
- 07AE 3B 45 08                              CMP EAX,[EBP+8]
- 07B1 7D 00                                 JGE L1079
- 07B3 8B 45 F0                              MOV EAX,[EBP-16]
- 07B6 F7 D8                                 NEG EAX
- 07B8 8B 4D F8                              MOV ECX,[EBP-8]
- 07BB 39 C1                                 CMP ECX,EAX
- 07BD 7D 00                                 JGE L1080
- 07BF                      L1079  EQU $
+ 079B 8B 45 F8                              MOV EAX,[EBP-8]
+ 079E 3B 45 08                              CMP EAX,[EBP+8]
+ 07A1 7D 00                                 JGE L1078
+ 07A3 8B 45 F0                              MOV EAX,[EBP-16]
+ 07A6 F7 D8                                 NEG EAX
+ 07A8 8B 4D F8                              MOV ECX,[EBP-8]
+ 07AB 39 C1                                 CMP ECX,EAX
+ 07AD 7D 00                                 JGE L1079
+ 07AF                      L1078  EQU $
             printexpo = exponent
- 07BF 8B 45 F8                              MOV EAX,[EBP-8]
- 07C2 89 45 EC                              MOV [EBP-20],EAX
+ 07AF 8B 45 F8                              MOV EAX,[EBP-8]
+ 07B2 89 45 EC                              MOV [EBP-20],EAX
             exponent = 0
- 07C5 C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
+ 07B5 C7 45 F8 00 00 00 00                  MOV LONG [EBP-8],0
             places = places - 2
- 07CC 83 6D 08 02                           SUB LONG [EBP+8],2
+ 07BC 83 6D 08 02                           SUB LONG [EBP+8],2
         %finish
- 07D0                      L1080  EQU $
+ 07C0                      L1079  EQU $
 
         ! Now the exponent is small-ish
         %if exponent < 0 %start;      ! 0.nnnn
- 07D0 8B 45 F8                              MOV EAX,[EBP-8]
- 07D3 3D 00 00 00 00                        CMP EAX,0
- 07D8 7D 00                                 JGE L1081
+ 07C0 8B 45 F8                              MOV EAX,[EBP-8]
+ 07C3 3D 00 00 00 00                        CMP EAX,0
+ 07C8 7D 00                                 JGE L1080
             printsymbol('0')
- 07DA 6A 30                                 PUSH 48
- 07DC E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 07DF 83 C4 04                              ADD ESP,4
+ 07CA 6A 30                                 PUSH 48
+ 07CC E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 07CF 83 C4 04                              ADD ESP,4
             printsymbol('.')
- 07E2 6A 2E                                 PUSH 46
- 07E4 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 07E7 83 C4 04                              ADD ESP,4
+ 07D2 6A 2E                                 PUSH 46
+ 07D4 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 07D7 83 C4 04                              ADD ESP,4
             places = places - 2
- 07EA 83 6D 08 02                           SUB LONG [EBP+8],2
+ 07DA 83 6D 08 02                           SUB LONG [EBP+8],2
 
             %while exponent < -1 %cycle
- 07EE                      L1082  EQU $
- 07EE 8B 45 F8                              MOV EAX,[EBP-8]
- 07F1 3D FF FF FF FF                        CMP EAX,-1
- 07F6 7D 00                                 JGE L1083
+ 07DE                      L1081  EQU $
+ 07DE 8B 45 F8                              MOV EAX,[EBP-8]
+ 07E1 3D FF FF FF FF                        CMP EAX,-1
+ 07E6 7D 00                                 JGE L1082
                 printsymbol('0')
- 07F8 6A 30                                 PUSH 48
- 07FA E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 07FD 83 C4 04                              ADD ESP,4
+ 07E8 6A 30                                 PUSH 48
+ 07EA E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 07ED 83 C4 04                              ADD ESP,4
                 exponent = exponent + 1
- 0800 FF 45 F8                              INC WORD [EBP-8]
+ 07F0 FF 45 F8                              INC WORD [EBP-8]
                 places = places - 1
- 0803 FF 4D 08                              DEC WORD [EBP+8]
+ 07F3 FF 4D 08                              DEC WORD [EBP+8]
             %repeat
- 0806 EB 00                                 JMP L1082
- 0808                      L1083  EQU $
+ 07F6 EB 00                                 JMP L1081
+ 07F8                      L1082  EQU $
 
             point = -1; ! because we've already passed that
- 0808 C7 45 F0 FF FF FF FF                  MOV LONG [EBP-16],-1
+ 07F8 C7 45 F0 FF FF FF FF                  MOV LONG [EBP-16],-1
         %else;          ! nnn.nnn
- 080F EB 00                                 JMP L1084
- 0811                      L1081  EQU $
+ 07FF EB 00                                 JMP L1083
+ 0801                      L1080  EQU $
             point = exponent
- 0811 8B 45 F8                              MOV EAX,[EBP-8]
- 0814 89 45 F0                              MOV [EBP-16],EAX
+ 0801 8B 45 F8                              MOV EAX,[EBP-8]
+ 0804 89 45 F0                              MOV [EBP-16],EAX
         %finish
- 0817                      L1084  EQU $
+ 0807                      L1083  EQU $
 
         %while places > 0 %cycle
- 0817                      L1085  EQU $
- 0817 8B 45 08                              MOV EAX,[EBP+8]
- 081A 3D 00 00 00 00                        CMP EAX,0
- 081F 7E 00                                 JLE L1086
+ 0807                      L1084  EQU $
+ 0807 8B 45 08                              MOV EAX,[EBP+8]
+ 080A 3D 00 00 00 00                        CMP EAX,0
+ 080F 7E 00                                 JLE L1085
             digit = int pt(x)
- 0821 DD 45 0C                              FLD QWORD [EBP+12]
- 0824 83 EC 08                              SUB ESP,8
- 0827 89 E7                                 MOV EDI,ESP
- 0829 DD 1F                                 FSTP QWORD [EDI]
- 082B E8 3D 00                              CALL 'INTPT' (EXTERN 61)
- 082E 83 C4 08                              ADD ESP,8
- 0831 89 45 F4                              MOV [EBP-12],EAX
+ 0811 DD 45 0C                              FLD QWORD [EBP+12]
+ 0814 83 EC 08                              SUB ESP,8
+ 0817 89 E7                                 MOV EDI,ESP
+ 0819 DD 1F                                 FSTP QWORD [EDI]
+ 081B E8 3F 00                              CALL 'INTPT' (EXTERN 63)
+ 081E 83 C4 08                              ADD ESP,8
+ 0821 89 45 F4                              MOV [EBP-12],EAX
             ! Rounding as we go through this loop can "oversize" the digit.  This
             ! of course tells us that we should have printed (eg) 40000 but we
             ! are now stuck with printing 39999
             %if digit > 9 %then digit = 9
- 0834 8B 45 F4                              MOV EAX,[EBP-12]
- 0837 3D 09 00 00 00                        CMP EAX,9
- 083C 7E 00                                 JLE L1087
- 083E C7 45 F4 09 00 00 00                  MOV LONG [EBP-12],9
- 0845                      L1087  EQU $
+ 0824 8B 45 F4                              MOV EAX,[EBP-12]
+ 0827 3D 09 00 00 00                        CMP EAX,9
+ 082C 7E 00                                 JLE L1086
+ 082E C7 45 F4 09 00 00 00                  MOV LONG [EBP-12],9
+ 0835                      L1086  EQU $
             printsymbol(digit + '0')
- 0845 8B 45 F4                              MOV EAX,[EBP-12]
- 0848 05 30 00 00 00                        ADD EAX,48
- 084D 50                                    PUSH EAX
- 084E E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 0851 83 C4 04                              ADD ESP,4
+ 0835 8B 45 F4                              MOV EAX,[EBP-12]
+ 0838 05 30 00 00 00                        ADD EAX,48
+ 083D 50                                    PUSH EAX
+ 083E E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 0841 83 C4 04                              ADD ESP,4
             x = (x - digit)*10
- 0854 DD 45 0C                              FLD QWORD [EBP+12]
- 0857 DB 45 F4                              FILD [EBP-12]
- 085A DE E9                                 FSUBP ST(1),ST
- 085C DB 05 00 00 00 00                     FILD [COT+0000]
- 0862 DE C9                                 FMULP ST(1),ST
- 0864 DD 5D 0C                              FSTP QWORD [EBP+12]
+ 0844 DD 45 0C                              FLD QWORD [EBP+12]
+ 0847 DB 45 F4                              FILD [EBP-12]
+ 084A DE E9                                 FSUBP ST(1),ST
+ 084C DB 05 00 00 00 00                     FILD [COT+0000]
+ 0852 DE C9                                 FMULP ST(1),ST
+ 0854 DD 5D 0C                              FSTP QWORD [EBP+12]
             %if point = 0 %then printsymbol('.') %and places = places - 1
- 0867 8B 45 F0                              MOV EAX,[EBP-16]
- 086A 3D 00 00 00 00                        CMP EAX,0
- 086F 75 00                                 JNE L1088
- 0871 6A 2E                                 PUSH 46
- 0873 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 0876 83 C4 04                              ADD ESP,4
- 0879 FF 4D 08                              DEC WORD [EBP+8]
- 087C                      L1088  EQU $
+ 0857 8B 45 F0                              MOV EAX,[EBP-16]
+ 085A 3D 00 00 00 00                        CMP EAX,0
+ 085F 75 00                                 JNE L1087
+ 0861 6A 2E                                 PUSH 46
+ 0863 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 0866 83 C4 04                              ADD ESP,4
+ 0869 FF 4D 08                              DEC WORD [EBP+8]
+ 086C                      L1087  EQU $
             point = point - 1
- 087C FF 4D F0                              DEC WORD [EBP-16]
+ 086C FF 4D F0                              DEC WORD [EBP-16]
             places = places - 1
- 087F FF 4D 08                              DEC WORD [EBP+8]
+ 086F FF 4D 08                              DEC WORD [EBP+8]
         %repeat
- 0882 EB 00                                 JMP L1085
- 0884                      L1086  EQU $
+ 0872 EB 00                                 JMP L1084
+ 0874                      L1085  EQU $
 
         %if printexpo # 0 %start
- 0884 8B 45 EC                              MOV EAX,[EBP-20]
- 0887 3D 00 00 00 00                        CMP EAX,0
- 088C 74 00                                 JE L1089
+ 0874 8B 45 EC                              MOV EAX,[EBP-20]
+ 0877 3D 00 00 00 00                        CMP EAX,0
+ 087C 74 00                                 JE L1088
             printsymbol('@')
- 088E 6A 40                                 PUSH 64
- 0890 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
- 0893 83 C4 04                              ADD ESP,4
+ 087E 6A 40                                 PUSH 64
+ 0880 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
+ 0883 83 C4 04                              ADD ESP,4
             write(printexpo, 1)
- 0896 FF 75 EC                              PUSH WORD [EBP-20]
- 0899 6A 01                                 PUSH 1
- 089B E8 00 00                              CALL 'WRITE' (INTERNAL L1054 )
- 089E 83 C4 08                              ADD ESP,8
+ 0886 FF 75 EC                              PUSH WORD [EBP-20]
+ 0889 6A 01                                 PUSH 1
+ 088B E8 00 00                              CALL 'WRITE' (INTERNAL L1053 )
+ 088E 83 C4 08                              ADD ESP,8
         %finish
- 08A1                      L1089  EQU $
+ 0891                      L1088  EQU $
     %end
- 08A1 C9                                    LEAVE
- 08A2 C3                                    RET
+ 0891 C9                                    LEAVE
+ 0892 C3                                    RET
 {----------------------------------------------------------------------------}
 {----------------------------------------------------------------------------}
     ! INTPT - return the integer part of a real.  Note that this is
@@ -1300,59 +1285,59 @@
     ! Thus, INTPT(1.9) = 1, whereas INT(1.9) = 2.  INTPT uses INT
     ! and then adjusts the rounding to truncate.
     %external %integer %function Int Pt(%longreal x)
- 08A3                      L1090  EQU $
- 08A3 C8 00 00 01                           ENTER 0000,1
+ 0893                      L1089  EQU $
+ 0893 C8 00 00 01                           ENTER 0000,1
         %integer i
 
         i = int(x)
                                       Generating CODE for 'INT' (MACRO 13)
- 08A7 DD 45 08                              FLD QWORD [EBP+8]
- 08AA DB 5D F4                              FISTP [EBP-12]
+ 0897 DD 45 08                              FLD QWORD [EBP+8]
+ 089A DB 5D F4                              FISTP [EBP-12]
                                       CALL 'INT' (MACRO 13)
- 08AD 8B 45 F4                              MOV EAX,[EBP-12]
- 08B0 89 45 F8                              MOV [EBP-8],EAX
+ 089D 8B 45 F4                              MOV EAX,[EBP-12]
+ 08A0 89 45 F8                              MOV [EBP-8],EAX
         %if i # 0 %then %start; ! zero is the easy answer
- 08B3 8B 45 F8                              MOV EAX,[EBP-8]
- 08B6 3D 00 00 00 00                        CMP EAX,0
- 08BB 74 00                                 JE L1091
+ 08A3 8B 45 F8                              MOV EAX,[EBP-8]
+ 08A6 3D 00 00 00 00                        CMP EAX,0
+ 08AB 74 00                                 JE L1090
             x = x - i
- 08BD DD 45 08                              FLD QWORD [EBP+8]
- 08C0 DB 45 F8                              FILD [EBP-8]
- 08C3 DE E9                                 FSUBP ST(1),ST
- 08C5 DD 5D 08                              FSTP QWORD [EBP+8]
+ 08AD DD 45 08                              FLD QWORD [EBP+8]
+ 08B0 DB 45 F8                              FILD [EBP-8]
+ 08B3 DE E9                                 FSUBP ST(1),ST
+ 08B5 DD 5D 08                              FSTP QWORD [EBP+8]
             %if i > 0 %start; ! correct towards zero - depends which way that is :-)
- 08C8 8B 45 F8                              MOV EAX,[EBP-8]
- 08CB 3D 00 00 00 00                        CMP EAX,0
- 08D0 7E 00                                 JLE L1092
+ 08B8 8B 45 F8                              MOV EAX,[EBP-8]
+ 08BB 3D 00 00 00 00                        CMP EAX,0
+ 08C0 7E 00                                 JLE L1091
                 %if x < 0 %then i = i - 1
- 08D2 DD 45 08                              FLD QWORD [EBP+8]
- 08D5 D9 EE                                 FLDZ
- 08D7 DE D9                                 FCOMPP ST(1),ST
- 08D9 DF E0                                 FSTSW AX
- 08DB 9E                                    SAHF
- 08DC 76 00                                 JBE L1093
- 08DE FF 4D F8                              DEC WORD [EBP-8]
- 08E1                      L1093  EQU $
+ 08C2 DD 45 08                              FLD QWORD [EBP+8]
+ 08C5 D9 EE                                 FLDZ
+ 08C7 DE D9                                 FCOMPP ST(1),ST
+ 08C9 DF E0                                 FSTSW AX
+ 08CB 9E                                    SAHF
+ 08CC 76 00                                 JBE L1092
+ 08CE FF 4D F8                              DEC WORD [EBP-8]
+ 08D1                      L1092  EQU $
             %else
- 08E1 EB 00                                 JMP L1094
- 08E3                      L1092  EQU $
+ 08D1 EB 00                                 JMP L1093
+ 08D3                      L1091  EQU $
                 %if x > 0 %then i = i + 1
- 08E3 DD 45 08                              FLD QWORD [EBP+8]
- 08E6 D9 EE                                 FLDZ
- 08E8 DE D9                                 FCOMPP ST(1),ST
- 08EA DF E0                                 FSTSW AX
- 08EC 9E                                    SAHF
- 08ED 73 00                                 JAE L1095
- 08EF FF 45 F8                              INC WORD [EBP-8]
- 08F2                      L1095  EQU $
+ 08D3 DD 45 08                              FLD QWORD [EBP+8]
+ 08D6 D9 EE                                 FLDZ
+ 08D8 DE D9                                 FCOMPP ST(1),ST
+ 08DA DF E0                                 FSTSW AX
+ 08DC 9E                                    SAHF
+ 08DD 73 00                                 JAE L1094
+ 08DF FF 45 F8                              INC WORD [EBP-8]
+ 08E2                      L1094  EQU $
             %finish
- 08F2                      L1094  EQU $
+ 08E2                      L1093  EQU $
         %finish
- 08F2                      L1091  EQU $
+ 08E2                      L1090  EQU $
         %result = i
- 08F2 8B 45 F8                              MOV EAX,[EBP-8]
- 08F5 C9                                    LEAVE
- 08F6 C3                                    RET
+ 08E2 8B 45 F8                              MOV EAX,[EBP-8]
+ 08E5 C9                                    LEAVE
+ 08E6 C3                                    RET
     %end
 {----------------------------------------------------------------------------}
 

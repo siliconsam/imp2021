@@ -142,7 +142,7 @@
         write(n, m)
  020C FF 75 0C                              PUSH WORD [EBP+12]
  020F FF 75 08                              PUSH WORD [EBP+8]
- 0212 E8 37 00                              CALL 'WRITE' (EXTERN 55)
+ 0212 E8 39 00                              CALL 'WRITE' (EXTERN 57)
  0215 83 C4 08                              ADD ESP,8
     %end
  0218 C9                                    LEAVE
@@ -180,7 +180,7 @@
  0252 C3                                    RET
  0253                      L1009  EQU $
             skipsymbol
- 0253 E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 0253 E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
         %repeat
  0256 EB 00                                 JMP L1005
     %end
@@ -231,7 +231,7 @@
  02BC 8A 07                                 MOV AL,[EDI]
  02BE 25 7F 00 00 00                        AND EAX,127
  02C3 50                                    PUSH EAX
- 02C4 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 02C4 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  02C7 83 C4 04                              ADD ESP,4
                 p = p+1
  02CA FF 45 08                              INC WORD [EBP+8]
@@ -271,7 +271,7 @@
  030A 74 00                                 JE L1016
             print symbol('<');  n = n-256
  030C 6A 3C                                 PUSH 60
- 030E E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 030E E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0311 83 C4 04                              ADD ESP,4
  0314 81 6D 08 00 01 00 00                  SUB LONG [EBP+8],256
         %repeat
@@ -299,7 +299,7 @@
  035B 74 00                                 JE L1019
  035D                      L1018  EQU $
  035D 6A 22                                 PUSH 34
- 035F E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 035F E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0362 83 C4 04                              ADD ESP,4
  0365                      L1019  EQU $
             n = n>>16
@@ -310,14 +310,14 @@
  0371 74 00                                 JE L1020
                 printsymbol('[');  hwrite(n, 0);  printsymbol(']')
  0373 6A 5B                                 PUSH 91
- 0375 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0375 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  0378 83 C4 04                              ADD ESP,4
  037B FF 75 08                              PUSH WORD [EBP+8]
  037E 6A 00                                 PUSH 0
  0380 E8 00 00                              CALL 'HWRITE' (INTERNAL L1002 )
  0383 83 C4 08                              ADD ESP,8
  0386 6A 5D                                 PUSH 93
- 0388 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 0388 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  038B 83 C4 04                              ADD ESP,4
             %finish
  038E                      L1020  EQU $
@@ -495,7 +495,7 @@ ok:     %if newname # 0 %start
  050F 68 FF 00 00 00                        PUSH 255
  0514 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  0517 83 C4 0C                              ADD ESP,12
- 051A E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 051A E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  051D 81 C4 00 01 00 00                     ADD ESP,256
                 print chars(charmax+1)
  0523 A1 00 00 00 00                        MOV EAX,[DATA+0000]
@@ -504,7 +504,7 @@ ok:     %if newname # 0 %start
  052A E8 00 00                              CALL 'PRINTCHARS' (INTERNAL L1010 )
  052D 83 C4 04                              ADD ESP,4
                 newline
- 0530 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 0530 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
             %finish
  0533                      L1035  EQU $
             index(n) = charmax+1;  charmax = i
@@ -562,7 +562,7 @@ ok:     %if newname # 0 %start
  05BB 68 FF 00 00 00                        PUSH 255
  05C0 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  05C3 83 C4 0C                              ADD ESP,12
- 05C6 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 05C6 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  05C9 81 C4 00 01 00 00                     ADD ESP,256
                 print chars(charmax+1)
  05CF A1 00 00 00 00                        MOV EAX,[DATA+0000]
@@ -571,7 +571,7 @@ ok:     %if newname # 0 %start
  05D6 E8 00 00                              CALL 'PRINTCHARS' (INTERNAL L1010 )
  05D9 83 C4 04                              ADD ESP,4
                 newline
- 05DC E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 05DC E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                 m = 0
  05DF C7 45 E8 00 00 00 00                  MOV LONG [EBP-24],0
             %finish
@@ -1150,7 +1150,7 @@ u:          %if sym = '(' %start
  0B55 68 83 00 00 00                        PUSH 131
  0B5A 8D 45 DC                              LEA EAX,[EBP-36]
  0B5D 50                                    PUSH EAX
- 0B5E E8 41 00                              CALL 'READ' (EXTERN 65)
+ 0B5E E8 43 00                              CALL 'READ' (EXTERN 67)
  0B61 83 C4 08                              ADD ESP,8
  0B64 8B 45 DC                              MOV EAX,[EBP-36]
  0B67 C1 E8 04                              SHR EAX,4
@@ -1833,18 +1833,18 @@ err:        exp = 0
  1205 68 FF 00 00 00                        PUSH 255
  120A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  120D 83 C4 0C                              ADD ESP,12
- 1210 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 1210 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  1213 81 C4 00 01 00 00                     ADD ESP,256
                         print name(k);  space;  print name(t)
  1219 FF 35 1C 01 00 00                     PUSH WORD [DATA+011C]
  121F E8 00 00                              CALL 'PRINTNAME' (INTERNAL L1014 )
  1222 83 C4 04                              ADD ESP,4
- 1225 E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 1225 E8 3A 00                              CALL 'SPACE' (EXTERN 58)
  1228 FF 35 20 01 00 00                     PUSH WORD [DATA+0120]
  122E E8 00 00                              CALL 'PRINTNAME' (INTERNAL L1014 )
  1231 83 C4 04                              ADD ESP,4
                         newline
- 1234 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 1234 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                     %finish
  1237                      L1115  EQU $
                     k = k&255
@@ -2890,7 +2890,7 @@ l1:     read sym %until sym # nl
  1C4A 3D 53 00 00 00                        CMP EAX,83
  1C4F 75 00                                 JNE L1183
             skip symbol;  p = 0
- 1C51 E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 1C51 E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
  1C54 C7 45 E4 00 00 00 00                  MOV LONG [EBP-28],0
         %else
  1C5B EB 00                                 JMP L1184
@@ -3112,10 +3112,10 @@ l1:     read sym %until sym # nl
  1EB4                      L1194  EQU $
             select output(glist)
  1EB4 6A 02                                 PUSH 2
- 1EB6 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 1EB6 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  1EB9 83 C4 04                              ADD ESP,4
             newline
- 1EBC E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 1EBC E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
         %else
  1EBF EB 00                                 JMP L1199
  1EC1                      L1192  EQU $
@@ -3133,10 +3133,10 @@ l1:     read sym %until sym # nl
  1EEA 89 06                                 MOV [ESI],EAX
             select output(glist)
  1EEC 6A 02                                 PUSH 2
- 1EEE E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 1EEE E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  1EF1 83 C4 04                              ADD ESP,4
             newline
- 1EF4 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 1EF4 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
             print name(p);  printstring(" =>")
  1EF7 FF 75 E4                              PUSH WORD [EBP-28]
  1EFA E8 00 00                              CALL 'PRINTNAME' (INTERNAL L1014 )
@@ -3149,7 +3149,7 @@ l1:     read sym %until sym # nl
  1F0F 68 FF 00 00 00                        PUSH 255
  1F14 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  1F17 83 C4 0C                              ADD ESP,12
- 1F1A E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 1F1A E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  1F1D 81 C4 00 01 00 00                     ADD ESP,256
             hwrite(i,1)
  1F23 FF 75 F4                              PUSH WORD [EBP-12]
@@ -3179,7 +3179,7 @@ l1:     read sym %until sym # nl
  1F5F 3D 00 00 00 00                        CMP EAX,0
  1F64 74 00                                 JE L1202
                 newline;  hwrite(i,3);  j = 0
- 1F66 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 1F66 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  1F69 FF 75 F4                              PUSH WORD [EBP-12]
  1F6C 6A 03                                 PUSH 3
  1F6E E8 00 00                              CALL 'HWRITE' (INTERNAL L1002 )
@@ -3194,16 +3194,16 @@ l1:     read sym %until sym # nl
  1F81 3D 05 00 00 00                        CMP EAX,5
  1F86 7E 00                                 JLE L1203
                 newline;  spaces(4);  j = 1
- 1F88 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 1F88 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  1F8B 6A 04                                 PUSH 4
- 1F8D E8 39 00                              CALL 'SPACES' (EXTERN 57)
+ 1F8D E8 3B 00                              CALL 'SPACES' (EXTERN 59)
  1F90 83 C4 04                              ADD ESP,4
  1F93 C7 45 F0 01 00 00 00                  MOV LONG [EBP-16],1
             %finish
  1F9A                      L1203  EQU $
             spaces(3)
  1F9A 6A 03                                 PUSH 3
- 1F9C E8 39 00                              CALL 'SPACES' (EXTERN 57)
+ 1F9C E8 3B 00                              CALL 'SPACES' (EXTERN 59)
  1F9F 83 C4 04                              ADD ESP,4
             k = item(i)
  1FA2 FF 75 F4                              PUSH WORD [EBP-12]
@@ -3238,7 +3238,7 @@ l1:     read sym %until sym # nl
  1FF0 68 FF 00 00 00                        PUSH 255
  1FF5 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  1FF8 83 C4 0C                              ADD ESP,12
- 1FFB E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 1FFB E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  1FFE 81 C4 00 01 00 00                     ADD ESP,256
                 print symbol('+') %and k=k-256 %while k&x'300' # 0
  2004                      L1206  EQU $
@@ -3247,7 +3247,7 @@ l1:     read sym %until sym # nl
  200C 3D 00 00 00 00                        CMP EAX,0
  2011 74 00                                 JE L1207
  2013 6A 2B                                 PUSH 43
- 2015 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 2015 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  2018 83 C4 04                              ADD ESP,4
  201B 81 6D EC 00 01 00 00                  SUB LONG [EBP-20],256
  2022 EB 00                                 JMP L1206
@@ -3273,7 +3273,7 @@ l1:     read sym %until sym # nl
  2050                      L1201  EQU $
         select output(errorstream)
  2050 6A 00                                 PUSH 0
- 2052 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 2052 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  2055 83 C4 04                              ADD ESP,4
         ->l1
  2058 EB 00                                 JMP L1178
@@ -3287,7 +3287,7 @@ l9:     printstring("WRONG FORMAT AT: ")
  2069 68 FF 00 00 00                        PUSH 255
  206E E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  2071 83 C4 0C                              ADD ESP,12
- 2074 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 2074 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  2077 81 C4 00 01 00 00                     ADD ESP,256
         %while sym # nl %cycle
  207D                      L1208  EQU $
@@ -3297,14 +3297,14 @@ l9:     printstring("WRONG FORMAT AT: ")
  2088 74 00                                 JE L1209
             print symbol(sym);  read sym
  208A FF 76 F8                              PUSH WORD [ESI-8]
- 208D E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 208D E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  2090 83 C4 04                              ADD ESP,4
  2093 E8 00 00                              CALL 'READSYM' (INTERNAL L1004 )
         %repeat
  2096 EB 00                                 JMP L1208
  2098                      L1209  EQU $
         newline
- 2098 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 2098 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
         ->l1
  209B EB 00                                 JMP L1178
         !deal with initial phrase
@@ -3316,7 +3316,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  20A7 75 00                                 JNE L1210
             selectoutput(errorstream)
  20A9 6A 00                                 PUSH 0
- 20AB E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 20AB E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  20AE 83 C4 04                              ADD ESP,4
             printstring("NOT AN IMP GRAMMAR");  newline
  20B1 81 EC 00 01 00 00                     SUB ESP,256
@@ -3327,9 +3327,9 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  20C0 68 FF 00 00 00                        PUSH 255
  20C5 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  20C8 83 C4 0C                              ADD ESP,12
- 20CB E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 20CB E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  20CE 81 C4 00 01 00 00                     ADD ESP,256
- 20D4 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 20D4 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
             %return
  20D7 C9                                    LEAVE
  20D8 C3                                    RET
@@ -3508,11 +3508,11 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  22E5 89 1F                                 MOV [EDI],EBX
         select output(glist)
  22E7 6A 02                                 PUSH 2
- 22E9 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 22E9 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  22EC 83 C4 04                              ADD ESP,4
         newlines(2)
  22EF 6A 02                                 PUSH 2
- 22F1 E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 22F1 E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  22F4 83 C4 04                              ADD ESP,4
         %cycle i = 0,1,119
  22F7 C7 45 F4 FF FF FF FF                  MOV LONG [EBP-12],-1
@@ -3551,7 +3551,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  235B 68 FF 00 00 00                        PUSH 255
  2360 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  2363 83 C4 0C                              ADD ESP,12
- 2366 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 2366 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  2369 81 C4 00 01 00 00                     ADD ESP,256
                 print name(initnext(i))
  236F FF 75 F4                              PUSH WORD [EBP-12]
@@ -3578,11 +3578,11 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  23B1 3D 00 00 00 00                        CMP EAX,0
  23B6 7D 00                                 JGE L1221
  23B8 6A 60                                 PUSH 96
- 23BA E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 23BA E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  23BD 83 C4 04                              ADD ESP,4
  23C0                      L1221  EQU $
                 newline
- 23C0 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 23C0 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
             %finish
  23C3                      L1220  EQU $
         %repeat
@@ -3590,7 +3590,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  23C5                      L1219  EQU $
         select output(errorstream)
  23C5 6A 00                                 PUSH 0
- 23C7 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 23C7 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  23CA 83 C4 04                              ADD ESP,4
     %end;  !read grammar
  23CD C9                                    LEAVE
@@ -3644,7 +3644,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  2441 3D 0A 00 00 00                        CMP EAX,10
  2446 74 00                                 JE L1225
                 skip symbol
- 2448 E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 2448 E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
                 %if code = '$' %start
  244B 8B 75 F8                              MOV ESI,[EBP-8]
  244E 8B 46 E0                              MOV EAX,[ESI-32]
@@ -3654,7 +3654,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  2458 68 83 00 00 00                        PUSH 131
  245D 8D 46 E0                              LEA EAX,[ESI-32]
  2460 50                                    PUSH EAX
- 2461 E8 41 00                              CALL 'READ' (EXTERN 65)
+ 2461 E8 43 00                              CALL 'READ' (EXTERN 67)
  2464 83 C4 08                              ADD ESP,8
  2467 C9                                    LEAVE
  2468 C3                                    RET
@@ -3673,7 +3673,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  247D 8B 5D F8                              MOV EBX,[EBP-8]
  2480 8D 43 D8                              LEA EAX,[EBX-40]
  2483 50                                    PUSH EAX
- 2484 E8 41 00                              CALL 'READ' (EXTERN 65)
+ 2484 E8 43 00                              CALL 'READ' (EXTERN 67)
  2487 83 C4 08                              ADD ESP,8
                 %while nextsymbol = '+' %cycle
  248A                      L1228  EQU $
@@ -3681,11 +3681,11 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  248D 3D 2B 00 00 00                        CMP EAX,43
  2492 75 00                                 JNE L1229
                     skipsymbol;  read(n);  sub = sub+n
- 2494 E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 2494 E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
  2497 68 83 00 00 00                        PUSH 131
  249C 8D 45 F0                              LEA EAX,[EBP-16]
  249F 50                                    PUSH EAX
- 24A0 E8 41 00                              CALL 'READ' (EXTERN 65)
+ 24A0 E8 43 00                              CALL 'READ' (EXTERN 67)
  24A3 83 C4 08                              ADD ESP,8
  24A6 8B 75 F8                              MOV ESI,[EBP-8]
  24A9 8B 45 F0                              MOV EAX,[EBP-16]
@@ -3694,7 +3694,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  24AF EB 00                                 JMP L1228
  24B1                      L1229  EQU $
                 skip symbol
- 24B1 E8 31 00                              CALL 'SKIPSYMBOL' (EXTERN 49)
+ 24B1 E8 33 00                              CALL 'SKIPSYMBOL' (EXTERN 51)
             %finish
  24B4                      L1225  EQU $
             code = class+128
@@ -4047,7 +4047,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  27FA 74 00                                 JE L1247
                         selectoutput(errorstream)
  27FC 6A 00                                 PUSH 0
- 27FE E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 27FE E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  2801 83 C4 04                              ADD ESP,4
                         printstring("Keydict overflow!");  newline
  2804 81 EC 00 01 00 00                     SUB ESP,256
@@ -4058,9 +4058,9 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  2813 68 FF 00 00 00                        PUSH 255
  2818 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  281B 83 C4 0C                              ADD ESP,12
- 281E E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 281E E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  2821 81 C4 00 01 00 00                     ADD ESP,256
- 2827 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 2827 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                         %signal 15,15
  282A B8 18 02 00 00                        MOV EAX,536
  282F 50                                    PUSH EAX
@@ -4193,7 +4193,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  296C                      L1253  EQU $
                 printsymbol(sym)
  296C FF 75 08                              PUSH WORD [EBP+8]
- 296F E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 296F E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  2972 83 C4 04                              ADD ESP,4
             %end
  2975 C9                                    LEAVE
@@ -4242,7 +4242,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  29E0 FF 45 08                              INC WORD [EBP+8]
  29E3                      L1257  EQU $
 						space
- 29E3 E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 29E3 E8 3A 00                              CALL 'SPACE' (EXTERN 58)
 						i = i+1;  s = s+2
  29E6 FF 45 0C                              INC WORD [EBP+12]
  29E9 83 45 08 02                           ADD LONG [EBP+8],2
@@ -4250,7 +4250,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  29ED EB 00                                 JMP L1258
  29EF                      L1256  EQU $
 						space
- 29EF E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 29EF E8 3A 00                              CALL 'SPACE' (EXTERN 58)
 						display(j>>7&127+i,s+2)
  29F2 8B 45 F0                              MOV EAX,[EBP-16]
  29F5 C1 E8 07                              SHR EAX,7
@@ -4271,7 +4271,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  2A1F                      L1259  EQU $
 						spaces(s);  i = i+1
  2A1F FF 75 08                              PUSH WORD [EBP+8]
- 2A22 E8 39 00                              CALL 'SPACES' (EXTERN 57)
+ 2A22 E8 3B 00                              CALL 'SPACES' (EXTERN 59)
  2A25 83 C4 04                              ADD ESP,4
  2A28 FF 45 0C                              INC WORD [EBP+12]
 					%finish
@@ -4281,7 +4281,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  2A2D                      L1255  EQU $
 					print symbol(':');  print name(j&127)
  2A2D 6A 3A                                 PUSH 58
- 2A2F E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 2A2F E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  2A32 83 C4 04                              ADD ESP,4
  2A35 8B 45 F0                              MOV EAX,[EBP-16]
  2A38 25 7F 00 00 00                        AND EAX,127
@@ -4294,7 +4294,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  2A4A 25 7F 00 00 00                        AND EAX,127
  2A4F 3D 00 00 00 00                        CMP EAX,0
  2A54 74 00                                 JE L1262
- 2A56 E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 2A56 E8 3A 00                              CALL 'SPACE' (EXTERN 58)
  2A59 8B 45 F0                              MOV EAX,[EBP-16]
  2A5C C1 E8 07                              SHR EAX,7
  2A5F 25 7F 00 00 00                        AND EAX,127
@@ -4327,7 +4327,7 @@ l10:    %if inits = 1 %start;    ! not imp!!!
  2AAA 83 C4 08                              ADD ESP,8
  2AAD                      L1263  EQU $
 					newline
- 2AAD E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 2AAD E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
 					%exit
  2AB0 EB 00                                 JMP L1260
 				%finish
@@ -4393,7 +4393,7 @@ l1:     %cycle
  2B26 68 83 00 00 00                        PUSH 131
  2B2B 8D 45 DC                              LEA EAX,[EBP-36]
  2B2E 50                                    PUSH EAX
- 2B2F E8 41 00                              CALL 'READ' (EXTERN 65)
+ 2B2F E8 43 00                              CALL 'READ' (EXTERN 67)
  2B32 83 C4 08                              ADD ESP,8
         newname = 1
  2B35 C7 05 0C 00 00 00 01 00 00 00         MOV LONG [DATA+000C],1
@@ -4421,7 +4421,7 @@ l1:     %cycle
  2B77 68 83 00 00 00                        PUSH 131
  2B7C 8D 46 F8                              LEA EAX,[ESI-8]
  2B7F 50                                    PUSH EAX
- 2B80 E8 41 00                              CALL 'READ' (EXTERN 65)
+ 2B80 E8 43 00                              CALL 'READ' (EXTERN 67)
  2B83 83 C4 08                              ADD ESP,8
  2B86                      L1274  EQU $
                 %cycle
@@ -4516,10 +4516,10 @@ l1:     %cycle
 l10:    select output(dlist);  newlines(2)
  2C38                      L1271  EQU $
  2C38 6A 03                                 PUSH 3
- 2C3A E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 2C3A E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  2C3D 83 C4 04                              ADD ESP,4
  2C40 6A 02                                 PUSH 2
- 2C42 E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 2C42 E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  2C45 83 C4 04                              ADD ESP,4
         kmax = 126;  keydict(32) = 0
  2C48 8B 5D FC                              MOV EBX,[EBP-4]
@@ -4543,9 +4543,9 @@ l10:    select output(dlist);  newlines(2)
  2C86 89 45 F4                              MOV [EBP-12],EAX
             print symbol(i);  space
  2C89 FF 75 F4                              PUSH WORD [EBP-12]
- 2C8C E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 2C8C E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  2C8F 83 C4 04                              ADD ESP,4
- 2C92 E8 38 00                              CALL 'SPACE' (EXTERN 56)
+ 2C92 E8 3A 00                              CALL 'SPACE' (EXTERN 58)
             %if char(dict) = i %start
  2C95 FF 75 E8                              PUSH WORD [EBP-24]
  2C98 FF 75 C4                              PUSH WORD [EBP-60]
@@ -4593,9 +4593,9 @@ l10:    select output(dlist);  newlines(2)
  2CFA                      L1287  EQU $
                 print symbol('?');  newline
  2CFA 6A 3F                                 PUSH 63
- 2CFC E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 2CFC E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  2CFF 83 C4 04                              ADD ESP,4
- 2D02 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 2D02 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
                 j = 32<<2
  2D05 C7 45 F0 80 00 00 00                  MOV LONG [EBP-16],128
             %finish
@@ -4644,11 +4644,11 @@ l10:    select output(dlist);  newlines(2)
 !        keydict('~') = keydict('^')
         newlines(2)
  2D6A 6A 02                                 PUSH 2
- 2D6C E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 2D6C E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  2D6F 83 C4 04                              ADD ESP,4
         select output(errorstream)
  2D72 6A 00                                 PUSH 0
- 2D74 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 2D74 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  2D77 83 C4 04                              ADD ESP,4
     %end
  2D7A C9                                    LEAVE
@@ -4800,7 +4800,7 @@ l10:    select output(dlist);  newlines(2)
  2F23 83 C4 04                              ADD ESP,4
     select output( errorstream )
  2F26 6A 00                                 PUSH 0
- 2F28 E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 2F28 E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  2F2B 83 C4 04                              ADD ESP,4
     read symbol(i) %until i = '/'
  2F2E                      L1302  EQU $
@@ -4844,7 +4844,7 @@ l10:    select output(dlist);  newlines(2)
     !write required values
     select output(tablestream)
  2F88 6A 01                                 PUSH 1
- 2F8A E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 2F8A E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  2F8D 83 C4 04                              ADD ESP,4
     printstring("   %endoflist");  newline
  2F90 81 EC 00 01 00 00                     SUB ESP,256
@@ -4855,9 +4855,9 @@ l10:    select output(dlist);  newlines(2)
  2F9F 68 FF 00 00 00                        PUSH 255
  2FA4 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  2FA7 83 C4 0C                              ADD ESP,12
- 2FAA E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 2FAA E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  2FAD 81 C4 00 01 00 00                     ADD ESP,256
- 2FB3 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 2FB3 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
 
     %constinteger names per line = 8
     printstring("%conststring(8)%array text(0:255) ="); newline
@@ -4869,9 +4869,9 @@ l10:    select output(dlist);  newlines(2)
  2FC5 68 FF 00 00 00                        PUSH 255
  2FCA E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  2FCD 83 C4 0C                              ADD ESP,12
- 2FD0 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 2FD0 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  2FD3 81 C4 00 01 00 00                     ADD ESP,256
- 2FD9 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 2FD9 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("""Z"",")
  2FDC 81 EC 00 01 00 00                     SUB ESP,256
  2FE2 89 E0                                 MOV EAX,ESP
@@ -4881,7 +4881,7 @@ l10:    select output(dlist);  newlines(2)
  2FEB 68 FF 00 00 00                        PUSH 255
  2FF0 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  2FF3 83 C4 0C                              ADD ESP,12
- 2FF6 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 2FF6 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  2FF9 81 C4 00 01 00 00                     ADD ESP,256
     ! we have just output the first name already
     ! so initialise k with good value
@@ -4898,20 +4898,20 @@ l10:    select output(dlist);  newlines(2)
  302B 89 85 28 FF FF FF                     MOV [EBP-216],EAX
         printsymbol('"');  print name(j);  printsymbol('"')
  3031 6A 22                                 PUSH 34
- 3033 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 3033 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  3036 83 C4 04                              ADD ESP,4
  3039 FF B5 28 FF FF FF                     PUSH WORD [EBP-216]
  303F E8 00 00                              CALL 'PRINTNAME' (INTERNAL L1014 )
  3042 83 C4 04                              ADD ESP,4
  3045 6A 22                                 PUSH 34
- 3047 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 3047 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  304A 83 C4 04                              ADD ESP,4
         printsymbol(',') %unless j = 255
  304D 8B 85 28 FF FF FF                     MOV EAX,[EBP-216]
  3053 3D FF 00 00 00                        CMP EAX,255
  3058 74 00                                 JE L1310
  305A 6A 2C                                 PUSH 44
- 305C E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 305C E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  305F 83 C4 04                              ADD ESP,4
  3062                      L1310  EQU $
         k = k-1;  k = names per line %and newline %if k <= 0
@@ -4920,13 +4920,13 @@ l10:    select output(dlist);  newlines(2)
  306E 3D 00 00 00 00                        CMP EAX,0
  3073 7F 00                                 JG L1311
  3075 C7 85 24 FF FF FF 08 00 00 00         MOV LONG [EBP-220],8
- 307F E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 307F E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  3082                      L1311  EQU $
     %repeat
  3082 EB 00                                 JMP L1308
  3084                      L1309  EQU $
     newline
- 3084 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 3084 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     outstring = -1
  3087 C7 05 10 00 00 00 FF FF FF FF         MOV LONG [DATA+0010],-1
     printstring("%constinteger gmax1=");  hwrite(gmax,0); newline
@@ -4938,13 +4938,13 @@ l10:    select output(dlist);  newlines(2)
  30A0 68 FF 00 00 00                        PUSH 255
  30A5 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  30A8 83 C4 0C                              ADD ESP,12
- 30AB E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 30AB E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  30AE 81 C4 00 01 00 00                     ADD ESP,256
  30B4 FF 75 EC                              PUSH WORD [EBP-20]
  30B7 6A 00                                 PUSH 0
  30B9 E8 00 00                              CALL 'HWRITE' (INTERNAL L1002 )
  30BC 83 C4 08                              ADD ESP,8
- 30BF E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 30BF E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("%owninteger gmax=");  hwrite(gmax,0);  newline
  30C2 81 EC 00 01 00 00                     SUB ESP,256
  30C8 89 E0                                 MOV EAX,ESP
@@ -4954,13 +4954,13 @@ l10:    select output(dlist);  newlines(2)
  30D1 68 FF 00 00 00                        PUSH 255
  30D6 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  30D9 83 C4 0C                              ADD ESP,12
- 30DC E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 30DC E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  30DF 81 C4 00 01 00 00                     ADD ESP,256
  30E5 FF 75 EC                              PUSH WORD [EBP-20]
  30E8 6A 00                                 PUSH 0
  30EA E8 00 00                              CALL 'HWRITE' (INTERNAL L1002 )
  30ED 83 C4 08                              ADD ESP,8
- 30F0 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 30F0 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("%constinteger imp phrase =");  hwrite(inits+1, 0); newlines(2)
  30F3 81 EC 00 01 00 00                     SUB ESP,256
  30F9 89 E0                                 MOV EAX,ESP
@@ -4970,7 +4970,7 @@ l10:    select output(dlist);  newlines(2)
  3102 68 FF 00 00 00                        PUSH 255
  3107 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  310A 83 C4 0C                              ADD ESP,12
- 310D E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 310D E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  3110 81 C4 00 01 00 00                     ADD ESP,256
  3116 A1 08 00 00 00                        MOV EAX,[DATA+0008]
  311B 40                                    INC EAX
@@ -4979,7 +4979,7 @@ l10:    select output(dlist);  newlines(2)
  311F E8 00 00                              CALL 'HWRITE' (INTERNAL L1002 )
  3122 83 C4 08                              ADD ESP,8
  3125 6A 02                                 PUSH 2
- 3127 E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 3127 E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  312A 83 C4 04                              ADD ESP,4
 
     printstring("!  FLAG<1> 0<1> SS<2> 0<3> T<1> LINK<8>");  newline
@@ -4991,9 +4991,9 @@ l10:    select output(dlist);  newlines(2)
  313C 68 FF 00 00 00                        PUSH 255
  3141 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  3144 83 C4 0C                              ADD ESP,12
- 3147 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 3147 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  314A 81 C4 00 01 00 00                     ADD ESP,256
- 3150 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 3150 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("%constshortintegerarray initial(0:119) =")
  3153 81 EC 00 01 00 00                     SUB ESP,256
  3159 89 E0                                 MOV EAX,ESP
@@ -5003,7 +5003,7 @@ l10:    select output(dlist);  newlines(2)
  3162 68 FF 00 00 00                        PUSH 255
  3167 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  316A 83 C4 0C                              ADD ESP,12
- 316D E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 316D E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  3170 81 C4 00 01 00 00                     ADD ESP,256
     %cycle i = 0,1,119
  3176 C7 85 2C FF FF FF FF FF FF FF         MOV LONG [EBP-212],-1
@@ -5018,7 +5018,7 @@ l10:    select output(dlist);  newlines(2)
  319A 25 07 00 00 00                        AND EAX,7
  319F 3D 00 00 00 00                        CMP EAX,0
  31A4 75 00                                 JNE L1314
- 31A6 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 31A6 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  31A9                      L1314  EQU $
         hwrite(initial(i), 7)
  31A9 FF B5 2C FF FF FF                     PUSH WORD [EBP-212]
@@ -5036,7 +5036,7 @@ l10:    select output(dlist);  newlines(2)
  31D3 3D 77 00 00 00                        CMP EAX,119
  31D8 74 00                                 JE L1315
  31DA 6A 2C                                 PUSH 44
- 31DC E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 31DC E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  31DF 83 C4 04                              ADD ESP,4
  31E2                      L1315  EQU $
     %repeat
@@ -5044,7 +5044,7 @@ l10:    select output(dlist);  newlines(2)
  31E4                      L1313  EQU $
     newlines(2)
  31E4 6A 02                                 PUSH 2
- 31E6 E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 31E6 E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  31E9 83 C4 04                              ADD ESP,4
 
     printstring("%constbyteintegerarray atomic(130:179) =")
@@ -5056,7 +5056,7 @@ l10:    select output(dlist);  newlines(2)
  31FB 68 FF 00 00 00                        PUSH 255
  3200 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  3203 83 C4 0C                              ADD ESP,12
- 3206 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 3206 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  3209 81 C4 00 01 00 00                     ADD ESP,256
     k = 0
  320F C7 85 24 FF FF FF 00 00 00 00         MOV LONG [EBP-220],0
@@ -5073,7 +5073,7 @@ l10:    select output(dlist);  newlines(2)
  323D 25 07 00 00 00                        AND EAX,7
  3242 3D 00 00 00 00                        CMP EAX,0
  3247 75 00                                 JNE L1318
- 3249 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 3249 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  324C                      L1318  EQU $
         k = k+1
  324C FF 85 24 FF FF FF                     INC WORD [EBP-220]
@@ -5093,7 +5093,7 @@ l10:    select output(dlist);  newlines(2)
  3279 3D B3 00 00 00                        CMP EAX,179
  327E 74 00                                 JE L1319
  3280 6A 2C                                 PUSH 44
- 3282 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 3282 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  3285 83 C4 04                              ADD ESP,4
  3288                      L1319  EQU $
     %repeat
@@ -5101,7 +5101,7 @@ l10:    select output(dlist);  newlines(2)
  328A                      L1317  EQU $
     newlines(2)
  328A 6A 02                                 PUSH 2
- 328C E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 328C E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  328F 83 C4 04                              ADD ESP,4
 
     printstring("%ownshortintegerarray phrase(200:255) =")
@@ -5113,7 +5113,7 @@ l10:    select output(dlist);  newlines(2)
  32A1 68 FF 00 00 00                        PUSH 255
  32A6 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  32A9 83 C4 0C                              ADD ESP,12
- 32AC E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 32AC E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  32AF 81 C4 00 01 00 00                     ADD ESP,256
     %for i = 200, 1, 255 %cycle
  32B5 C7 85 2C FF FF FF C7 00 00 00         MOV LONG [EBP-212],199
@@ -5128,7 +5128,7 @@ l10:    select output(dlist);  newlines(2)
  32D9 25 07 00 00 00                        AND EAX,7
  32DE 3D 00 00 00 00                        CMP EAX,0
  32E3 75 00                                 JNE L1322
- 32E5 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 32E5 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  32E8                      L1322  EQU $
         hwrite(phrase(i),3)
  32E8 FF B5 2C FF FF FF                     PUSH WORD [EBP-212]
@@ -5146,7 +5146,7 @@ l10:    select output(dlist);  newlines(2)
  3312 3D FF 00 00 00                        CMP EAX,255
  3317 74 00                                 JE L1323
  3319 6A 2C                                 PUSH 44
- 331B E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 331B E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  331E 83 C4 04                              ADD ESP,4
  3321                      L1323  EQU $
     %repeat
@@ -5154,7 +5154,7 @@ l10:    select output(dlist);  newlines(2)
  3323                      L1321  EQU $
     newlines(2)
  3323 6A 02                                 PUSH 2
- 3325 E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 3325 E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  3328 83 C4 04                              ADD ESP,4
 
     printstring("!  MORE<1> 0<1> ORDER<2> TYPE<4> CLASS<8>");  newline
@@ -5166,9 +5166,9 @@ l10:    select output(dlist);  newlines(2)
  333A 68 FF 00 00 00                        PUSH 255
  333F E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  3342 83 C4 0C                              ADD ESP,12
- 3345 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 3345 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  3348 81 C4 00 01 00 00                     ADD ESP,256
- 334E E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 334E E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("%ownshortintegerarray gram(0:max grammar) =")
  3351 81 EC 00 01 00 00                     SUB ESP,256
  3357 89 E0                                 MOV EAX,ESP
@@ -5178,7 +5178,7 @@ l10:    select output(dlist);  newlines(2)
  3360 68 FF 00 00 00                        PUSH 255
  3365 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  3368 83 C4 0C                              ADD ESP,12
- 336B E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 336B E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  336E 81 C4 00 01 00 00                     ADD ESP,256
     %cycle i = 0,1,gmax
  3374 8B 45 EC                              MOV EAX,[EBP-20]
@@ -5195,7 +5195,7 @@ l10:    select output(dlist);  newlines(2)
  33A2 25 07 00 00 00                        AND EAX,7
  33A7 3D 00 00 00 00                        CMP EAX,0
  33AC 75 00                                 JNE L1326
- 33AE E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 33AE E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  33B1                      L1326  EQU $
         k = 0
  33B1 C7 85 24 FF FF FF 00 00 00 00         MOV LONG [EBP-220],0
@@ -5230,13 +5230,13 @@ l10:    select output(dlist);  newlines(2)
  3412 83 C4 08                              ADD ESP,8
         print symbol(',')
  3415 6A 2C                                 PUSH 44
- 3417 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 3417 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  341A 83 C4 04                              ADD ESP,4
     %repeat
  341D EB 00                                 JMP L1324
  341F                      L1325  EQU $
     newline;
- 341F E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 341F E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("0(max grammar-gmax1)")
  3422 81 EC 00 01 00 00                     SUB ESP,256
  3428 89 E0                                 MOV EAX,ESP
@@ -5246,11 +5246,11 @@ l10:    select output(dlist);  newlines(2)
  3431 68 FF 00 00 00                        PUSH 255
  3436 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  3439 83 C4 0C                              ADD ESP,12
- 343C E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 343C E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  343F 81 C4 00 01 00 00                     ADD ESP,256
     newlines(2)
  3445 6A 02                                 PUSH 2
- 3447 E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 3447 E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  344A 83 C4 04                              ADD ESP,4
     printstring("%ownshortintegerarray glink(0:max grammar) =")
  344D 81 EC 00 01 00 00                     SUB ESP,256
@@ -5261,7 +5261,7 @@ l10:    select output(dlist);  newlines(2)
  345C 68 FF 00 00 00                        PUSH 255
  3461 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  3464 83 C4 0C                              ADD ESP,12
- 3467 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 3467 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  346A 81 C4 00 01 00 00                     ADD ESP,256
     %cycle i = 0, 1, gmax
  3470 8B 45 EC                              MOV EAX,[EBP-20]
@@ -5278,7 +5278,7 @@ l10:    select output(dlist);  newlines(2)
  349E 25 07 00 00 00                        AND EAX,7
  34A3 3D 00 00 00 00                        CMP EAX,0
  34A8 75 00                                 JNE L1330
- 34AA E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 34AA E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  34AD                      L1330  EQU $
         hwrite(next(i), 7)
  34AD FF B5 2C FF FF FF                     PUSH WORD [EBP-212]
@@ -5293,13 +5293,13 @@ l10:    select output(dlist);  newlines(2)
  34C8 83 C4 08                              ADD ESP,8
         printsymbol(',')
  34CB 6A 2C                                 PUSH 44
- 34CD E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 34CD E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  34D0 83 C4 04                              ADD ESP,4
     %repeat
  34D3 EB 00                                 JMP L1328
  34D5                      L1329  EQU $
     newline;
- 34D5 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 34D5 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("0(max grammar-gmax1)")
  34D8 81 EC 00 01 00 00                     SUB ESP,256
  34DE 89 E0                                 MOV EAX,ESP
@@ -5309,11 +5309,11 @@ l10:    select output(dlist);  newlines(2)
  34E7 68 FF 00 00 00                        PUSH 255
  34EC E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  34EF 83 C4 0C                              ADD ESP,12
- 34F2 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 34F2 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  34F5 81 C4 00 01 00 00                     ADD ESP,256
     newlines(2)
  34FB 6A 02                                 PUSH 2
- 34FD E8 3B 00                              CALL 'NEWLINES' (EXTERN 59)
+ 34FD E8 3D 00                              CALL 'NEWLINES' (EXTERN 61)
  3500 83 C4 04                              ADD ESP,4
 
     printstring("%constshortinteger max kdict = ");  hwrite(kmax,0); newline
@@ -5325,13 +5325,13 @@ l10:    select output(dlist);  newlines(2)
  3512 68 FF 00 00 00                        PUSH 255
  3517 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  351A 83 C4 0C                              ADD ESP,12
- 351D E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 351D E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  3520 81 C4 00 01 00 00                     ADD ESP,256
  3526 FF 75 E8                              PUSH WORD [EBP-24]
  3529 6A 00                                 PUSH 0
  352B E8 00 00                              CALL 'HWRITE' (INTERNAL L1002 )
  352E 83 C4 08                              ADD ESP,8
- 3531 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 3531 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("%constshortintegerarray kdict(32:max kdict) =");
  3534 81 EC 00 01 00 00                     SUB ESP,256
  353A 89 E0                                 MOV EAX,ESP
@@ -5341,7 +5341,7 @@ l10:    select output(dlist);  newlines(2)
  3543 68 FF 00 00 00                        PUSH 255
  3548 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  354B 83 C4 0C                              ADD ESP,12
- 354E E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 354E E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  3551 81 C4 00 01 00 00                     ADD ESP,256
     %cycle i = 32,1,kmax
  3557 8B 45 E8                              MOV EAX,[EBP-24]
@@ -5358,7 +5358,7 @@ l10:    select output(dlist);  newlines(2)
  3585 25 07 00 00 00                        AND EAX,7
  358A 3D 00 00 00 00                        CMP EAX,0
  358F 75 00                                 JNE L1333
- 3591 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 3591 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
  3594                      L1333  EQU $
         hwrite(keydict(i),7)
  3594 FF B5 2C FF FF FF                     PUSH WORD [EBP-212]
@@ -5376,14 +5376,14 @@ l10:    select output(dlist);  newlines(2)
  35BE 3B 45 E8                              CMP EAX,[EBP-24]
  35C1 74 00                                 JE L1334
  35C3 6A 2C                                 PUSH 44
- 35C5 E8 2C 00                              CALL 'PRINTSYMBOL' (EXTERN 44)
+ 35C5 E8 2E 00                              CALL 'PRINTSYMBOL' (EXTERN 46)
  35C8 83 C4 04                              ADD ESP,4
  35CB                      L1334  EQU $
     %repeat
  35CB EB 00                                 JMP L1331
  35CD                      L1332  EQU $
     newline
- 35CD E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 35CD E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("   %list");  newline
  35D0 81 EC 00 01 00 00                     SUB ESP,256
  35D6 89 E0                                 MOV EAX,ESP
@@ -5393,9 +5393,9 @@ l10:    select output(dlist);  newlines(2)
  35DF 68 FF 00 00 00                        PUSH 255
  35E4 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  35E7 83 C4 0C                              ADD ESP,12
- 35EA E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 35EA E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  35ED 81 C4 00 01 00 00                     ADD ESP,256
- 35F3 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 35F3 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
     printstring("%endoffile");  newline
  35F6 81 EC 00 01 00 00                     SUB ESP,256
  35FC 89 E0                                 MOV EAX,ESP
@@ -5405,13 +5405,13 @@ l10:    select output(dlist);  newlines(2)
  3605 68 FF 00 00 00                        PUSH 255
  360A E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  360D 83 C4 0C                              ADD ESP,12
- 3610 E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 3610 E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  3613 81 C4 00 01 00 00                     ADD ESP,256
- 3619 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 3619 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
 
     selectoutput(errorstream)
  361C 6A 00                                 PUSH 0
- 361E E8 25 00                              CALL 'SELECTOUTPUT' (EXTERN 37)
+ 361E E8 27 00                              CALL 'SELECTOUTPUT' (EXTERN 39)
  3621 83 C4 04                              ADD ESP,4
     printstring("Grammar complete");  newline
  3624 81 EC 00 01 00 00                     SUB ESP,256
@@ -5422,9 +5422,9 @@ l10:    select output(dlist);  newlines(2)
  3633 68 FF 00 00 00                        PUSH 255
  3638 E8 03 00                              CALL '_IMPSTRCPY' (EXTERN 3)
  363B 83 C4 0C                              ADD ESP,12
- 363E E8 32 00                              CALL 'PRINTSTRING' (EXTERN 50)
+ 363E E8 34 00                              CALL 'PRINTSTRING' (EXTERN 52)
  3641 81 C4 00 01 00 00                     ADD ESP,256
- 3647 E8 3A 00                              CALL 'NEWLINE' (EXTERN 58)
+ 3647 E8 3C 00                              CALL 'NEWLINE' (EXTERN 60)
 %endofprogram
  364A C9                                    LEAVE
  364B C3                                    RET

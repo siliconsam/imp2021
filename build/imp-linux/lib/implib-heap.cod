@@ -23,7 +23,7 @@
 
         impfree( Where )
  000A FF 75 F8                              PUSH WORD [EBP-8]
- 000D E8 64 00                              CALL 'IMPFREE' (EXTERN 100)
+ 000D E8 67 00                              CALL 'IMPFREE' (EXTERN 103)
  0010 83 C4 04                              ADD ESP,4
     %end
  0013 C9                                    LEAVE
@@ -51,7 +51,7 @@
 
         Res == impmalloc(Bytes)
  0032 FF 75 F4                              PUSH WORD [EBP-12]
- 0035 E8 65 00                              CALL 'IMPMALLOC' (EXTERN 101)
+ 0035 E8 68 00                              CALL 'IMPMALLOC' (EXTERN 104)
  0038 83 C4 04                              ADD ESP,4
  003B 89 45 F8                              MOV [EBP-8],EAX
 

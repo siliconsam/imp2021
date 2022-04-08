@@ -12,7 +12,7 @@
         %integer count
 
         arr == getarguments
- 0004 E8 64 00                              CALL 'GETARGUMENTS' (EXTERN 100)
+ 0004 E8 67 00                              CALL 'GETARGUMENTS' (EXTERN 103)
  0007 89 45 F8                              MOV [EBP-8],EAX
 
         count = 0
@@ -67,7 +67,7 @@
  0053 7D 00                                 JGE L1004
             ! get the pointer (aka "name") to the C-style char array
             b == byteinteger( integer( addr(getarguments) + WORDSIZE*index ) )
- 0055 E8 64 00                              CALL 'GETARGUMENTS' (EXTERN 100)
+ 0055 E8 67 00                              CALL 'GETARGUMENTS' (EXTERN 103)
                                       Generating CODE for 'ADDR' (MACRO 4)
                                       CALL 'ADDR' (MACRO 4)
  0058 8B 4D 0C                              MOV ECX,[EBP+12]

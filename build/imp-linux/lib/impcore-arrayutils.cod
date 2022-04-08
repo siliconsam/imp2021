@@ -1016,7 +1016,7 @@
  0505 6A 00                                 PUSH 0
  0507 8D 85 FC FD FF FF                     LEA EAX,[EBP-516]
  050D 50                                    PUSH EAX
- 050E E8 40 00                              CALL 'ITOS' (EXTERN 64)
+ 050E E8 42 00                              CALL 'ITOS' (EXTERN 66)
  0511 83 C4 0C                              ADD ESP,12
  0514 8D 85 FC FC FF FF                     LEA EAX,[EBP-772]
  051A 50                                    PUSH EAX

@@ -8386,56 +8386,61 @@
   8369          %string(255) the source file name
   8370          %integer i,j
   8371  
-  8372          %if (length( getenv( getenvindex( "IMP_ICODE" ) ) ) # 0) %start
-  8373              ! ok, we want to show the iCode records
-  8374              ShowICode = 1
-  8375          %finish
+  8372          ! The %signal 9,0 and %signal 9,1 events are allowed by default
+  8373          ! However, these events should not be triggered inside  pass2
+  8374          ! when reading the .icd or .imp source files
+  8375          block eof event
   8376  
-  8377          ! JDM - Before we do any file I/O we need to get the source file name
-  8378          ! (as used to feed the 'source' stream)
-  8379  
-  8380          select input( source )
-  8381          the source file name = input name
-  8382  
-  8383          ! JDM - ok, now we can really start
-  8384          select input( icode )
-  8385          select output( objout )
-  8386  
-  8387          var(0) = 0;              !  for %RECORD(*) . . . . .
-  8388          parms = max vars
-  8389  
-  8390          ! Initialise the GP Tag ASL
-  8391          %for i=1,1,Max GP %cycle
-  8392              GP Tags(i)_link = i - 1
-  8393          %repeat
-  8394          gp asl = Max GP
-  8395  
-  8396          ! Tell the linker our source file name
-  8397          dumpsourcename( the source file name )
-  8398  
-  8399          ! predefine the perms for the linker
-  8400          ! We ignore the number (j) because we know they are in sequence
-  8401          %for i=1,1,lastperm %cycle
-  8402              j = externalref(permname(i))
-  8403          %repeat
-  8404  
-  8405      %end
-  8406  
-  8407      !              -------- it all starts here ---------
-  8408      initialise pass2
+  8377          %if (length( getenv( getenvindex( "IMP_ICODE" ) ) ) # 0) %start
+  8378              ! ok, we want to show the iCode records
+  8379              ShowICode = 1
+  8380          %finish
+  8381  
+  8382          ! JDM - Before we do any file I/O we need to get the source file name
+  8383          ! (as used to feed the 'source' stream)
+  8384  
+  8385          select input( source )
+  8386          the source file name = input name
+  8387  
+  8388          ! JDM - ok, now we can really start
+  8389          select input( icode )
+  8390          select output( objout )
+  8391  
+  8392          var(0) = 0;              !  for %RECORD(*) . . . . .
+  8393          parms = max vars
+  8394  
+  8395          ! Initialise the GP Tag ASL
+  8396          %for i=1,1,Max GP %cycle
+  8397              GP Tags(i)_link = i - 1
+  8398          %repeat
+  8399          gp asl = Max GP
+  8400  
+  8401          ! Tell the linker our source file name
+  8402          dumpsourcename( the source file name )
+  8403  
+  8404          ! predefine the perms for the linker
+  8405          ! We ignore the number (j) because we know they are in sequence
+  8406          %for i=1,1,lastperm %cycle
+  8407              j = externalref(permname(i))
+  8408          %repeat
   8409  
-  8410      !  Prime SYM/NEXT pair
-  8411      read symbol(Pending)
-  8412      Spec = 0
-  8413      decvar == begin
-  8414      assemble(-3,0,0)
-  8415  
-  8416      ! We flush constants
-  8417      flush cot
-  8418      flush data
-  8419      flush switch
+  8410      %end
+  8411  
+  8412      !              -------- it all starts here ---------
+  8413      initialise pass2
+  8414  
+  8415      !  Prime SYM/NEXT pair
+  8416      read symbol(Pending)
+  8417      Spec = 0
+  8418      decvar == begin
+  8419      assemble(-3,0,0)
   8420  
-  8421  %endofprogram
+  8421      ! We flush constants
+  8422      flush cot
+  8423      flush data
+  8424      flush switch
+  8425  
+  8426  %endofprogram
 ?DUMPRR8 unused
 ?IFCALL unused
 ?GETINTERNALFORMNAME unused
@@ -8459,4 +8464,4 @@
 ?DL unused
 ?CHECKUNASS unused
 
-  5666 Statements compiled
+  5667 Statements compiled

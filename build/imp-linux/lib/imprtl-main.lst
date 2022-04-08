@@ -270,75 +270,81 @@
   267      %external %routine     %spec prim file seek       %alias "fseek" ( %integer handle, displacement, pos )
   268      %external %routine     %spec prim close           %alias "fclose" ( %integer handle )
   269      %external %integer %fn %spec prim readbytes       %alias "fread" ( %integer handle, count, itemsz, %byte %name buffer )
-  270      %external %integer %fn %spec prim writebytes      %alias "fwrite" ( %integer handle, count, itemsz,%byte %name buffer )
-  271      %external %integer %fn %spec prim get char        %alias "fgetc" ( %integer handle )
-  272      %external %routine     %spec prim put char        %alias "fputc" ( %integer handle,ch )
-  273      %external %routine     %spec prim flush           %alias "fflush" ( %integer handle )
-  274  
-  275      %external %routine exit( %integer status )
-  276          prim exit( status )
-  277      %end
-  278  
-  279      %external %integer %fn get error
-  280          %result = prim get err
-  281      %end
-  282  
-  283      %external %integer %fn getstderrhandle
-  284          %result = prim geterrhandle
-  285      %end
-  286  
-  287      %external %integer %fn getstdinhandle
-  288          %result = prim getinhandle
-  289      %end
-  290  
-  291      %external %integer %fn getstdouthandle
-  292          %result = prim getouthandle
-  293      %end
-  294  
-  295      %external %routine put double( %integer handle, %long %real d )
-  296          prim write double( handle, d )
-  297      %end
-  298  
-  299      %external %integer %fn openfile ( %integer mode address, %integer file name address )
-  300          %result = prim openfile( mode address, file name address )
-  301      %end
-  302  
-  303      %external %integer %fn tell ( %integer handle )
-  304          %result = prim tell( handle )
-  305      %end
-  306  
-  307      %external %routine file rewind( %integer handle )
-  308          prim file rewind( handle )
-  309      %end
-  310  
-  311      %external %routine file seek ( %integer handle, displacement, pos )
-  312          prim file seek( handle, displacement, pos )
-  313      %end
-  314  
-  315      %external %routine close( %integer handle )
-  316          prim close( handle )
-  317      %end
-  318  
-  319      %external %integer %fn readbytes( %integer handle, count, itemsz, %byte %name buffer )
-  320          %result = prim readbytes( handle, count, itemsz, buffer )
-  321      %end
-  322  
-  323      %external %integer %fn writebytes( %integer handle, count, itemsz,%byte %name buffer )
-  324          %result = prim writebytes( handle, count, itemsz, buffer )
-  325      %end
-  326  
-  327      %external %integer %fn get char( %integer handle )
-  328          %result = prim get char( handle )
-  329      %end
-  330  
-  331      %external %routine put char( %integer handle,ch )
-  332          prim put char( handle,ch )
-  333      %end
-  334  
-  335      %external %routine flush( %integer handle )
-  336          prim flush( handle )
-  337      %end
-  338  
-  339  %endoffile
+  270      %external %integer %fn %spec prim writebytes      %alias "fwrite" ( %integer handle, count, itemsz, %byte %name buffer )
+  271      %external %integer %fn %spec prim eof             %alias "feof" ( %integer handle )
+  272      %external %integer %fn %spec prim get char        %alias "fgetc" ( %integer handle )
+  273      %external %routine     %spec prim put char        %alias "fputc" ( %integer handle,ch )
+  274      %external %routine     %spec prim flush           %alias "fflush" ( %integer handle )
+  275  
+  276      %external %routine exit( %integer status )
+  277          prim exit( status )
+  278      %end
+  279  
+  280      %external %integer %fn get error
+  281          %result = prim get err
+  282      %end
+  283  
+  284      %external %integer %fn getstderrhandle
+  285          %result = prim geterrhandle
+  286      %end
+  287  
+  288      %external %integer %fn getstdinhandle
+  289          %result = prim getinhandle
+  290      %end
+  291  
+  292      %external %integer %fn getstdouthandle
+  293          %result = prim getouthandle
+  294      %end
+  295  
+  296      %external %routine put double( %integer handle, %long %real d )
+  297          prim write double( handle, d )
+  298      %end
+  299  
+  300      %external %integer %fn openfile ( %integer mode address, %integer file name address )
+  301          %result = prim openfile( mode address, file name address )
+  302      %end
+  303  
+  304      %external %integer %fn tell ( %integer handle )
+  305          %result = prim tell( handle )
+  306      %end
+  307  
+  308      %external %routine file rewind( %integer handle )
+  309          prim file rewind( handle )
+  310      %end
+  311  
+  312      %external %routine file seek ( %integer handle, displacement, pos )
+  313          prim file seek( handle, displacement, pos )
+  314      %end
+  315  
+  316      %external %routine close( %integer handle )
+  317          prim close( handle )
+  318      %end
+  319  
+  320      %external %integer %fn readbytes( %integer handle, count, itemsz, %byte %name buffer )
+  321          %result = prim readbytes( handle, count, itemsz, buffer )
+  322      %end
+  323  
+  324      %external %integer %fn writebytes( %integer handle, count, itemsz,%byte %name buffer )
+  325          %result = prim writebytes( handle, count, itemsz, buffer )
+  326      %end
+  327  
+  328      %external %predicate file end( %integer handle )
+  329          %false %if prim eof( handle ) = 0
+  330          %true
+  331      %end
+  332  
+  333      %external %integer %fn get char( %integer handle )
+  334          %result = prim get char( handle )
+  335      %end
+  336  
+  337      %external %routine put char( %integer handle,ch )
+  338          prim put char( handle,ch )
+  339      %end
+  340  
+  341      %external %routine flush( %integer handle )
+  342          prim flush( handle )
+  343      %end
+  344  
+  345  %endoffile
 
-  208 Statements compiled
+  213 Statements compiled

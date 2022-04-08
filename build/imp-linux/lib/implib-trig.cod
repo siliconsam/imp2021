@@ -37,7 +37,7 @@
  0037 83 EC 08                              SUB ESP,8
  003A 89 E6                                 MOV ESI,ESP
  003C DD 1E                                 FSTP QWORD [ESI]
- 003E E8 64 00                              CALL 'CLIBCOS' (EXTERN 100)
+ 003E E8 67 00                              CALL 'CLIBCOS' (EXTERN 103)
  0041 83 C4 08                              ADD ESP,8
  0044 C9                                    LEAVE
  0045 C3                                    RET
@@ -81,7 +81,7 @@
  007D 83 EC 08                              SUB ESP,8
  0080 89 E7                                 MOV EDI,ESP
  0082 DD 1F                                 FSTP QWORD [EDI]
- 0084 E8 65 00                              CALL 'CLIBSINE' (EXTERN 101)
+ 0084 E8 68 00                              CALL 'CLIBSINE' (EXTERN 104)
  0087 83 C4 08                              ADD ESP,8
  008A C9                                    LEAVE
  008B C3                                    RET

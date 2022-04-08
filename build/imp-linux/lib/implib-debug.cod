@@ -45,7 +45,7 @@
  003A C8 00 00 01                           ENTER 0000,1
         debugsymbol( ' ' )
  003E 6A 20                                 PUSH 32
- 0040 E8 2F 00                              CALL 'DEBUGSYMBOL' (EXTERN 47)
+ 0040 E8 31 00                              CALL 'DEBUGSYMBOL' (EXTERN 49)
  0043 83 C4 04                              ADD ESP,4
     %end
  0046 C9                                    LEAVE
@@ -107,7 +107,7 @@
  009B 8A 00                                 MOV AL,[EAX]
  009D 25 FF 00 00 00                        AND EAX,255
  00A2 50                                    PUSH EAX
- 00A3 E8 2F 00                              CALL 'DEBUGSYMBOL' (EXTERN 47)
+ 00A3 E8 31 00                              CALL 'DEBUGSYMBOL' (EXTERN 49)
  00A6 83 C4 04                              ADD ESP,4
         %repeat
  00A9 EB 00                                 JMP L1010
@@ -121,7 +121,7 @@
  00AD C8 00 00 01                           ENTER 0000,1
         debug symbol( nl )
  00B1 6A 0A                                 PUSH 10
- 00B3 E8 2F 00                              CALL 'DEBUGSYMBOL' (EXTERN 47)
+ 00B3 E8 31 00                              CALL 'DEBUGSYMBOL' (EXTERN 49)
  00B6 83 C4 04                              ADD ESP,4
     %end
  00B9 C9                                    LEAVE
