@@ -99,19 +99,19 @@
 @if not exist %IMP_DEV_TEMP%\imp\scripts        @mkdir %IMP_DEV_TEMP%\imp\scripts
 
 @rem Now build the compiler etc in a temporary location
-@copy %IMP_DEV_SOURCE%\imp\*.bat                %IMP_DEV_TEMP%\imp\*                     > nul
-@copy %IMP_DEV_SOURCE%\imp\compiler\*.grammar   %IMP_DEV_TEMP%\imp\compiler\*.grammar    > nul
-@copy %IMP_DEV_SOURCE%\imp\compiler\*.bat       %IMP_DEV_TEMP%\imp\compiler\*.bat        > nul
-@copy %IMP_DEV_SOURCE%\imp\compiler\*.imp       %IMP_DEV_TEMP%\imp\compiler\*.imp        > nul
-xcopy/S/E %IMP_DEV_SOURCE%\imp\lib              %IMP_DEV_TEMP%\imp\lib                   > nul
-xcopy/S/E %IMP_DEV_SOURCE%\imp\pass3            %IMP_DEV_TEMP%\imp\pass3                 > nul
-xcopy/S/E %IMP_DEV_SOURCE%\imp\scripts          %IMP_DEV_TEMP%\imp\scripts               > nul
+@copy %IMP_DEV_SOURCE%\imp\*.bat                %IMP_DEV_TEMP%\imp\*
+@copy %IMP_DEV_SOURCE%\imp\compiler\*.grammar   %IMP_DEV_TEMP%\imp\compiler\*.grammar
+@copy %IMP_DEV_SOURCE%\imp\compiler\*.bat       %IMP_DEV_TEMP%\imp\compiler\*.bat
+@copy %IMP_DEV_SOURCE%\imp\compiler\*.imp       %IMP_DEV_TEMP%\imp\compiler\*.imp
+@xcopy/S/E %IMP_DEV_SOURCE%\imp\lib              %IMP_DEV_TEMP%\imp\lib
+@xcopy/S/E %IMP_DEV_SOURCE%\imp\pass3            %IMP_DEV_TEMP%\imp\pass3
+@xcopy/S/E %IMP_DEV_SOURCE%\imp\scripts          %IMP_DEV_TEMP%\imp\scripts
 
-echo.
-echo                    ***********************************
-echo                    * Compiler suite being installed. *
-echo                    ***********************************
-echo.
+@echo.
+@echo                    ***********************************
+@echo                    * Compiler suite being installed. *
+@echo                    ***********************************
+@echo.
 
 @cd %IMP_DEV_TEMP%
 @rem Build the libraries, lexer/parser generator and the three passes of the compiler 
@@ -119,25 +119,25 @@ echo.
 
 @rem now to "issue"/release the newly built library, compiler, scripts and documents
 @rem Issue the new library
-copy %IMP_DEV_TEMP%\imp\lib\libi77.lib         %IMP_DEV_RELEASE%\lib\libi77.lib         > nul
-rem Issue the new include
-copy %IMP_DEV_TEMP%\imp\lib\stdperm.imp        %IMP_DEV_RELEASE%\include\stdperm.imp    > nul
+@copy %IMP_DEV_TEMP%\imp\lib\libi77.lib         %IMP_DEV_RELEASE%\lib\libi77.lib
+@rem Issue the new include
+@copy %IMP_DEV_TEMP%\imp\lib\stdperm.imp        %IMP_DEV_RELEASE%\include\stdperm.imp
 @rem Issue the run script, takeon, pass1, pass2 sections of the compiler
-copy %IMP_DEV_TEMP%\imp\scripts\*              %IMP_DEV_RELEASE%\bin\*                  > nul
-copy %IMP_DEV_TEMP%\imp\compiler\*.exe         %IMP_DEV_RELEASE%\bin\*.exe              > nul
+@copy %IMP_DEV_TEMP%\imp\scripts\*              %IMP_DEV_RELEASE%\bin\*
+@copy %IMP_DEV_TEMP%\imp\compiler\*.exe         %IMP_DEV_RELEASE%\bin\*.exe
 @rem the versions of pass3
-copy %IMP_DEV_TEMP%\imp\pass3\*.exe            %IMP_DEV_RELEASE%\bin\*.exe              > nul
+@copy %IMP_DEV_TEMP%\imp\pass3\*.exe            %IMP_DEV_RELEASE%\bin\*.exe
 @rem issue the documents
-copy %IMP_DEV_SOURCE%\docs\imp77.pdf           %IMP_DEV_RELEASE%\docs\imp77.pdf         > nul
-copy %IMP_DEV_SOURCE%\docs\ascii.txt           %IMP_DEV_RELEASE%\docs\ascii.txt         > nul
-copy %IMP_DEV_SOURCE%\docs\icode1v3.txt        %IMP_DEV_RELEASE%\docs\icode1v3.txt      > nul
-copy %IMP_DEV_SOURCE%\docs\psr_thesis.txt      %IMP_DEV_RELEASE%\docs\psr_thesis.txt    > nul
+@copy %IMP_DEV_SOURCE%\docs\imp77.pdf           %IMP_DEV_RELEASE%\docs\imp77.pdf
+@copy %IMP_DEV_SOURCE%\docs\ascii.txt           %IMP_DEV_RELEASE%\docs\ascii.txt
+@copy %IMP_DEV_SOURCE%\docs\icode1v3.txt        %IMP_DEV_RELEASE%\docs\icode1v3.txt
+@copy %IMP_DEV_SOURCE%\docs\psr_thesis.txt      %IMP_DEV_RELEASE%\docs\psr_thesis.txt
 
-echo.
-echo                    *********************************
-echo                    * Compiler suite now installed. *
-echo                    *********************************
-echo.
+@echo.
+@echo                    *********************************
+@echo                    * Compiler suite now installed. *
+@echo                    *********************************
+@echo.
 
 :end_build_compiler
 @goto build_tests
@@ -146,23 +146,23 @@ echo.
 @rem Did we make a request for the various compiler tests?
 @if "%tests%"=="" @goto no_build_tests
 
-echo.
-echo                    ***********************************
-echo                    * Compiler tests being installed. *
-echo                    ***********************************
-echo.
+@echo.
+@echo                    ***********************************
+@echo                    * Compiler tests being installed. *
+@echo                    ***********************************
+@echo.
 
 @rem Now set up the compiler/utility test files
-if not exist %IMP_DEV_TEMP%\tests              @mkdir %IMP_DEV_TEMP%\tests              > nul
-if not exist %IMP_DEV_TEMP%\tests\examples     @mkdir %IMP_DEV_TEMP%\tests\examples     > nul
-xcopy/S/E %IMP_DEV_SOURCE%\tests\examples      %IMP_DEV_TEMP%\tests\examples            > nul
-copy %IMP_DEV_SOURCE%\tests\*                  %IMP_DEV_TEMP%\tests\*                   > nul
+@if not exist %IMP_DEV_TEMP%\tests              @mkdir %IMP_DEV_TEMP%\tests
+@if not exist %IMP_DEV_TEMP%\tests\examples     @mkdir %IMP_DEV_TEMP%\tests\examples
+@xcopy/S/E %IMP_DEV_SOURCE%\tests\examples      %IMP_DEV_TEMP%\tests\examples
+@copy %IMP_DEV_SOURCE%\tests\*                  %IMP_DEV_TEMP%\tests\*
 
-echo.
-echo                    *********************************
-echo                    * Compiler tests now installed. *
-echo                    *********************************
-echo.
+@echo.
+@echo                    *********************************
+@echo                    * Compiler tests now installed. *
+@echo                    *********************************
+@echo.
 
 :end_build_tests
 @goto build_tools
@@ -180,29 +180,29 @@ echo.
 @rem Did we make a request for the various tools?
 @if "%tools%"=="" @goto no_build_tools
 
-echo.
-echo                    ***********************************
-echo                    * Compiler tools being installed. *
-echo                    ***********************************
-echo.
+@echo.
+@echo                    ***********************************
+@echo                    * Compiler tools being installed. *
+@echo                    ***********************************
+@echo.
 
 @rem Now for the various tool utilities
 @if not exist %IMP_DEV_TEMP%\tools              @mkdir %IMP_DEV_TEMP%\tools
-xcopy/S/E %IMP_DEV_SOURCE%\tools               %IMP_DEV_TEMP%\tools                     > nul
+@xcopy/S/E %IMP_DEV_SOURCE%\tools               %IMP_DEV_TEMP%\tools
 
 @cd %IMP_DEV_TEMP%\tools
 @rem Build the tools
 @call %IMP_DEV_TEMP%\tools\maketools
 
 @rem Issue the tools
-copy %IMP_DEV_TEMP%\tools\ibj\*.exe            %IMP_DEV_RELEASE%\bin\*                  > nul
-copy %IMP_DEV_TEMP%\tools\icd\*.exe            %IMP_DEV_RELEASE%\bin\*                  > nul
+@copy %IMP_DEV_TEMP%\tools\ibj\*.exe            %IMP_DEV_RELEASE%\bin\*
+@copy %IMP_DEV_TEMP%\tools\icd\*.exe            %IMP_DEV_RELEASE%\bin\*
 
-echo.
-echo                    *********************************
-echo                    * Compiler tools now installed. *
-echo                    *********************************
-echo.
+@echo.
+@echo                    *********************************
+@echo                    * Compiler tools now installed. *
+@echo                    *********************************
+@echo.
 
 :end_build_tools
 @rem All the requested compiler options have been set up
@@ -224,9 +224,9 @@ echo.
 @goto exit
 
 :nofolder
-echo                    **************************************************
-echo                    **** ERROR **** No build target directory given! *
-echo                    **************************************************
+@echo                    **************************************************
+@echo                    **** ERROR **** No build target directory given! *
+@echo                    **************************************************
 
 :exit
 @endlocal

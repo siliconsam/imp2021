@@ -268,6 +268,7 @@
     %external %routine     %spec prim close           %alias "fclose" ( %integer handle )
     %external %integer %fn %spec prim readbytes       %alias "fread" ( %integer handle, count, itemsz, %byte %name buffer )
     %external %integer %fn %spec prim writebytes      %alias "fwrite" ( %integer handle, count, itemsz,%byte %name buffer )
+    %external %integer %fn %spec prim eof             %alias "feof" ( %integer handle )
     %external %integer %fn %spec prim get char        %alias "fgetc" ( %integer handle )
     %external %routine     %spec prim put char        %alias "fputc" ( %integer handle,ch )
     %external %routine     %spec prim flush           %alias "fflush" ( %integer handle )
@@ -322,6 +323,11 @@
 
     %external %integer %fn writebytes( %integer handle, count, itemsz,%byte %name buffer )
         %result = prim writebytes( handle, count, itemsz, buffer )
+    %end
+
+    %external %predicate file end( %integer handle )
+        %false %if prim eof( handle ) = 0
+        %true
     %end
 
     %external %integer %fn get char( %integer handle )

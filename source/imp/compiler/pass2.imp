@@ -8369,6 +8369,11 @@ c(*):       abort("Bad I Code");				           ! To catch the sinners!! (that is
         %string(255) the source file name
         %integer i,j
 
+        ! The %signal 9,0 and %signal 9,1 events are allowed by default
+        ! However, these events should not be triggered inside  pass2
+        ! when reading the .icd or .imp source files
+        block eof event
+
         %if (length( getenv( getenvindex( "IMP_ICODE" ) ) ) # 0) %start
             ! ok, we want to show the iCode records
             ShowICode = 1

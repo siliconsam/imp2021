@@ -1,0 +1,499 @@
+* 16-OCT-1980        IMP-77 GRAMMAR
+
+*     actions                             pactions
+*
+* 1 - set type                            check for record exp
+* 2 - check type                          set numerical ptype
+* 3 - check string                        set string type
+* 4 - recover atom                        set integer type
+* 5 - apply parameters,subscripts         set const type
+* 6 - indirect next                       set next
+* 7 - check&set block type                generalise cond exps
+* 8 - check operator
+* 9 - check non-local %for
+*10 - direct next
+
+/CLASSES
+
+  0 Z"         ,(19)
+
+[generated classes=1]
+
+  1 VDEC"      %
+  2 OWNVDEC"   %
+  3 EXTVSPEC"  %
+  4 ADEC"      %
+  5 OWNADEC"   %
+  6 EXTASPEC"  %
+  7 PROC"      %
+  8 PROCSPEC"  %
+  9 FORMDEC"   %
+ 10 SWDEC"     %
+ 11 LDEC"      %
+ 12 FORMSPEC"  %
+
+ 18 OPTION"    OPTION
+ 19 COMMA"     %
+
+[normal classes=20]
+
+ 20 T"         ;
+ 21 COLON"     :
+ 22 COMMENT"   COMMENT
+ 23 LB"        (, [
+ 24 ALIAS"     ALIAS
+ 25 RB"        ), ]
+ 26 SUB"       _
+
+ 27 ARRAYD     ARRAY$40(2)
+ 28 STYPE      INTEGER(16+1),
+               REAL(32+1),
+               BYTEINTEGER(16+2),                BYTE(16+2),
+               SHORTINTEGER(16+3),               SHORT(16+3),
+               LONGINTEGER(16+4),                LONG(16+4),
+               LONGLONGINTEGER(16+5),            LONGLONG(16+5),
+               LONGREAL(32+4)
+ 29 ARRAY      ARRAY(2)
+ 30 NAME       NAME(1)
+ 31 PROCD      ROUTINE(8+96),      PREDICATE(11+112)
+ 32 FNMAP      FUNCTION(9),        FN(9),
+               MAP(10),            NAMEFN(10),     NAMEFUNCTION(10)
+ 33 SWITCH     SWITCH(12)
+ 34 OWN        OWN(1),             CONST(2),       CONSTANT(2)
+ 35 EXTERNAL   EXTERNAL(3),        SYSTEM(4),      DYNAMIC(5),
+               PRIM(6),            PERM(7)
+ 36 STRING     STRING$40(48)
+ 37 RECORD     RECORD(64)
+ 38 FORMAT     RECORDFORMAT(9), RECORDFORMATSPEC(12)
+ 39 SPEC       SPEC
+ 40 MCODE      *(40)
+ 41 LABEL      LABEL(6)
+ 42 OP1        <<(4+1),    >>(8+1),    ^^(12+1),    ^(48+3),
+                                       \\(12+1),    \(48+3)
+ 43 OP2        &(20+1),    *(40),      //(16+1),    /(44+2)
+ 44 OP3        +(32),      -(36),      !(24+1),     !!(28+1)
+ 45 SIGN       -(36), +(32)
+ 46 UOP        \(48+3), ^(48+3), ~(48+3)
+ 47 MOD        |(14)
+ 48 DOT        .(13)
+ 49 COMP       =(0),       <(2),       >(4),
+               #(1),       >=(3),      <=(5),
+               \=(1),      <>(1),      ~=(1)
+ 50 ACOMP      ==,         ##(1)
+ 51 EQ         =(0),       =$10(0)
+ 52 EQEQ       ==,         ==$10
+ 53 JAM        <(2)
+ 54 JUMP"      ->
+ 55 RESOP      ->
+ 56 AND        AND,        AND$10
+ 57 OR         OR(2),      OR$10(2)
+ 58 NOT        NOT
+ 59 WHILE      WHILE(128+32+16+4)
+ 60 UNTIL      UNTIL(128+32+16+4+2)
+ 61 FOR"       FOR
+ 62 CWORD      IF(32+8+4),    UNLESS(32+8+6)
+ 63 EXIT       EXIT(4),       CONTINUE(32)
+ 64 ON         ON,            ONEVENT
+ 65 SIGNAL     SIGNAL,        SIGNALEVENT
+ 66 THEN"      THEN
+ 67 START      START
+ 68 ELSE       ELSE
+ 69 FINISH     FINISH
+ 70 FELSE      FINISHELSE
+ 71 CYCLE      CYCLE
+ 72 REPEAT     REPEAT
+ 73 PROGRAM    PROGRAM
+ 74 BEGIN      BEGIN
+ 75 END        END(2)
+ 76 ENDPROG    ENDOFPROGRAM(1), ENDOFFILE(0)
+ 77 ENDPERM    ENDOFPERM
+ 78 FRESULT    RESULT=(1384)
+ 79 MRESULT    RESULT==(1241)
+ 80 BACK       RETURN(1319),    TRUE(1354),     FALSE(1210)
+ 81 MONITOR    MONITOR(77+32)
+ 82 STOP       STOP(83+32)
+ 83 LIST       LIST(1),         ENDOFLIST(3)
+ 84 REALSLN    REALSLONG(4),    REALSNORMAL(1)
+ 85 CONTROL    CONTROL,         DIAGNOSE(1)
+ 86 INCLUDE    INCLUDE
+ 87 MASS       *=
+ 88 RTYPE      INTEGER$40(16+1)
+ 89 ADDOP      ++(117), --(113)
+
+[built-in=90]
+
+ 90 IDENT       [identifier]
+ 91 V           [simple variable]
+ 92 N           [pointer variable]
+ 93 CONST       [constant]
+ 94 FM          [recordformat]
+ 96 R           [routine call]
+ 97 F           [function call]
+ 98 M           [map call]
+ 99 P           [predicate call]
+100 RP          [routine parameter]
+101 FP          [function parameter]
+102 MP          [map parameter]
+103 PP          [predicate parameter]
+104 L           [label]
+105 S           [switch]
+106 A           [array]
+107 AN          [arrayname]
+108 NA          [name array]
+109 NAN         [namearrayname]
+
+[manifest=120]
+
+120 %MSTART     [infiltrate %start]
+121 %CLEAR      [record=0]
+122 %PRED       [set cc from predicate]
+
+124 %DUBIOUS    [check dubious declaration]
+125 %DUP        [duplicate proc param id]
+126 %PIN        [start of parameters]
+127 %POUT       [end   of parameters]
+128 %EDUP        [end of DUP]
+
+[figurative=130]
+
+130 PIDENT     =IDENT
+131 CIDENT     =IDENT
+132 OIDENT     =IDENT
+133 FNAME      =IDENT
+134 SWID       =IDENT
+135 DOTL       =DOT
+136 DOTR       =DOT
+137 ASEP       =COMMA
+138 CSEP       =COMMA
+139 OSEP       =COMMA
+140 PSEP       =COMMA
+141 ARB        =RB
+142 BPLRB      =RB
+143 ORB        =RB
+144 PRB        =RB
+145 CRB        =RB
+146 RCRB       =RB
+147 RECRB      =RB
+148 RECLB      =LB
+149 LAB        =L
+150 MLAB       =L
+151 SLAB       =S
+152 XNAME      =NAME
+153 OWNT       =T
+154 DBSEP      =COLON
+155 PCONST     =CONST
+156 CMOD       =MOD
+157 CSIGN      =SIGN
+158 CUOP       =UOP
+159 COP1       =OP1
+160 COP2       =OP2
+161 COP3       =OP3
+162 INDEF      =MCODE
+163 XELSE      =ELSE
+164 CRESOP     =RESOP
+165 NLAB       =L
+166 RUNTIL     =UNTIL
+167 ACONST     =CONST
+168 ORRB       =RB
+169 FMANY      =MCODE
+170 OSTRING    =CONST
+171 FMLB       =LB
+172 FMRB       =RB
+173 FMOR       =OR
+174 RANGERB    =RB
+175 FSID       =IDENT
+
+[actions=180]
+
+181 %DUMMY        [set dummy var for init]
+182 %DECL         [escape to declarator]
+183 %TYPE         [2 - check operand type]
+184 %ZERO         [check record=0]
+185 %APPLY        [apply parameters]
+186 %PROT         [check prot=0]
+187 %SETPROT      [set protection]
+188 %PTYPE        [6 - set phrase type]
+189 %GAPP         [generate and set app]
+190 %LOCAL        [reset local limit]
+191 %GUARD        [protect record subnames]
+192 %MCODE        [handle machine code]
+193 %CDUMMY       [check = + DUMMY]
+194 %SETTYPE      [1 - fixing type]
+195 %OPER         [8 - check operator type]
+196 %PARAM        [10- set parameter type & check]
+197 %BLOCK        [7 - check block type]
+198 %OTHER        [3,4,9 - sundry others]
+199 %COMPILE      [compile phrase]
+
+[phrasal=200]
+200 APP               *** used by compile ***
+201 BASEAPP
+202 APP2
+203 APP3
+204 APP4
+205 APP5
+206 APP6
+207 ADEFN
+208 NPARM
+209 SWDEF
+210 SWIDS
+211 CIEXP
+212 RCONST
+213 SCONST
+214 ARRAYP
+215 XIMP
+216 IMP
+217 COND
+218 SCOND
+219 EXP1
+220 EXP2
+221 SEXP
+222 IEXP
+223 IEXP1
+224 IEXP2
+225 ISEXP
+226 SEQ
+227 FDEF
+228 EXP
+229 NARRAYP
+230 STRUCT
+231 RESEXP
+232 BPL
+233 CONSTB
+234 FITEM
+235 MOREA
+236 CLIST
+237 FPP
+238 FPP0
+239 FPP1
+240 FPP2
+241 INITVAR
+242 RECEXP
+243 EIMP
+244 IDENTS
+245 RANGE
+
+246 RCONSTB
+247 VARP
+248 INITDEC
+
+252 ESCDEC
+253 ESCPROC
+254 ESCARRAY
+255 ESCREC
+
+/RULES
+
+SS      -> %DECL (VDEC< IDENT INITDEC (COMMA IDENT INITDEC)* T,
+                  ADEC ADEFN (COMMA ADEFN)* T,
+                  (PROC<<, PROCSPEC<<) PIDENT ALIAS ACONST< %OTHER[1] (LB Z FPP RB, %PIN Z %POUT) T,
+                  (PROC<<, PROCSPEC<<) PIDENT (LB Z FPP RB, %PIN Z %POUT) T,
+                  EXTVSPEC< IDENT (ALIAS ACONST< %OTHER[1])? (COMMA IDENT (ALIAS ACONST< %OTHER[1])?)* T,
+                  OWNVDEC<  INITVAR (COMMA INITVAR)* T,
+                  OWNADEC< OIDENT %SETTYPE (ALIAS ACONST< %OTHER[1])? CONSTB< (EQ Z ((IEXP[5] (OSEP, LB (INDEF, IEXP) ORB OSEP))* (T Z)?)*  IEXP[5] (LB (INDEF, IEXP) ORB)? OWNT,  T),
+                  EXTASPEC<     OIDENT (ALIAS ACONST< %OTHER[1])? CONSTB< (COMMA OIDENT (ALIAS ACONST< %OTHER[1])? CONSTB<)* T,
+                  FORMDEC< FNAME LB %PIN Z FITEM (COMMA IDENT, COMMA FITEM)* (FMOR FITEM (COMMA (IDENT, FITEM))* )* RECRB %POUT T,
+                  FORMSPEC< FSID T,
+                  LDEC IDENT (COMMA IDENT)* T,
+                  SWDEC< SWDEF (COMMA SWDEF)* T),
+           LAB< COLON,
+           SLAB< LB (INDEF", IEXP<<) RB COLON,
+           FELSE<? CWORD COND START T,
+           FELSE<? CWORD COND THEN START T,
+           FELSE<? CWORD COND THEN IMP (ELSE (START, CWORD EIMP, IMP))? T,
+           FELSE< (START, IMP) T,
+           XELSE< T,
+           XELSE<  CWORD COND T %MSTART,
+           XELSE<  CWORD COND THEN IMP (ELSE (CWORD XIMP)?)? T %MSTART,
+           FINISH< T,
+           BEGIN<<    T,
+           PROGRAM<< PIDENT T,
+           END<<<     T,
+           ENDPROG<<<,
+           ENDPERM<   T,
+           CYCLE T,
+           CYCLE SEQ<[4] T,
+           (WHILE COND, FOR SEQ[4]) (CYCLE, THEN IMP) T,
+           REPEAT< T,
+           REPEAT< RUNTIL COND T,
+           ON (CLIST<, MCODE") START" T,
+           CONTROL< CIEXP< T,
+           LIST< T,
+           MASS IEXP< T,
+           MCODE" %MCODE,
+           INCLUDE< CONST %OTHER[1] LIST? T,
+           REALSLN< T,
+           OPTION< OSTRING %OTHER[1] T,
+           IMP (T,
+                (CWORD<, WHILE<) COND< T,
+                UNTIL< COND T,
+                FOR SEQ<[4] T)
+
+INITDEC -> %CDUMMY (V   (EQ %SETTYPE  EXP<[1], JAM %SETTYPE SIGN" EXP<[1]),
+                    N   EQEQ %SETTYPE (V< %TYPE, N< %TYPE) %PROT (ADDOP< SEXP<<[4])?,
+                    AN  EQEQ %SETTYPE (A< %TYPE, AN< %TYPE) %PROT,
+                    NAN EQEQ %SETTYPE (NA< %TYPE, NAN< %TYPE) %PROT)
+
+IDENTS  -> IDENT (COMMA IDENT)*
+
+SWIDS   -> SWID (COMMA SWID)*
+
+SWDEF   -> SWIDS CONSTB< %COMPILE
+
+IMP     -> V %PROT (EQ %SETTYPE        EXP<[1],
+                    JAM %SETTYPE SIGN" EXP<[1],
+                    RESOP %OTHER[1]    RESEXP<[3]) (AND" IMP)?,
+           R (AND" IMP)?,
+           N (%PROT ((ADDOP< SEXP<<[4])? (EQ %SETTYPE        EXP<[1],
+                     JAM %SETTYPE SIGN" EXP<[1],
+                     RESOP %OTHER[1]     RESEXP<[3]),
+                     EQEQ %SETTYPE  (V< %TYPE, N< %TYPE) %PROT (ADDOP< SEXP<<[4])?),
+              EQEQ %SETTYPE (V<, N<) %TYPE %PROT (ADDOP< SEXP<<[4])?) (AND" IMP)?,
+           BACK %BLOCK,
+           FRESULT %BLOCK EXP<[1],
+           EXIT,
+           AN  EQEQ %SETTYPE (%PROT  (A< %TYPE %PROT, AN< %TYPE %PROT),(A< %TYPE, AN< %TYPE)) (AND" IMP)?,
+           NAN EQEQ %SETTYPE (%PROT ((NA< %TYPE, NAN< %TYPE) %PROT , (NA< %TYPE, NAN< %TYPE) %PROT), ((NA< %TYPE, NAN< %TYPE) , (NA< %TYPE, NAN< %TYPE))) (AND" IMP)?,
+           MRESULT %BLOCK (%PROT (V< %TYPE, N< %TYPE) %PROT, (V< %TYPE, N< %TYPE)),
+           STOP,
+           MONITOR (AND" IMP)?,
+           JUMP (L, S< LB EXP<<[4] RB),
+           SIGNAL IEXP< (COMMA EXP<[4] (COMMA EXP<[4])?)?
+
+EIMP    -> COND START,
+           COND THEN START,
+           COND THEN IMP (ELSE (START, CWORD EIMP, IMP))?
+
+XIMP    -> COND THEN?,
+           COND THEN IMP (ELSE (CWORD XIMP)?)?
+
+COND    -> SCOND ((AND< SCOND)*, (OR< SCOND)*),
+           EXP +
+
+SCOND  ->  (V %SETTYPE, N %SETTYPE) (COMP %OTHER[2] EXP<[7] (COMP %OTHER[2] EXP<[7])?,
+                                     ACOMP (V< %TYPE, N< %TYPE),
+                                     CRESOP %OTHER[1] RESEXP<[3],
+                                     (OP1 %OPER SEXP<[2])* (OP2 %OPER EXP1<[2])* (OP3 %OPER EXP2<[2])* (+, COMP %OTHER[2] EXP<[7] (COMP %OTHER[2] EXP<[7])?),
+                                     (DOT %OTHER[1] (V<, N<) %OTHER[1])* (+, COMP %OTHER[2] EXP<[7] (COMP %OTHER[2] EXP<[7])?)),
+           LB COND[2] RB,
+           NOT SCOND,
+           P %PRED,
+           LB EXP[2] RB (OP1 %OPER SEXP<[2])* (OP2 %OPER EXP1<[2])* (OP3 %OPER EXP2<[2])* (+, COMP %OTHER[2] %SETTYPE EXP<[2] (COMP %OTHER[2] EXP<[2])?),
+           (A, AN, NA, NAN) ACOMP %SETTYPE (A< %TYPE, AN< %TYPE, NA< %TYPE, NAN< %TYPE),
+           EXP[2] (+, COMP %OTHER[2] EXP<[2] (COMP %OTHER[2] EXP<[2])?)
+
+RECEXP  -> CONST" %ZERO %CLEAR,
+           V %TYPE, N %TYPE
+
+EXP     -> (V<, N<) %TYPE (OP1 %OPER SEXP<)* (OP2 %OPER EXP1<)* (OP3 %OPER EXP2<)*,
+           (V<, N<) %TYPE (DOT %OTHER[1] (V<, N<) %TYPE)*,
+           UOP? SEXP< (OP1 %OPER SEXP<)* (OP2 %OPER EXP1<)* (OP3 %OPER EXP2<)*,
+           SIGN EXP2< (OP3 %OPER EXP2<)*
+
+EXP2    -> SEXP< (OP1 %OPER SEXP<)* (OP2 %OPER EXP1<)*
+
+EXP1    -> SEXP< (OP1 %OPER SEXP<)*
+
+SEXP    -> V %TYPE, N %TYPE, LB EXP RB,
+           MOD" EXP MOD
+
+IEXP    -> CUOP? ISEXP<[4] (COP1 ISEXP<[4])* (COP2 IEXP1<)* (COP3 IEXP2<)*,
+           CSIGN IEXP2< (COP3 IEXP2<)*
+
+IEXP2   -> ISEXP<[4] (COP1 ISEXP<[4])* (COP2 IEXP1<)*
+
+IEXP1   -> ISEXP<[4] (COP1 ISEXP<[4])*
+
+ISEXP   -> PCONST %TYPE,
+           LB IEXP RB,
+           MOD" IEXP CMOD
+
+SEQ     -> (V %TYPE, N %TYPE) %PROT %OTHER[4] EQ" EXP COMMA EXP< CSEP EXP<<
+
+RCONST  -> SIGN? CONST< %TYPE
+
+SCONST  -> CONST %OTHER[1]
+
+FDEF    -> RECLB (FM, INDEF") RB %COMPILE
+
+FITEM   -> FMLB FITEM (COMMA (IDENT, FITEM))* (FMOR FITEM (COMMA (IDENT, FITEM))* )* FMRB,
+           %DECL (VDEC IDENT, ADEC IDENTS RCONSTB (COMMA MOREA)?)
+
+MOREA   -> IDENT (COMMA IDENT)* RCONSTB (COMMA MOREA)?,
+           FITEM (COMMA IDENT, COMMA FITEM)*
+
+CONSTB  -> LB IEXP COLON IEXP CRB
+
+RCONSTB -> LB IEXP COLON IEXP RCRB
+
+BPL     -> LB EXP[4] DBSEP EXP<[4] (COMMA EXP[4] DBSEP EXP<[4])* BPLRB
+
+FPP     -> %PIN %DECL (VDEC IDENT (COMMA IDENT)* (COMMA FPP0, %POUT),
+                       PROC IDENT %DUP FPP1 (COMMA FPP0<<, %POUT<<) %EDUP)
+
+FPP0    -> %DECL      (VDEC IDENT (COMMA IDENT)* (COMMA FPP0, %POUT),
+                       PROC IDENT %DUP FPP1 (COMMA FPP0<<, %POUT<<) %EDUP)
+
+FPP1    -> %PIN (LB %LOCAL FPP2 %GAPP RB)? %POUT
+
+FPP2    -> %DECL (VDEC IDENT (COMMA IDENT)*, PROC IDENT FPP1") (COMMA FPP2)?
+
+
+ADEFN   -> IDENTS BPL %COMPILE
+
+BASEAPP -> EXP[4]
+
+APP2    -> EXP[4] ASEP EXP[4]
+
+APP3    -> EXP[4] ASEP EXP[4] ASEP EXP[4]
+
+APP4    -> EXP[4] ASEP EXP[4] ASEP EXP[4] ASEP EXP[4]
+
+APP5    -> EXP[4] ASEP EXP[4] ASEP EXP[4] ASEP EXP[4] ASEP EXP[4]
+
+APP6    -> EXP[4] ASEP EXP[4] ASEP EXP[4] ASEP EXP[4] ASEP EXP[4] ASEP EXP[4]
+
+CLIST   -> IEXP (COMMA IEXP)*
+
+INITVAR -> CIDENT %SETTYPE (ALIAS ACONST< %OTHER[1])? (EQ" %DUMMY V" IEXP<[5],
+                  EQEQ" %DUMMY (N", AN", NAN") %OTHER[3] (V<, N<) %PROT %TYPE (ADDOP< IEXP<<[4])?,
+                  EQEQ" %DUMMY (N", AN", NAN") IEXP<[4],
+                  %DUBIOUS) %COMPILE
+
+
+CIEXP   -> IEXP %COMPILE
+
+RESEXP  -> ((V, N) %PROT DOTL)? LB EXP RB (DOTR (V, N) %PROT)?
+
+NPARM   -> (V, N, A, AN, NA, NAN) %PROT, NLAB
+
+VARP    -> (V %PTYPE, N %PTYPE) %PROT (ADDOP< SEXP<<[4])?
+
+ARRAYP  -> A %PTYPE, AN %PTYPE
+
+NARRAYP -> NA %PTYPE, NAN %PTYPE
+
+STRUCT  -> STRING (MCODE", IEXP<) RB,
+           RECORD RECLB (FM, MCODE") RB
+
+RANGE   -> IEXP COLON IEXP RANGERB
+
+ESCDEC  -> (STYPE< NAME? (ARRAY XNAME?, ARRAYD IEXP< RB XNAME)?,
+            OWN? (STYPE<, RTYPE RANGE, STRUCT<) NAME? (ARRAY XNAME?, ARRAYD IEXP< RB XNAME)?,
+            PROCD< SPEC?,
+            EXTERNAL? (STYPE<, RTYPE RANGE, STRUCT<) NAME? (ARRAY XNAME?, ARRAYD IEXP< RB XNAME)?,
+            EXTERNAL? (PROCD<, (STYPE<, RTYPE RANGE, STRUCT<) FNMAP) SPEC?,
+            EXTERNAL          (STYPE<, RTYPE RANGE, STRUCT<) NAME? (ARRAY XNAME?, ARRAYD IEXP< RB XNAME)? SPEC,
+            FORMAT,
+            SWITCH,
+            LABEL,
+            NAME) %COMPILE
+
+ESCPROC -> (R, F, M, P) LB APP PRB %APPLY
+
+ESCARRAY-> (V, N) LB (%PROT APP, APP %SETPROT) ARB %APPLY
+
+ESCREC  -> (V, N) SUB %GUARD (V, N, A, AN, NA, NAN) %OTHER[0]
+
+/END
+

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+PARSEDATA=par.$1.lis
+LEXDATA=lex.$1.lis
+
+cp $1.tables.inc tables.inc
+imp77 readtables.imp
+
+./readtables =${PARSEDATA},${LEXDATA}
+
+rm tables.inc
+rm readtables

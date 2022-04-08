@@ -71,19 +71,20 @@ chr(10):
             end;
           end;
 '"':      begin
-            (* JUMPIFD *)
+//            (* JUMPIFD *)
             (* COMPARE DOUBLE *)
-            r.test := readchar(fin);
-            r.clabel := readtag(fin);
+//            r.test := readchar(fin);
+//            r.clabel := readtag(fin);
 
             tablevels( fout );
-            writeln( fout, r.mnemonic,' ',toTest(r.test),' $',r.clabel );
+//            writeln( fout, r.mnemonic,' ',toTest(r.test),' $',r.clabel );
+            writeln( fout, r.mnemonic );
 
             if debugFlag then
             begin
               writeinst( ficd, r.icode );
-              writechar( ficd, r.test );
-              writetag( ficd, r.clabel );
+//              writechar( ficd, r.test );
+//              writetag( ficd, r.clabel );
             end;
           end;
 '#':      begin
@@ -328,20 +329,21 @@ chr(10):
             end;
           end;
 '?':      begin
-            (* JUMPIF *)
+//            (* JUMPIF *)
             (* COMPARE VALUES *)
-            (* JUMP FORWARD to Compiler label *)
-            str1 := toTest(readchar(fin));
-            uint1 := readtag(fin);
+//            (* JUMP FORWARD to Compiler label *)
+//            str1 := toTest(readchar(fin));
+//            uint1 := readtag(fin);
 
             tablevels( fout );
-            writeln( fout, r.mnemonic,' ',str1,' $',uint1 );
+//            writeln( fout, r.mnemonic,' ',str1,' $',uint1 );
+            writeln( fout, r.mnemonic );
 
             if debugFlag then
             begin
               writeinst( ficd, r.icode );
-              writechar( ficd, fromTest( str1 ) );
-              writetag( ficd, uint1 );
+//              writechar( ficd, fromTest( str1 ) );
+//              writetag( ficd, uint1 );
             end;
           end;
 '@':      begin
@@ -389,17 +391,18 @@ chr(10):
             (* JUMPIFA *)
             (* COMPARE ADDRESSES *)
             (* JUMP FORWARD to Compiler label *)
-            str1 := toTest(readchar(fin));
-            uint1 := readtag(fin);
+//            str1 := toTest(readchar(fin));
+//            uint1 := readtag(fin);
 
             tablevels( fout );
-            writeln( fout, r.mnemonic,' ',str1,' $',uint1 );
+//            writeln( fout, r.mnemonic,' ',str1,' $',uint1 );
+            writeln( fout, r.mnemonic );
 
             if debugFlag then
             begin
               writeinst( ficd, r.icode );
-              writechar( ficd, fromTest( str1 ) );
-              writetag( ficd, uint1 );
+//              writechar( ficd, fromTest( str1 ) );
+//              writetag( ficd, uint1 );
             end;
           end;
 'D':      begin

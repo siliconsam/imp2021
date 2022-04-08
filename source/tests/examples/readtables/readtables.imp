@@ -1,0 +1,292 @@
+%begin
+
+    %constinteger max grammar  = 1720
+
+    !*** start of generated tables ***
+    %include "tables.inc"
+    !***  end  of generated tables ***
+
+    %integer min kdict = array lower bound( kdict, 1)
+    %integer max kdict = array upper bound( kdict, 1)
+
+    { grammar related constants }
+    %constinteger manifest = 120, figurative = 130
+    %constinteger actions  = 180, phrasal    = 200
+
+    %constbyteintegerarray mappedsymbol(0:127) = %c
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ',  10, ' ',  12, ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', '!', '"', '#', '$', '%', '&',  39,
+        '(', ')', '*', '+', ',', '-', '.', '/',
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', ':', ';', '<', '=', '>', '?',
+        '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+        'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+        'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+        'X', 'Y', 'Z', '[', '\', ']', '^', '_',
+        '`', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+        'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+        'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+        'X', 'Y', 'Z', '{', 124, '}', '~', ' '
+
+    %string(2) %function mappedsymbolchar(%integer ch)
+        %string(2) s
+        %integer x
+
+        x = ch & 127
+        s = ""
+
+        %if (x = 10) %then %start
+            s = "LF"
+        %finish %else %if (x = 12) %then %start
+            s = "FF"
+        %finish %else %start
+            s = tostring(mappedsymbol(x))
+        %finish
+        %result = s
+    %end
+
+    %predicate isterminal( %integer id )
+        ! Indicate which of the text() entries
+        ! represent a lexical string
+        %true %if (id < 27)
+        %true %if (text(id) = "FOR")
+        %true %if (text(id) = "THEN")
+        %true %if (text(id) = "JUMP")
+
+        %false
+    %end
+
+    %routine dumpGram
+        %const %integer countMax = 5
+        %const %integer indentMax = 6
+        %const %integer separateMax = 3
+        %integer i,j
+        %integer value
+        %integer more,o1,order,type,class
+        %integer previous,count
+
+        previous = 0
+        count = 0
+        newlines(2)
+
+        ! skip the 0'th entry
+        %for i = 1, 1, gmax1 %cycle
+            value = gram(i)
+
+            more = (value >> 15) & 1
+            o1 = (value >> 14) & 1
+            order = (value >> 12) & 3
+            type = (value >> 8) & 15
+            class = value & 255
+
+            %for j = 200,1,255 %cycle
+                %if (phrase(j) = i) %and (length(text(j)) <> 0) %start
+                    printstring(text(j))            
+                    printstring(" => ")
+                    printstring(itos(i,0))
+                    newline
+                %finish
+            %repeat
+
+            %if (previous = 0) %start
+                printstring(itos(i,3))
+                spaces(3)
+                %if (more = 0) %start
+                    ! just this entry
+                    count = 0
+                %finish %else %start
+                    ! start of alternate sequence
+                    previous = 1
+                    count = 1
+                %finish
+            %finish %else %start
+                %if (more = 0) %start
+                    ! last entry in alternate sequence
+                    previous = 0
+                    count = countMax
+                %finish %else %start
+                    ! middle entry in alternate sequence
+                    %if (count = countMax) %then count = 1 %%else count = count + 1
+                    %if (count = 1) %then spaces(4)
+                %finish
+            %finish
+
+            ! print the symbol name
+            %if (class = 0) %start
+                printstring("*E")
+                %if (order = 1) %then printstring("+")
+            %finish %else %start
+                printstring(text(class))
+                %if (order > 0) %start
+                    ! indicate the order level
+                    %for j=1,1,order %cycle
+                        printstring("<")
+                    %repeat
+                %finish
+                %if (o1 = 1) %start
+                    ! indicate it is a terminal symbol
+                    printstring("""")
+                %finish
+                %if (type > 0) %start
+                    ! indicate the type
+                    printstring("[".itos(type,0)."]")
+                %finish
+            %finish
+            space
+            write(glink(i),0)
+
+            %if (previous = 0) %or (count = countMax) %then newline
+            %if (more = 1) %then spaces(separateMax)
+        %repeat
+        newline
+    %end
+
+    %routine dumpInitial
+        %integer i,j
+        %integer gvalue
+        %integer link
+        %integer more,o1,order,type,class
+
+        %for i=0,1,119 %cycle
+
+            link = initial(i) & 255
+
+            %if (link # 0) %start
+                gvalue = gram(link)
+
+                more = (gvalue >> 15) & 1
+                o1 = (gvalue >> 14) & 1
+                order = (gvalue >> 12) & 3
+                type = (gvalue >> 8) & 15
+                class = gvalue & 255
+
+                printstring( itos(i,3).":")
+
+                ! print the symbol name
+                space
+                %if (i = 0) %start
+                    printstring(text(i)."""")
+                %finish %else %start
+                    printstring(text(class))
+                %finish
+                %if (order > 0) %start
+                    ! indicate the order level
+                    %for j=1,1,order %cycle
+                        printstring("<")
+                    %repeat
+                %finish
+                %if (o1 = 1) %start
+                    ! indicate it is a terminal symbol
+                    printstring("""")
+                %finish
+                %if (type > 0) %start
+                    ! indicate the type
+                    printstring("[".itos(type,0)."]")
+                %finish
+                space; printstring(itos(link,0))
+                newline
+
+            %finish
+        %repeat
+    %end
+
+    !! For kdict entries, kdict(32:126)
+    !! kdict(n) & 3 has the semantic
+    !!   0 = space
+    !!   1 = %
+    !!   2 = {
+    !!   3 = ff
+    !!   other values represent themselves
+
+    %routine trace( %integer level, index )
+        %integer next level
+        %integer inst,p1,p2
+        %switch instruction(0:3)
+
+        next level = level
+        inst = (kdict(index)>>14)&16_3
+        p1   = (kdict(index)>>7)&16_7f
+        p2   = (kdict(index)>>0)&16_7f
+
+        -> instruction(inst)
+
+instruction(0):
+        %if (32 < p2 <= 127) %start 
+            printstring(mappedsymbolchar(p2))
+            nextlevel = nextlevel + 1
+        %finish
+        %if (32 < p1 <= 127) %start
+            printstring(mappedsymbolchar(p1))
+            nextlevel = nextlevel + 1
+        %finish
+        space
+        nextlevel = nextlevel + 1
+        trace( nextlevel, index + 1 )
+        -> end decodeinstruction
+
+instruction(1):
+        printstring(":".text(p2))
+        printsymbol( '"' ) %if isterminal( p2 )
+        %if (kdict(index+1) # 0) %start
+            spaces(2)
+            printstring(itos(kdict(index+1),0))
+        %finish
+        newline
+        -> end decodeinstruction
+
+instruction(2):
+        %if (p2 # 10) %then printstring(mappedsymbolchar(p2)) %else printstring("$")
+        space
+        nextlevel = nextlevel + 2
+        trace( nextlevel, index + p1 )
+        spaces( level )
+        trace( level, index + 1 )
+        -> end decodeinstruction
+
+instruction(3):
+        printstring(":".text(p2) )
+        printsymbol( '"' ) %if isterminal( p2 )
+        space
+        printstring(text(p1))
+        printsymbol( '"' ) %if isterminal( p1 )
+        %if (kdict(index+1) # 0) %start
+            spaces(2)
+            printstring(itos(kdict(index+1),0))
+        %finish
+        newline
+        -> end decodeinstruction
+
+end decodeinstruction:
+    %end
+
+    %routine dumplexdict
+        %integer i
+
+        newlines(2)
+        %for i=33,1,126 %cycle
+
+            %if (kdict(i) >> 2) < 127 %start
+                printsymbol( i )
+                space
+                printstring( "?" )
+                newline
+            %finish %else %start
+                printsymbol( i )
+                space
+                trace( 2, kdict(i)>>2 )
+            %finish
+        %repeat
+        newlines(2)
+    %end
+
+    selectoutput(1)
+    dumpGram
+    dumpInitial
+
+    selectoutput(2)
+    dumplexdict
+
+%endofprogram

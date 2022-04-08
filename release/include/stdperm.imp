@@ -55,6 +55,11 @@
 %external %integer       %fn  %spec     Read Buffer( %name ptr, %integer count )
 %external %routine            %spec		Prompt( %string(31) S )
 
+! Special input routines (only intended for use by pass2 of the compiler)
+! These allow the "end of input" event to be switched on/off
+%external %routine            %spec     allow eof event
+%external %routine            %spec     block eof event
+
 ! Output routines
 %external %integer       %fn  %spec		Output Stream
 %external %string(255)   %fn  %spec		Output Name
@@ -157,6 +162,7 @@
 %external %routine            %spec     file rewind( %integer handle )
 %external %routine            %spec     file seek( %integer handle, displacement, pos )
 %external %routine            %spec     close( %integer handle )
+%external %predicate          %spec     file end( %integer handle )
 %external %integer       %fn  %spec     readbytes( %integer handle, count, itemsz, %byte %name buffer )
 %external %integer       %fn  %spec     writebytes( %integer handle, count, itemsz,%byte %name buffer )
 %external %integer       %fn  %spec     get char( %integer handle )

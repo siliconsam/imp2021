@@ -10,7 +10,6 @@
 @set P3_HOME=%IMP_HOME%\bin
 @set LIB_HOME=%IMP_HOME%\lib
 
-@set FILESEP=/
 @set dolink=yes
 @set docode=no
 @set dolist=no
